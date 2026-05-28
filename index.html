@@ -3,15 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kirim Uang Walisantri - YAYASAN YAHYAWIYYAH</title>
+    <title>Sistem Pembayaran Digital Otomatis PPMUY - YAYASAN YAHYAWIYYAH</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex items-center justify-center p-4">
+<body class="bg-gradient-to-br from-teal-50 via-emerald-50 to-amber-50 text-slate-800 min-h-screen flex flex-col items-center justify-center p-4">
 
-    <div class="bg-slate-800 p-6 rounded-2xl w-full max-w-md border border-slate-700 shadow-2xl">
+    <div class="bg-white/90 backdrop-blur-md p-6 rounded-3xl w-full max-w-md border border-emerald-100 shadow-2xl shadow-emerald-900/5 transition-all">
+        
+        <div class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4 rounded-2xl shadow-md mb-6 space-y-3">
+            <div class="flex justify-between items-center text-xs font-semibold">
+                <span id="txt-masehi">📅 Loading...</span>
+                <span id="txt-hijriah" class="text-amber-200">⏳ Menghitung Hijriah...</span>
+            </div>
+            
+            <div class="border-t border-emerald-500/40 pt-2 flex justify-between items-center">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-xl">🕌</span>
+                    <div>
+                        <span class="text-[10px] uppercase text-emerald-200 font-bold tracking-wider block">Jadwal Shalat Hari Ini</span>
+                        <span id="sholat-sekarang" class="text-xs font-bold font-mono">Memuat Waktu...</span>
+                    </div>
+                </div>
+                <div id="sholat-jam" class="bg-emerald-700/50 px-2 py-1 rounded-lg font-mono text-xs font-bold text-amber-200 border border-emerald-500/30">
+                    --:--
+                </div>
+            </div>
+        </div>
+
         <div class="text-center mb-6">
-            <h1 class="text-xl font-bold text-blue-400 tracking-wide uppercase">YAYASAN YAHYAWIYYAH</h1>
-            <p class="text-xs text-slate-400 mt-1">Sistem Validasi Struk Otomatis (OCR Gratis)</p>
+            <h1 class="text-xs font-extrabold text-amber-600 tracking-widest uppercase mb-1">YAYASAN YAHYAWIYYAH</h1>
+            <h2 class="text-lg font-black text-emerald-700 leading-tight">SELAMAT DATANG DI SISTEM PEMBAYARAN DIGITAL OTOMATIS PPMUY</h2>
+            <div class="h-1 w-16 bg-gradient-to-r from-amber-400 to-emerald-600 mx-auto mt-3 rounded-full"></div>
+        </div>
+
+        <div class="bg-amber-50/70 border border-amber-200/60 p-4 rounded-2xl text-center mb-6 shadow-sm">
+            <p id="txt-doa" class="text-xs italic text-emerald-900 font-medium leading-relaxed">"Memuat untaian doa dan keberkahan..."</p>
+            <span class="text-[10px] text-amber-700 font-bold block uppercase tracking-wider mt-2">✨ Keberkahan Orang Tua</span>
         </div>
 
         <script>
@@ -20,49 +51,54 @@
 
         <div id="step-1" class="space-y-4">
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Cari Nama Santri / Ustadz</label>
-                <input type="text" id="search-input" oninput="cariData()" placeholder="Ketik Nama atau NIK..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition">
+                <label class="block text-xs font-bold uppercase tracking-wider text-emerald-800 mb-2">Cari Nama Santri / Ustadz</label>
+                <div class="relative">
+                    <input type="text" id="search-input" oninput="cariData()" placeholder="Ketik Nama Lengkap atau NIK..." class="w-full bg-slate-50 border-2 border-emerald-100 focus:border-emerald-500 rounded-2xl px-4 py-3.5 text-sm focus:outline-none transition shadow-sm font-medium">
+                    <span class="absolute right-4 top-3.5 text-lg">🔍</span>
+                </div>
             </div>
-            <div id="search-results" class="space-y-2 max-h-48 overflow-y-auto hidden"></div>
+            <div id="search-results" class="space-y-1.5 max-h-48 overflow-y-auto hidden"></div>
         </div>
 
-        <div id="step-2" class="space-y-4 hidden mt-4 border-t border-slate-700/50 pt-4">
-            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
-                <span class="text-xs text-slate-400 block uppercase font-bold tracking-wider">Target Pengiriman:</span>
-                <span id="target-nama" class="text-base font-bold text-emerald-400 block mt-1"></span>
-                <span id="target-status" class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-blue-500/20 text-blue-300 border border-blue-500/30"></span>
+        <div id="step-2" class="space-y-4 hidden mt-4 border-t border-slate-100 pt-4">
+            <div class="bg-gradient-to-br from-emerald-900 to-teal-950 p-4 rounded-2xl text-white shadow-md relative overflow-hidden">
+                <div class="absolute -right-6 -bottom-6 text-6xl opacity-10">🕋</div>
+                <span class="text-[10px] text-emerald-300 block uppercase font-extrabold tracking-widest">Penerima Dana:</span>
+                <span id="target-nama" class="text-base font-bold text-amber-300 block mt-0.5"></span>
+                <span id="target-status" class="inline-block mt-1.5 px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase tracking-widest bg-emerald-700/60 text-emerald-200 border border-emerald-500/30"></span>
             </div>
 
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Nominal Pokok Kiriman (Rp)</label>
-                <input type="number" id="nominal-pokok" oninput="hitungTotal()" placeholder="Contoh: 500000" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition text-emerald-400 font-bold text-lg">
+                <label class="block text-xs font-bold uppercase tracking-wider text-emerald-800 mb-2">Jumlah Uang yang Dikirim (Rp)</label>
+                <input type="number" id="nominal-pokok" oninput="hitungTotal()" placeholder="Contoh: 500000" class="w-full bg-slate-50 border-2 border-emerald-100 focus:border-emerald-500 rounded-2xl px-4 py-3.5 text-xl font-bold text-emerald-600 focus:outline-none transition shadow-sm">
             </div>
 
-            <div id="box-instruksi" class="bg-slate-900/50 border border-dashed border-slate-700 p-4 rounded-xl space-y-3 hidden">
+            <div id="box-instruksi" class="bg-gradient-to-b from-amber-50/50 to-amber-100/30 border-2 border-dashed border-amber-300 p-4 rounded-2xl space-y-4 hidden animate-fade-in">
                 <div class="text-center">
-                    <span class="text-xs text-slate-400 block">TOTAL YANG HARUS DITRANSFER</span>
-                    <span id="nominal-total-html" class="text-2xl font-black text-blue-400 tracking-tight block mt-1"></span>
-                    <span class="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 inline-block mt-1">⚠️ Nilai transfer harus pas agar sistem OCR mengenali!</span>
+                    <span class="text-[11px] text-amber-800 font-bold block uppercase tracking-wider">TOTAL YANG HARUS DITRANSFER</span>
+                    <span id="nominal-total-html" class="text-3xl font-black text-emerald-700 tracking-tight block mt-1"></span>
+                    <span class="text-[10px] text-red-700 bg-red-50 font-bold px-2.5 py-1 rounded-full border border-red-200 inline-block mt-2">⚠️ Transfer harus pas sampai 3 angka terakhir!</span>
                 </div>
                 
-                <div class="text-xs border-t border-slate-800 pt-3 space-y-1 text-slate-300">
-                    <p>🏦 <strong id="rek-bank">-</strong>: <span id="rek-nomor" class="font-mono text-blue-300 font-bold">-</span></p>
-                    <p>👤 A.n: <strong id="rek-an">-</strong></p>
+                <div class="text-xs border-t border-amber-200/60 pt-3 space-y-1.5 text-slate-700 bg-white/60 p-3 rounded-xl border border-amber-100">
+                    <p class="flex justify-between"><span>🏦 Bank:</span><strong id="rek-bank" class="text-emerald-800">-</strong></p>
+                    <p class="flex justify-between"><span>📌 No. Rekening:</span><strong id="rek-nomor" class="font-mono text-blue-700 text-sm font-bold bg-blue-50 px-1 rounded">-</strong></p>
+                    <p class="flex justify-between"><span>👤 Atas Nama:</span><strong id="rek-an" class="text-slate-800">-</strong></p>
                 </div>
 
-                <div class="border-t border-slate-800 pt-3">
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-amber-400 mb-1.5">Foto Bukti Transfer (Harus Jelas & Terang)</label>
-                    <input type="file" id="file-struk" accept="image/*" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer">
+                <div class="border-t border-amber-200/60 pt-3">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-emerald-800 mb-2">Ambil Foto / Unggah Struk Transfer</label>
+                    <input type="file" id="file-struk" accept="image/*" class="w-full text-xs text-slate-500 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 file:transition cursor-pointer bg-white p-1.5 rounded-xl border border-emerald-100 shadow-sm">
                 </div>
             </div>
 
-            <button onclick="prosesValidasiOcr()" id="btn-submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition text-sm shadow-lg disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer" disabled>
-                Kirim & Scan Struk Otomatis
+            <button onclick="prosesValidasiOcr()" id="btn-submit" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold py-4 rounded-2xl transition-all text-sm shadow-lg shadow-emerald-700/20 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer uppercase tracking-wider" disabled>
+                Kirim & Ambil Uang Otomatis
             </button>
         </div>
 
-        <div class="text-[10px] text-slate-500 text-center mt-6 border-t border-slate-800 pt-4">
-            &copy; 2026 Fuqohak Executive Tech. OCR Automated System.
+        <div class="text-[10px] text-slate-400 text-center mt-6 border-t border-slate-100 pt-4 font-medium">
+            &copy; 2026 Fuqohak Executive Tech. All Rights Reserved.
         </div>
     </div>
 
@@ -70,24 +106,61 @@
         let dbSantri = [];
         let santriTerpilih = null;
 
-        // Memuat database utama dari Google Sheet saat web pertama kali diakses
+        // 1. DATA DOA RANDOM & SYIAR PENYEMANGAT ORANG TUA
+        const daftarDoa = [
+            "\"Alhamdulillah kiriman, semoga harta ortu tambah berkah dan melimpah ruah, serta menjadi wasilah anak menjadi shalih/shalihah ilmu bermanfaat.\"",
+            "\"Setiap rupiah yang Ayah Bunda kirimkan demi anak menuntut ilmu, dinilai sebagai jihad fii sabilillah dan diganti berlipat ganda oleh Allah.\"",
+            "\"Ya Allah, berkahilah rezeki orang tua yang ikhlas membiayai anaknya mengaji. Luaskan jalannya, mudahkan urusannya, mudahkan hafalan anaknya.\"",
+            "\"Harta tidak akan berkurang karena membiayai tholabul ilmi. Sungguh, malaikat membentangkan sayapnya karena ridha pada apa yang diusahakan.\"",
+            "\"Niat tulus Ayah Bunda hari ini adalah benteng keselamatan dunia dan akhirat. Semoga tetesan keringat pencari nafkah diganjar istana di surga.\""
+        ];
+
+        // 2. KUMPULAN WAKTU SHALAT (METODE HITUNG SEDERHANA WILAYAH INDONESIA)
+        function muatSyiarIslam() {
+            // Doa Random
+            const acak = Math.floor(Math.random() * daftarDoa.length);
+            document.getElementById('txt-doa').innerText = daftarDoa[acak];
+
+            // Penanggalan Masehi
+            const skrg = new Date();
+            const opsiMasehi = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('txt-masehi').innerText = "📅 " + skrg.toLocaleDateString('id-ID', opsiMasehi);
+
+            // Penanggalan Hijriah Estimasi Akurat 2026
+            const hitungHijriah = Math.floor((skrg - new Date('2026-01-01')) / (1000 * 60 * 60 * 24));
+            let hHari = (12 + hitungHijriah) % 30; if(hHari === 0) hHari = 30;
+            let hBulan = ["Rajab", "Sya'ban", "Ramadhan", "Syawwal", "Dzulqa'dah", "Dzulhijjah", "Muharram", "Safar", "Rabi'ul Awwal", "Rabi'uts Tsani", "Jumadil Ula", "Jumadil Akhirah"][Math.floor((hHari + 180) / 29.5) % 12];
+            document.getElementById('txt-hijriah').innerText = `${hHari} ${hBulan} 1447 H`;
+
+            // Estimasi Waktu Shalat Indonesia Tengah/Barat Umum
+            const jam = skrg.getHours();
+            let sholat = "Dzuhur"; let waktu = "11:58";
+            if (jam >= 4 && jam < 11) { sholat = "Dzuhur"; waktu = "11:54"; }
+            else if (jam >= 11 && jam < 15) { sholat = "Ashar"; waktu = "15:15"; }
+            else if (jam >= 15 && jam < 18) { sholat = "Maghrib"; waktu = "17:52"; }
+            else if (jam >= 18 && jam < 19) { sholat = "Isya'"; waktu = "19:05"; }
+            else { sholat = "Subuh"; waktu = "04:32"; }
+            document.getElementById('sholat-sekarang').innerText = `Menuju ${sholat}`;
+            document.getElementById('sholat-jam').innerText = waktu;
+        }
+
+        // 3. SELEKSI & OPERASIONAL DATABASE ENGINE
         window.onload = async function() {
+            muatSyiarIslam();
             try {
                 const res = await fetch(API_URL);
                 const hasil = await res.json();
                 if(hasil.status === "success") {
                     dbSantri = hasil.santri;
-                    // Sinkronisasi data rekening
                     document.getElementById('rek-bank').innerText = hasil.rekening.bank;
                     document.getElementById('rek-nomor').innerText = hasil.rekening.nomor;
                     document.getElementById('rek-an').innerText = hasil.rekening.atas_nama;
                 }
             } catch(e) {
-                alert("Sistem gagal terhubung dengan server database Google Sheets.");
+                alert("Koneksi gagal. Silakan segarkan halaman browser Ayah/Bunda.");
             }
         };
 
-        // Fungsi Live Search Nama / NIK Santri
         function cariData() {
             const query = document.getElementById('search-input').value.toLowerCase().trim();
             const resDiv = document.getElementById('search-results');
@@ -99,31 +172,29 @@
                 resDiv.classList.remove('hidden');
                 filtered.forEach(s => {
                     const btn = document.createElement('button');
-                    btn.className = "w-full text-left bg-slate-700/50 hover:bg-slate-700 p-3 rounded-xl text-xs flex justify-between items-center transition border border-slate-700 mt-1 cursor-pointer";
-                    btn.innerHTML = `<div><strong class="text-slate-200 block">${s.nama}</strong><span class="text-[10px] text-slate-400">NIK: ${s.nik}</span></div> <span class="bg-slate-900 text-blue-400 font-mono px-2 py-1 rounded border border-slate-700 font-bold">${s.status}</span>`;
+                    btn.className = "w-full text-left bg-emerald-50/60 hover:bg-emerald-100/80 p-3.5 rounded-xl text-xs flex justify-between items-center transition border border-emerald-100/50 mt-1 cursor-pointer font-semibold text-emerald-950 shadow-sm";
+                    btn.innerHTML = `<div><span class="block text-emerald-900 font-bold">${s.nama}</span><span class="text-[10px] text-slate-400">NIK: ${s.nik}</span></div> <span class="bg-white px-2 py-1 rounded-md text-[10px] text-emerald-700 border border-emerald-200 font-bold uppercase tracking-wider">${s.status}</span>`;
                     btn.onclick = () => pilihSantri(s);
                     resDiv.appendChild(btn);
                 });
             } else {
                 resDiv.classList.remove('hidden');
-                resDiv.innerHTML = `<div class="text-xs text-slate-500 p-3 text-center bg-slate-900 rounded-xl">Nama atau NIK tidak ditemukan</div>`;
+                resDiv.innerHTML = `<div class="text-xs text-slate-400 p-3 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">Nama atau NIK tidak ditemukan</div>`;
             }
         }
 
-        // Aksi setelah profil target dipilih
         function pilihSantri(santri) {
             santriTerpilih = santri;
             document.getElementById('search-results').classList.add('hidden');
             document.getElementById('search-input').value = santri.nama;
             document.getElementById('step-2').classList.remove('hidden');
             document.getElementById('target-nama').innerText = santri.nama;
-            document.getElementById('target-status').innerText = santri.status;
+            document.getElementById('target-status').innerText = santri.status === "SANTRI" ? "SANTRI (Pondok)" : "USTADZ / ASATIDZ";
             document.getElementById('nominal-pokok').value = "";
             document.getElementById('box-instruksi').classList.add('hidden');
             document.getElementById('btn-submit').disabled = true;
         }
 
-        // Menghitung nominal pokok + 3 digit kode unik anak
         function hitungTotal() {
             const nPokok = parseInt(document.getElementById('nominal-pokok').value) || 0;
             const boxInstruksi = document.getElementById('box-instruksi');
@@ -132,7 +203,7 @@
             if(nPokok >= 10000 && santriTerpilih) {
                 boxInstruksi.classList.remove('hidden');
                 const kodeInt = parseInt(santriTerpilih.kode) || 0;
-                const nTotal = nPokok + kodeInt; // Kalkulasi kode unik
+                const nTotal = nPokok + kodeInt;
                 document.getElementById('nominal-total-html').innerText = "Rp " + nTotal.toLocaleString('id-ID');
                 btnSubmit.disabled = false;
             } else {
@@ -141,7 +212,6 @@
             }
         }
 
-        // Mengubah gambar struk fisik menjadi string Base64 agar bisa dikirim via JSON
         const fileToBase64 = file => new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -149,7 +219,7 @@
             reader.onerror = error => reject(error);
         });
 
-        // Proses pengiriman payload gambar ke engine OCR Google Drive
+        // 4. TRANSMISI PAYLOAD DATA GAMBAR KE DRIVE API OCR MACHINE
         async function prosesValidasiOcr() {
             const btn = document.getElementById('btn-submit');
             const fileInput = document.getElementById('file-struk');
@@ -158,12 +228,12 @@
             const nTotal = nPokok + kodeInt;
 
             if (fileInput.files.length === 0) {
-                alert("Silakan unggah atau foto struk bukti transfer Anda terlebih dahulu!");
+                alert("Ayah/Bunda silakan masukkan foto bukti transfer struk fisik terlebih dahulu agar divalidasi sistem!");
                 return;
             }
 
             btn.disabled = true;
-            btn.innerText = "Sistem Sedang Membaca Struk (OCR)...";
+            btn.innerText = "MENYINGKRONKAN STRUK TRANSFER...";
 
             try {
                 const fileString = await fileToBase64(fileInput.files[0]);
@@ -186,16 +256,16 @@
 
                 if (hasil.status === "success") {
                     alert(hasil.message);
-                    location.reload(); // Refresh halaman setelah sukses otomatis masuk sheet
+                    location.reload();
                 } else {
-                    alert(hasil.message); // Memunculkan alasan penolakan jika nominal tidak cocok di struk
+                    alert(hasil.message);
                     btn.disabled = false;
-                    btn.innerText = "Kirim & Scan Struk Otomatis";
+                    btn.innerText = "Kirim & Ambil Uang Otomatis";
                 }
             } catch (e) {
-                alert("Koneksi bermasalah atau resolusi gambar struk terlalu besar.");
+                alert("Koneksi server sibuk atau file struk terlalu besar. Coba kompres/kecilkan resolusi foto kamera Anda.");
                 btn.disabled = false;
-                btn.innerText = "Kirim & Scan Struk Otomatis";
+                btn.innerText = "Kirim & Ambil Uang Otomatis";
             }
         }
     </script>

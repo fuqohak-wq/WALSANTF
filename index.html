@@ -81,11 +81,11 @@
                 
                 <div class="text-[11px] text-slate-700 bg-white/80 p-2 rounded-lg border border-amber-200/60 space-y-1">
                     <p class="flex justify-between items-center">
-                        <span>🏦 Bank: <strong id="rek-bank" class="text-emerald-800">-</strong></span>
-                        <span id="rek-an" class="text-[10px] font-semibold text-slate-500 text-right">-</span>
+                        <span>🏦 Bank: <strong id="rek-bank" class="text-emerald-800">BRI</strong></span>
+                        <span id="rek-an" class="text-[10px] font-semibold text-slate-500 text-right">YAYASAN YAHYAWIYYAH</span>
                     </p>
                     <div class="flex justify-between items-center border-t border-slate-100 pt-1">
-                        <span class="font-mono text-xs font-bold text-blue-800 bg-blue-50/60 px-1.5 py-0.5 rounded border border-blue-100/50" id="rek-nomor">0</span>
+                        <span class="font-mono text-xs font-bold text-blue-800 bg-blue-50/60 px-1.5 py-0.5 rounded border border-blue-100/50" id="rek-nomor">003801003305309</span>
                         <button onclick="salinTeks('rek-nomor', 'Nomor Rekening')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-md transition cursor-pointer active:scale-95 shadow-sm">📋 Salin Rek</button>
                     </div>
                 </div>
@@ -102,7 +102,7 @@
         </div>
 
         <div class="text-[9px] text-slate-400 text-center mt-3 border-t border-slate-100 pt-2 font-medium">
-            &copy; 2026 Fuqohak Executive Tech. Unlimited Client OCR Engine.
+            &copy; 2026 Fuqohak Executive Tech. Secure Multi-Criteria OCR.
         </div>
     </div>
 
@@ -147,11 +147,11 @@
                 const hasil = await res.json();
                 if(hasil.status === "success") {
                     dbSantri = hasil.santri;
-                    document.getElementById('rek-bank').innerText = hasil.rekening.bank;
-                    document.getElementById('rek-nomor').innerText = hasil.rekening.nomor;
-                    document.getElementById('rek-an').innerText = hasil.rekening.atas_nama;
+                    if(hasil.rekening.bank) document.getElementById('rek-bank').innerText = hasil.rekening.bank;
+                    if(hasil.rekening.nomor) document.getElementById('rek-nomor').innerText = hasil.rekening.nomor;
+                    if(hasil.rekening.atas_nama) document.getElementById('rek-an').innerText = hasil.rekening.atas_nama;
                 }
-            } catch(e) { alert("Gagal memuat database database dari Google Sheets. Pastikan API_URL benar dan sudah di-deploy Anyone!"); }
+            } catch(e) { console.log("Gagal memuat database via API."); }
         };
 
         function cariData() {
@@ -217,7 +217,14 @@
             });
         }
 
-        // 🔥 MODUL OCR CLIENT-SIDE (ANTI LIMIT GOOGLE DRIVE)
+        const fileToBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+
+        // 🔥 CRITICAL ENGINE: VALIDASI MULTI-KRITERIA SUPER KETAT & AMAN
         async function prosesValidasiOcr() {
             const btn = document.getElementById('btn-submit');
             const fileInput = document.getElementById('file-struk');
@@ -229,53 +236,76 @@
             }
 
             btn.disabled = true;
-            btn.innerText = "MEMBACA STRUK TEKS...";
+            btn.innerText = "MEMVALIDASI STRUK (MOHON TUNGGU)...";
 
             try {
-                // Memulai pembacaan gambar langsung di browser internal HP
                 const imageFile = fileInput.files[0];
+                const fileString = await fileToBase64(imageFile);
+
+                // Jalankan pemindaian teks penuh
                 const worker = await Tesseract.createWorker('ind');
                 const ret = await worker.recognize(imageFile);
-                const teksHasilScan = ret.data.text.replace(/[\.\,]/g, ''); // bersihkan tanda titik koma komparasi angka
+                const rawText = ret.data.text;
+                const textClean = rawText.toUpperCase().replace(/[\.\,]/g, ''); // Pembersihan simbol pemisah angka
                 await worker.terminate();
 
-                // Validasi pencocokan nominal di dalam teks struk fisik
-                const targetAngkaStr = nominalTotalGlobal.toString();
-                if (!teksHasilScan.includes(targetAngkaStr)) {
-                    alert(`Validasi Gagal! Angka nominal wajib "${nominalTotalGlobal}" tidak terbaca pada struk. Pastikan foto struk Anda dalam posisi tegak, jelas, terang, dan tidak buram.`);
-                    btn.disabled = false;
-                    btn.innerText = "Kirim & Ambil Uang Otomatis";
-                    return;
-                }
+                console.log("=== HASIL SCAN TEXT ===", textClean);
 
-                btn.innerText = "MENYINGKRONKAN KE SHEET...";
+                // Kumpulan parameter pengaman berlapis (Anti-Iseng)
+                const targetNominal = nominalTotalGlobal.toString();
+                const adaNominal = textClean.includes(targetNominal);
+                const statusSukses = textClean.includes("BERHASIL") || textClean.includes("SUKSES") || textClean.includes("SUCCESS");
+                const namaYayasan = textClean.includes("YAHYAWIYYAH");
+                const nomorRekValid = textClean.includes("3305") || textClean.includes("0038"); // Potongan digit kunci rek BRI yayasan Mas
                 
-                // Jika lolos verifikasi OCR, kirim data bersih ke Google Sheet tanpa membebani Drive API
-                const payload = {
-                    aksi: "simpanTransaksiOcrLolos",
-                    nik: santriTerpilih.nik,
-                    nama: santriTerpilih.nama,
-                    nominal_pokok: nPokok,
-                    nominal_total: nominalTotalGlobal,
-                    device: navigator.userAgent
-                };
+                // Regex untuk mengecek apakah ada nomor referensi/no ref transaksi dari bank (minimal 8-15 digit angka acak)
+                const adaNoRef = /\d{8,}/.test(textClean);
 
-                const response = await fetch(API_URL, {
-                    method: "POST",
-                    body: JSON.stringify(payload)
-                });
-                const hasil = await response.json();
-
-                if (hasil.status === "success") {
-                    alert("Alhamdulillah, Validasi Struk Berhasil! Data Anda sudah terekam otomatis di sistem database.");
-                    location.reload();
+                // Evaluasi Logika Filter Penolakan Sistem
+                if (!statusSukses) {
+                    alert("Validasi Gagal! Struk tidak valid atau status transfer tidak terbaca 'Berhasil/Sukses'.");
+                } else if (!adaNominal) {
+                    alert(`Validasi Gagal! Angka kode unik "${nominalTotalGlobal}" tidak ditemukan. Pastikan nominal transfer persis.`);
+                } else if (!namaYayasan && !nomorRekValid) {
+                    alert("Validasi Gagal! Rekening tujuan terdeteksi bukan milik YAYASAN YAHYAWIYYAH.");
+                } else if (!adaNoRef) {
+                    alert("Validasi Gagal! Nomor referensi validasi transaksi bank tidak ditemukan di dalam gambar.");
                 } else {
-                    alert(hasil.message);
-                    btn.disabled = false;
-                    btn.innerText = "Kirim & Ambil Uang Otomatis";
+                    // JIKA SEMUA KRITERIA AMAN & TEMBUS FILTER, KIRIM KE GOOGLE SHEETS & DRIVE
+                    btn.innerText = "SINKRONISASI DATABASE...";
+                    
+                    const payload = {
+                        aksi: "simpanTransaksiDenganFileB64",
+                        nik: santriTerpilih.nik,
+                        nama: santriTerpilih.nama,
+                        nominal_pokok: nPokok,
+                        nominal_total: nominalTotalGlobal,
+                        image_base64: fileString,
+                        file_name: `STRUK_${santriTerpilled ? santriTerpilih.nik : 'USER'}_${Date.now()}.jpg`,
+                        device: navigator.userAgent
+                    };
+
+                    const response = await fetch(API_URL, {
+                        method: "POST",
+                        body: JSON.stringify(payload)
+                    });
+                    const hasil = await response.json();
+
+                    if (hasil.status === "success") {
+                        alert("Alhamdulillah, Validasi Berlapis Sukses! Dana terekam otomatis dan file bukti asli berhasil diamankan ke arsip yayasan.");
+                        location.reload();
+                        return;
+                    } else {
+                        alert(hasil.message);
+                    }
                 }
+
+                // Reset tombol jika gagal lolos verifikasi kriteria
+                btn.disabled = false;
+                btn.innerText = "Kirim & Ambil Uang Otomatis";
+
             } catch (e) {
-                alert("Proses verifikasi gagal. Pastikan koneksi internet stabil.");
+                alert("Sistem OCR sibuk membaca teks gambar. Silakan coba ganti foto yang lebih terang atau dekat.");
                 btn.disabled = false;
                 btn.innerText = "Kirim & Ambil Uang Otomatis";
             }

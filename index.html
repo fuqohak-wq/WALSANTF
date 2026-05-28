@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Pembayaran Digital Otomatis PPMUY - YAYASAN YAHYAWIYYAH</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -73,7 +74,7 @@
                     <span class="text-[10px] text-amber-800 font-bold block uppercase tracking-wider">TOTAL WAJIB DITRANSFER</span>
                     <div class="flex items-center justify-center gap-2 mt-0.5">
                         <span id="nominal-total-html" class="text-2xl font-black text-emerald-700 tracking-tight"></span>
-                        <button onclick="salinTeks('nominal-total-raw', 'Nominal')" class="bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md transition cursor-pointer active:scale-95 shadow-sm flex items-center gap-0.5">📋 <span>Salin</span></button>
+                        <button onclick="salinTeks('nominal-total-raw', 'Nominal')" class="bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md transition cursor-pointer active:scale-95 shadow-sm">📋 Salin</button>
                     </div>
                     <span class="text-[8px] text-red-600 font-bold block mt-1">⚠️ Nilai transfer harus persis hingga 3 angka terakhir!</span>
                 </div>
@@ -101,7 +102,7 @@
         </div>
 
         <div class="text-[9px] text-slate-400 text-center mt-3 border-t border-slate-100 pt-2 font-medium">
-            &copy; 2026 Fuqohak Executive Tech. One-Screen Interface.
+            &copy; 2026 Fuqohak Executive Tech. Unlimited Client OCR Engine.
         </div>
     </div>
 
@@ -115,39 +116,30 @@
         const daftarDoa = [
             "\"Semoga setiap rupiah yang disalurkan dibalas dengan kelipatan rezeki berlimpah oleh Allah.\"",
             "\"Tetesan keringat Ayah Bunda dalam membiayai anak mengaji dihitung sebagai pahala jihad sabilillah.\"",
-            "\"Ya Allah lancarkanlah rezeki pemberi nafkah hari ini, dan cerdaskanlah hafalan buah hatinya.\"",
-            "\"Harta tidak akan pernah berkurang karena membiayai perjuangan tholabul ilmi di pondok.\""
+            "\"Ya Allah lancarkanlah rezeki pemberi nafkah hari ini, dan cerdaskanlah hafalan buah hatinya.\""
         ];
 
-        // ENGINE PENANGGALAN DAN SYIAR SHALAT
         function muatSyiarIslam() {
             const acak = Math.floor(Math.random() * daftarDoa.length);
             document.getElementById('txt-doa').innerText = daftarDoa[acak];
-
             const skrg = new Date();
             const opsiMasehi = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             document.getElementById('txt-masehi').innerText = "📅 " + skrg.toLocaleDateString('id-ID', opsiMasehi);
-
             try {
                 const opsiHijriah = { day: 'numeric', month: 'long', year: 'numeric' };
                 const formatterHijriah = new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', opsiHijriah);
                 document.getElementById('txt-hijriah').innerText = formatterHijriah.format(skrg) + " H";
-            } catch (e) {
-                document.getElementById('txt-hijriah').innerText = "Dzulhijjah 1447 H";
-            }
+            } catch (e) { document.getElementById('txt-hijriah').innerText = "Dzulhijjah 1447 H"; }
 
             const jam = skrg.getHours();
             let sholat = "Dzuhur"; let waktu = "11:58";
             if (jam >= 4 && jam < 11) { sholat = "Dzuhur"; waktu = "11:54"; }
             else if (jam >= 11 && jam < 15) { sholat = "Ashar"; waktu = "15:15"; }
-            else if (jam >= 15 && jam < 18) { sholat = "Maghrib"; waktu = "17:52"; }
-            else if (jam >= 18 && jam < 19) { sholat = "Isya'"; waktu = "19:05"; }
-            else { sholat = "Subuh"; waktu = "04:32"; }
+            else { sholat = "Maghrib"; waktu = "17:52"; }
             document.getElementById('sholat-sekarang').innerText = `Menuju ${sholat}`;
             document.getElementById('sholat-jam').innerText = waktu;
         }
 
-        // AMBIL DATABASE SPREADSHEET
         window.onload = async function() {
             muatSyiarIslam();
             try {
@@ -159,12 +151,9 @@
                     document.getElementById('rek-nomor').innerText = hasil.rekening.nomor;
                     document.getElementById('rek-an').innerText = hasil.rekening.atas_nama;
                 }
-            } catch(e) {
-                alert("Gagal sinkronisasi data.");
-            }
+            } catch(e) { alert("Gagal memuat database database dari Google Sheets. Pastikan API_URL benar dan sudah di-deploy Anyone!"); }
         };
 
-        // LIVE SEARCH (PADAT)
         function cariData() {
             const query = document.getElementById('search-input').value.toLowerCase().trim();
             const resDiv = document.getElementById('search-results');
@@ -176,7 +165,7 @@
                 resDiv.classList.remove('hidden');
                 filtered.forEach(s => {
                     const btn = document.createElement('button');
-                    btn.className = "w-full text-left bg-emerald-50/60 hover:bg-emerald-100/80 p-2.5 rounded-xl text-[11px] flex justify-between items-center transition border border-emerald-100/50 cursor-pointer text-emerald-950 shadow-sm";
+                    btn.className = "w-full text-left bg-emerald-50/60 hover:bg-emerald-100/80 p-2.5 rounded-xl text-[11px] flex justify-between items-center transition border border-emerald-100/50 cursor-pointer text-emerald-950 mt-1";
                     btn.innerHTML = `<div><span class="block text-emerald-900 font-bold">${s.nama}</span><span class="text-[9px] text-slate-400">NIK: ${s.nik}</span></div> <span class="bg-white px-1.5 py-0.5 rounded text-[8px] text-emerald-700 border border-emerald-200 font-bold uppercase">${s.status}</span>`;
                     btn.onclick = () => pilihSantri(s);
                     resDiv.appendChild(btn);
@@ -193,7 +182,7 @@
             document.getElementById('search-input').value = santri.nama;
             document.getElementById('step-2').classList.remove('hidden');
             document.getElementById('target-nama').innerText = santri.nama;
-            document.getElementById('target-status').innerText = santri.status === "SANTRI" ? "SANTRI" : "USTADZ";
+            document.getElementById('target-status').innerText = santri.status;
             document.getElementById('nominal-pokok').value = "";
             document.getElementById('box-instruksi').classList.add('hidden');
             document.getElementById('btn-submit').disabled = true;
@@ -217,35 +206,18 @@
             }
         }
 
-        // 🔥 FITUR KLIPBOR OTOMATIS PREMIUM
         function salinTeks(elementId, jenisInfo) {
             let teksYgDisalin = document.getElementById(elementId).innerText;
-            // Bersihkan teks dari label pelengkap jika menyalin nomor rek
-            if(elementId === 'rek-nomor') {
-                teksYgDisalin = teksYgDisalin.replace(/\s/g, '');
-            }
-            
+            if(elementId === 'rek-nomor') { teksYgDisalin = teksYgDisalin.replace(/\s/g, ''); }
             navigator.clipboard.writeText(teksYgDisalin).then(() => {
-                alert(`Alhamdulillah, ${jenisInfo} berhasil disalin! Silakan tempel (paste) di aplikasi M-Banking Ayah/Bunda.`);
+                alert(`Alhamdulillah, ${jenisInfo} berhasil disalin!`);
             }).catch(err => {
-                // Fail-safe jika browser lama tidak mendukung navigator.clipboard
-                const el = document.createElement('textarea');
-                el.value = teksYgDisalin;
-                document.body.appendChild(el);
-                el.select();
-                document.execCommand('copy');
-                document.body.removeChild(el);
+                const el = document.createElement('textarea'); el.value = teksYgDisalin; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
                 alert(`Alhamdulillah, ${jenisInfo} berhasil disalin!`);
             });
         }
 
-        const fileToBase64 = file => new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
-
+        // 🔥 MODUL OCR CLIENT-SIDE (ANTI LIMIT GOOGLE DRIVE)
         async function prosesValidasiOcr() {
             const btn = document.getElementById('btn-submit');
             const fileInput = document.getElementById('file-struk');
@@ -257,18 +229,34 @@
             }
 
             btn.disabled = true;
-            btn.innerText = "MENYINGKRONKAN STRUK TRANSFER...";
+            btn.innerText = "MEMBACA STRUK TEKS...";
 
             try {
-                const fileString = await fileToBase64(fileInput.files[0]);
+                // Memulai pembacaan gambar langsung di browser internal HP
+                const imageFile = fileInput.files[0];
+                const worker = await Tesseract.createWorker('ind');
+                const ret = await worker.recognize(imageFile);
+                const teksHasilScan = ret.data.text.replace(/[\.\,]/g, ''); // bersihkan tanda titik koma komparasi angka
+                await worker.terminate();
+
+                // Validasi pencocokan nominal di dalam teks struk fisik
+                const targetAngkaStr = nominalTotalGlobal.toString();
+                if (!teksHasilScan.includes(targetAngkaStr)) {
+                    alert(`Validasi Gagal! Angka nominal wajib "${nominalTotalGlobal}" tidak terbaca pada struk. Pastikan foto struk Anda dalam posisi tegak, jelas, terang, dan tidak buram.`);
+                    btn.disabled = false;
+                    btn.innerText = "Kirim & Ambil Uang Otomatis";
+                    return;
+                }
+
+                btn.innerText = "MENYINGKRONKAN KE SHEET...";
                 
+                // Jika lolos verifikasi OCR, kirim data bersih ke Google Sheet tanpa membebani Drive API
                 const payload = {
-                    aksi: "uploadDanVerifyOCR",
+                    aksi: "simpanTransaksiOcrLolos",
                     nik: santriTerpilih.nik,
                     nama: santriTerpilih.nama,
                     nominal_pokok: nPokok,
                     nominal_total: nominalTotalGlobal,
-                    image_base64: fileString,
                     device: navigator.userAgent
                 };
 
@@ -279,7 +267,7 @@
                 const hasil = await response.json();
 
                 if (hasil.status === "success") {
-                    alert(hasil.message);
+                    alert("Alhamdulillah, Validasi Struk Berhasil! Data Anda sudah terekam otomatis di sistem database.");
                     location.reload();
                 } else {
                     alert(hasil.message);
@@ -287,7 +275,7 @@
                     btn.innerText = "Kirim & Ambil Uang Otomatis";
                 }
             } catch (e) {
-                alert("Koneksi sibuk atau file gambar terlalu besar.");
+                alert("Proses verifikasi gagal. Pastikan koneksi internet stabil.");
                 btn.disabled = false;
                 btn.innerText = "Kirim & Ambil Uang Otomatis";
             }

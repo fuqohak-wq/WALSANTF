@@ -17,7 +17,7 @@
         <div class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4 rounded-2xl shadow-md mb-6 space-y-3">
             <div class="flex justify-between items-center text-xs font-semibold">
                 <span id="txt-masehi">📅 Loading...</span>
-                <span id="txt-hijriah" class="text-amber-200">⏳ Menghitung Hijriah...</span>
+                <span id="txt-hijriah" class="text-amber-200 font-bold">⏳ Menghitung Hijriah...</span>
             </div>
             
             <div class="border-t border-emerald-500/40 pt-2 flex justify-between items-center">
@@ -115,22 +115,25 @@
             "\"Niat tulus Ayah Bunda hari ini adalah benteng keselamatan dunia dan akhirat. Semoga tetesan keringat pencari nafkah diganjar istana di surga.\""
         ];
 
-        // 2. KUMPULAN WAKTU SHALAT (METODE HITUNG SEDERHANA WILAYAH INDONESIA)
+        // 2. KUMPULAN WAKTU SHALAT & KALENDER AKURAT
         function muatSyiarIslam() {
             // Doa Random
             const acak = Math.floor(Math.random() * daftarDoa.length);
             document.getElementById('txt-doa').innerText = daftarDoa[acak];
 
-            // Penanggalan Masehi
+            // Penanggalan Masehi Resmi
             const skrg = new Date();
             const opsiMasehi = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             document.getElementById('txt-masehi').innerText = "📅 " + skrg.toLocaleDateString('id-ID', opsiMasehi);
 
-            // Penanggalan Hijriah Estimasi Akurat 2026
-            const hitungHijriah = Math.floor((skrg - new Date('2026-01-01')) / (1000 * 60 * 60 * 24));
-            let hHari = (12 + hitungHijriah) % 30; if(hHari === 0) hHari = 30;
-            let hBulan = ["Rajab", "Sya'ban", "Ramadhan", "Syawwal", "Dzulqa'dah", "Dzulhijjah", "Muharram", "Safar", "Rabi'ul Awwal", "Rabi'uts Tsani", "Jumadil Ula", "Jumadil Akhirah"][Math.floor((hHari + 180) / 29.5) % 12];
-            document.getElementById('txt-hijriah').innerText = `${hHari} ${hBulan} 1447 H`;
+            // 🔥 PERBAIKAN: Penanggalan Hijriah Otomatis Menggunakan Standar Resmi Internasional browser (Anti-Ngaco)
+            try {
+                const opsiHijriah = { textInfo: false, day: 'numeric', month: 'long', year: 'numeric' };
+                const formatterHijriah = new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', opsiHijriah);
+                document.getElementById('txt-hijriah').innerText = formatterHijriah.format(skrg) + " H";
+            } catch (e) {
+                document.getElementById('txt-hijriah').innerText = "Dzulhijjah 1447 H";
+            }
 
             // Estimasi Waktu Shalat Indonesia Tengah/Barat Umum
             const jam = skrg.getHours();

@@ -234,7 +234,7 @@
                     ctx.drawImage(img, 0, 0, width, height);
                     
                     const dataUrlKecil = canvas.toDataURL('image/jpeg', 0.75);
-                    resolve(dataUrlKecKecil || dataUrlKecil);
+                    resolve(dataUrlKecil);
                 };
             };
         });
@@ -273,18 +273,15 @@
                 const textClean = rawText.toUpperCase().replace(/[\.\,]/g, ''); 
                 await worker.terminate();
 
-                // Aturan Keamanan Berlapis
                 const targetNominal = nominalTotalGlobal.toString();
                 const adaNominal = textClean.includes(targetNominal);
                 const statusSukses = textClean.includes("BERHASIL") || textClean.includes("SUKSES") || textClean.includes("SUCCESS");
                 const namaYayasan = textClean.includes("YAHYAWIYYAH");
                 const nomorRekValid = textClean.includes("3305") || textClean.includes("0038");
                 
-                // 🔍 PROSES EKSTRAKSI NOMOR REFERENSI BANK (8 HINGGA 15 DIGIT ANGKA UNIK)
                 const matchRef = textClean.match(/\d{8,15}/);
                 const noRefTerdeteksi = matchRef ? matchRef[0] : "";
 
-                // Evaluasi Logika Filter Penolakan
                 if (!statusSukses) {
                     alert("Validasi Gagal! Status transaksi tidak terbaca 'Berhasil' atau 'Sukses'. Pastikan struk bukan berstatus gagal/pending.");
                 } else if (!adaNominal) {
@@ -296,7 +293,6 @@
                 } else {
                     btnText.innerText = "MENYIMPAN DATA KE SHEETS...";
                     
-                    // Sisipkan payload 'no_ref' ke backend Apps Script untuk dikunci gembok ganda
                     const payload = {
                         aksi: "simpanTransaksiDenganFileB64",
                         nik: santriTerpilih.nik,
@@ -306,7 +302,7 @@
                         image_base64: base64Kompresi, 
                         file_name: `STRUK_${santriTerpilih.nik}_${Date.now()}.jpg`,
                         device: navigator.userAgent,
-                        no_ref: noRefTerdeteksi // 🔥 Dikirim rapi ke backend anti-replay attack
+                        no_ref: noRefTerdeteksi 
                     };
 
                     const response = await fetch(API_URL, {
@@ -320,7 +316,6 @@
                         location.reload();
                         return;
                     } else {
-                        // Jika hasil.status === "error" (Duplikat terdeteksi oleh Code.gs)
                         alert(hasil.message);
                     }
                 }

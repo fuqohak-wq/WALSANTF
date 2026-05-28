@@ -11,11 +11,11 @@
     <div class="bg-slate-800 p-6 rounded-2xl w-full max-w-md border border-slate-700 shadow-2xl">
         <div class="text-center mb-6">
             <h1 class="text-xl font-bold text-blue-400 tracking-wide uppercase">YAYASAN YAHYAWIYYAH</h1>
-            <p class="text-xs text-slate-400 mt-1">Sistem Otomatisasi Validasi Struk Transfer (OCR)</p>
+            <p class="text-xs text-slate-400 mt-1">Sistem Validasi Struk Otomatis (OCR Gratis)</p>
         </div>
 
         <script>
-            const API_URL = "GANTI_DENGAN_URL_WEB_APP_APPS_SCRIPT_MAS_FUQOHAK";
+            const API_URL = "https://script.google.com/macros/s/AKfycbz4WIiha9JSemWqoC4603207orwCm3eYd3XlMwXzNZBTLHvWsITLlyecHnjB4hvr-i03w/exec";
         </script>
 
         <div id="step-1" class="space-y-4">
@@ -42,15 +42,16 @@
                 <div class="text-center">
                     <span class="text-xs text-slate-400 block">TOTAL YANG HARUS DITRANSFER</span>
                     <span id="nominal-total-html" class="text-2xl font-black text-blue-400 tracking-tight block mt-1"></span>
-                    <span class="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 inline-block mt-1">⚠️ Nilai transfer harus pas agar OCR mengenali!</span>
+                    <span class="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 inline-block mt-1">⚠️ Nilai transfer harus pas agar sistem OCR mengenali!</span>
                 </div>
+                
                 <div class="text-xs border-t border-slate-800 pt-3 space-y-1 text-slate-300">
                     <p>🏦 <strong id="rek-bank">-</strong>: <span id="rek-nomor" class="font-mono text-blue-300 font-bold">-</span></p>
                     <p>👤 A.n: <strong id="rek-an">-</strong></p>
                 </div>
 
                 <div class="border-t border-slate-800 pt-3">
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-amber-400 mb-1.5">Upload Foto Bukti Transfer</label>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-amber-400 mb-1.5">Foto Bukti Transfer (Harus Jelas & Terang)</label>
                     <input type="file" id="file-struk" accept="image/*" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer">
                 </div>
             </div>
@@ -69,21 +70,24 @@
         let dbSantri = [];
         let santriTerpilih = null;
 
+        // Memuat database utama dari Google Sheet saat web pertama kali diakses
         window.onload = async function() {
             try {
                 const res = await fetch(API_URL);
                 const hasil = await res.json();
                 if(hasil.status === "success") {
                     dbSantri = hasil.santri;
+                    // Sinkronisasi data rekening
                     document.getElementById('rek-bank').innerText = hasil.rekening.bank;
                     document.getElementById('rek-nomor').innerText = hasil.rekening.nomor;
                     document.getElementById('rek-an').innerText = hasil.rekening.atas_nama;
                 }
             } catch(e) {
-                alert("Gagal koneksi database.");
+                alert("Sistem gagal terhubung dengan server database Google Sheets.");
             }
         };
 
+        // Fungsi Live Search Nama / NIK Santri
         function cariData() {
             const query = document.getElementById('search-input').value.toLowerCase().trim();
             const resDiv = document.getElementById('search-results');
@@ -95,17 +99,18 @@
                 resDiv.classList.remove('hidden');
                 filtered.forEach(s => {
                     const btn = document.createElement('button');
-                    btn.className = "w-full text-left bg-slate-700/50 hover:bg-slate-700 p-3 rounded-xl text-xs flex justify-between items-center transition border border-slate-700 mt-1";
+                    btn.className = "w-full text-left bg-slate-700/50 hover:bg-slate-700 p-3 rounded-xl text-xs flex justify-between items-center transition border border-slate-700 mt-1 cursor-pointer";
                     btn.innerHTML = `<div><strong class="text-slate-200 block">${s.nama}</strong><span class="text-[10px] text-slate-400">NIK: ${s.nik}</span></div> <span class="bg-slate-900 text-blue-400 font-mono px-2 py-1 rounded border border-slate-700 font-bold">${s.status}</span>`;
                     btn.onclick = () => pilihSantri(s);
                     resDiv.appendChild(btn);
                 });
             } else {
                 resDiv.classList.remove('hidden');
-                resDiv.innerHTML = `<div class="text-xs text-slate-500 p-3 text-center bg-slate-900 rounded-xl">Nama tidak ditemukan</div>`;
+                resDiv.innerHTML = `<div class="text-xs text-slate-500 p-3 text-center bg-slate-900 rounded-xl">Nama atau NIK tidak ditemukan</div>`;
             }
         }
 
+        // Aksi setelah profil target dipilih
         function pilihSantri(santri) {
             santriTerpilih = santri;
             document.getElementById('search-results').classList.add('hidden');
@@ -118,6 +123,7 @@
             document.getElementById('btn-submit').disabled = true;
         }
 
+        // Menghitung nominal pokok + 3 digit kode unik anak
         function hitungTotal() {
             const nPokok = parseInt(document.getElementById('nominal-pokok').value) || 0;
             const boxInstruksi = document.getElementById('box-instruksi');
@@ -126,7 +132,7 @@
             if(nPokok >= 10000 && santriTerpilih) {
                 boxInstruksi.classList.remove('hidden');
                 const kodeInt = parseInt(santriTerpilih.kode) || 0;
-                const nTotal = nPokok + kodeInt;
+                const nTotal = nPokok + kodeInt; // Kalkulasi kode unik
                 document.getElementById('nominal-total-html').innerText = "Rp " + nTotal.toLocaleString('id-ID');
                 btnSubmit.disabled = false;
             } else {
@@ -135,7 +141,7 @@
             }
         }
 
-        // Konversi File Gambar ke Base64 String
+        // Mengubah gambar struk fisik menjadi string Base64 agar bisa dikirim via JSON
         const fileToBase64 = file => new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -143,6 +149,7 @@
             reader.onerror = error => reject(error);
         });
 
+        // Proses pengiriman payload gambar ke engine OCR Google Drive
         async function prosesValidasiOcr() {
             const btn = document.getElementById('btn-submit');
             const fileInput = document.getElementById('file-struk');
@@ -151,7 +158,7 @@
             const nTotal = nPokok + kodeInt;
 
             if (fileInput.files.length === 0) {
-                alert("Silakan pilih atau foto struk bukti transfer Anda terlebih dahulu!");
+                alert("Silakan unggah atau foto struk bukti transfer Anda terlebih dahulu!");
                 return;
             }
 
@@ -179,14 +186,14 @@
 
                 if (hasil.status === "success") {
                     alert(hasil.message);
-                    location.reload();
+                    location.reload(); // Refresh halaman setelah sukses otomatis masuk sheet
                 } else {
-                    alert(hasil.message);
+                    alert(hasil.message); // Memunculkan alasan penolakan jika nominal tidak cocok di struk
                     btn.disabled = false;
                     btn.innerText = "Kirim & Scan Struk Otomatis";
                 }
             } catch (e) {
-                alert("Koneksi bermasalah atau file gambar terlalu besar.");
+                alert("Koneksi bermasalah atau resolusi gambar struk terlalu besar.");
                 btn.disabled = false;
                 btn.innerText = "Kirim & Scan Struk Otomatis";
             }

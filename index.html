@@ -92,21 +92,22 @@
 
                 <div class="pt-0.5">
                     <label class="block text-[10px] font-bold uppercase tracking-wider text-emerald-800 mb-1 text-center">Foto / Unggah Struk Bukti Transfer</label>
-                    <input type="file" id="file-struk" accept="image/*" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 bg-white p-1 rounded-lg border border-emerald-200 shadow-inner cursor-pointer">
+                    <input type="file" id="file-struk" accept="image/*" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-emerald-600 file:text-white bg-white p-1 rounded-lg border border-emerald-200 shadow-inner cursor-pointer">
                 </div>
             </div>
 
-            <button onclick="prosesValidasiOcr()" id="btn-submit" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold py-3 rounded-xl transition-all text-xs shadow-md disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer uppercase tracking-wider" disabled>
-                Kirim & Ambil Uang Otomatis
+            <button onclick="prosesValidasiOcr()" id="btn-submit" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold py-3 rounded-xl transition-all text-xs shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer uppercase tracking-wider flex justify-center items-center gap-2" disabled>
+                <span id="btn-text">Kirim & Ambil Uang Otomatis</span>
             </button>
         </div>
 
         <div class="text-[9px] text-slate-400 text-center mt-3 border-t border-slate-100 pt-2 font-medium">
-            &copy; 2026 Fuqohak Executive Tech. Secure Multi-Criteria OCR.
+            &copy; 2026 Fuqohak Executive Tech. Compression OCR Engine V2.
         </div>
     </div>
 
     <span id="nominal-total-raw" class="hidden">0</span>
+    <canvas id="canvas-kompresor" class="hidden"></canvas>
 
     <script>
         let dbSantri = [];
@@ -170,9 +171,6 @@
                     btn.onclick = () => pilihSantri(s);
                     resDiv.appendChild(btn);
                 });
-            } else {
-                resDiv.classList.remove('hidden');
-                resDiv.innerHTML = `<div class="text-[10px] text-slate-400 p-2 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">Nama tidak ditemukan</div>`;
             }
         }
 
@@ -209,70 +207,100 @@
         function salinTeks(elementId, jenisInfo) {
             let teksYgDisalin = document.getElementById(elementId).innerText;
             if(elementId === 'rek-nomor') { teksYgDisalin = teksYgDisalin.replace(/\s/g, ''); }
-            navigator.clipboard.writeText(teksYgDisalin).then(() => {
-                alert(`Alhamdulillah, ${jenisInfo} berhasil disalin!`);
-            }).catch(err => {
-                const el = document.createElement('textarea'); el.value = teksYgDisalin; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-                alert(`Alhamdulillah, ${jenisInfo} berhasil disalin!`);
-            });
+            navigator.clipboard.writeText(teksYgDisalin).then(() => { alert(`Alhamdulillah, ${jenisInfo} berhasil disalin!`); });
         }
 
-        const fileToBase64 = file => new Promise((resolve, reject) => {
+        // 🔥 STRATEGI 1: ENGINE KOMPRESI GAMBAR (MENGECILKAN UKURAN DARI MB MENJADI KB SECARA INSTAN)
+        const kompresGambarSisiKlien = (file) => new Promise((resolve) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.getElementById('canvas-kompresor');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Batasi maksimal lebar gambar 1000px agar Tesseract membacanya sangat ringan
+                    const MAX_WIDTH = 1000;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Ekspor menjadi base64 dengan kualitas kompresi 0.75 (Teks tetap super tajam, file sangat enteng)
+                    const dataUrlKecil = canvas.toDataURL('image/jpeg', 0.75);
+                    resolve(dataUrlKecil);
+                };
+            };
         });
 
-        // 🔥 CRITICAL ENGINE: VALIDASI MULTI-KRITERIA SUPER KETAT & AMAN
+        // 🔥 STRATEGI 2: INSPEKSI OCR MULTI-KRITERIA TANPA BATAS TIMEOUT
         async function prosesValidasiOcr() {
             const btn = document.getElementById('btn-submit');
+            const btnText = document.getElementById('btn-text');
             const fileInput = document.getElementById('file-struk');
             const nPokok = parseInt(document.getElementById('nominal-pokok').value) || 0;
 
             if (fileInput.files.length === 0) {
-                alert("Silakan masukkan atau foto gambar struk transfer terlebih dahulu!");
+                alert("Silakan pilih atau foto gambar struk transfer terlebih dahulu!");
                 return;
             }
 
             btn.disabled = true;
-            btn.innerText = "MEMVALIDASI STRUK (MOHON TUNGGU)...";
+            btnText.innerText = "MENGOMPRES UKURAN GAMBAR...";
 
             try {
-                const imageFile = fileInput.files[0];
-                const fileString = await fileToBase64(imageFile);
+                // Kecilkan resolusi gambar terlebih dahulu secara instan di background
+                const fileGambarMentah = fileInput.files[0];
+                const base64Kompresi = await kompresGambarSisiKlien(fileGambarMentah);
 
-                // Jalankan pemindaian teks penuh
-                const worker = await Tesseract.createWorker('ind');
-                const ret = await worker.recognize(imageFile);
+                btnText.innerText = "MENYIAPKAN MESIN PEMBACA (0%)...";
+
+                // Inisialisasi Tesseract Worker Bahasa Indonesia
+                const worker = await Tesseract.createWorker('ind', 1, {
+                    logger: m => {
+                        // Tampilkan progres pembacaan teks asli secara real-time ke tombol agar user sabar menunggu
+                        if(m.status === 'recognizing text') {
+                            const persen = Math.floor(m.progress * 100);
+                            btnText.innerText = `MEMBACA DATA STRUK (${persen}%)`;
+                        }
+                    }
+                });
+
+                // Proses scanning teks pada file gambar hasil kompresi
+                const ret = await worker.recognize(base64Kompresi);
                 const rawText = ret.data.text;
-                const textClean = rawText.toUpperCase().replace(/[\.\,]/g, ''); // Pembersihan simbol pemisah angka
+                const textClean = rawText.toUpperCase().replace(/[\.\,]/g, ''); // Buang titik/koma pemisah ribuan
                 await worker.terminate();
 
-                console.log("=== HASIL SCAN TEXT ===", textClean);
-
-                // Kumpulan parameter pengaman berlapis (Anti-Iseng)
+                // Kumpulan Aturan Sensor Kunci Keamanan Berlapis (Anti-Iseng)
                 const targetNominal = nominalTotalGlobal.toString();
                 const adaNominal = textClean.includes(targetNominal);
                 const statusSukses = textClean.includes("BERHASIL") || textClean.includes("SUKSES") || textClean.includes("SUCCESS");
                 const namaYayasan = textClean.includes("YAHYAWIYYAH");
-                const nomorRekValid = textClean.includes("3305") || textClean.includes("0038"); // Potongan digit kunci rek BRI yayasan Mas
-                
-                // Regex untuk mengecek apakah ada nomor referensi/no ref transaksi dari bank (minimal 8-15 digit angka acak)
-                const adaNoRef = /\d{8,}/.test(textClean);
+                const nomorRekValid = textClean.includes("3305") || textClean.includes("0038");
+                const adaNoRef = /\d{8,}/.test(textClean); // Cek eksistensi nomor referensi bank unik
 
-                // Evaluasi Logika Filter Penolakan Sistem
+                // Evaluasi Logika Filter Penolakan
                 if (!statusSukses) {
-                    alert("Validasi Gagal! Struk tidak valid atau status transfer tidak terbaca 'Berhasil/Sukses'.");
+                    alert("Validasi Gagal! Status transaksi tidak terbaca 'Berhasil' atau 'Sukses'. Pastikan struk bukan berstatus gagal/pending.");
                 } else if (!adaNominal) {
-                    alert(`Validasi Gagal! Angka kode unik "${nominalTotalGlobal}" tidak ditemukan. Pastikan nominal transfer persis.`);
+                    alert(`Validasi Gagal! Angka kode unik wajib "${nominalTotalGlobal}" tidak terbaca pada gambar. Mohon perjelas posisi foto.`);
                 } else if (!namaYayasan && !nomorRekValid) {
                     alert("Validasi Gagal! Rekening tujuan terdeteksi bukan milik YAYASAN YAHYAWIYYAH.");
                 } else if (!adaNoRef) {
-                    alert("Validasi Gagal! Nomor referensi validasi transaksi bank tidak ditemukan di dalam gambar.");
+                    alert("Validasi Gagal! Nomor referensi bank tidak ditemukan pada struk.");
                 } else {
-                    // JIKA SEMUA KRITERIA AMAN & TEMBUS FILTER, KIRIM KE GOOGLE SHEETS & DRIVE
-                    btn.innerText = "SINKRONISASI DATABASE...";
+                    // JIKA LOLOS PENGECEKAN KETAT, KIRIM KE GOOGLE SHEETS
+                    btnText.innerText = "MENYIMPAN DATA KE SHEETS...";
                     
                     const payload = {
                         aksi: "simpanTransaksiDenganFileB64",
@@ -280,8 +308,8 @@
                         nama: santriTerpilih.nama,
                         nominal_pokok: nPokok,
                         nominal_total: nominalTotalGlobal,
-                        image_base64: fileString,
-                        file_name: `STRUK_${santriTerpilled ? santriTerpilih.nik : 'USER'}_${Date.now()}.jpg`,
+                        image_base64: base64Kompresi, // File enteng hasil kompresi yang diunggah ke Drive
+                        file_name: `STRUK_${santriTerpilih.nik}_${Date.now()}.jpg`,
                         device: navigator.userAgent
                     };
 
@@ -292,7 +320,7 @@
                     const hasil = await response.json();
 
                     if (hasil.status === "success") {
-                        alert("Alhamdulillah, Validasi Berlapis Sukses! Dana terekam otomatis dan file bukti asli berhasil diamankan ke arsip yayasan.");
+                        alert("Alhamdulillah, Validasi Struk Sukses! Pembayaran terekam otomatis dan bukti fisik aman diarsipkan.");
                         location.reload();
                         return;
                     } else {
@@ -300,14 +328,14 @@
                     }
                 }
 
-                // Reset tombol jika gagal lolos verifikasi kriteria
+                // Kembalikan tombol ke fungsi semula jika gagal melewati aturan filter
                 btn.disabled = false;
-                btn.innerText = "Kirim & Ambil Uang Otomatis";
+                btnText.innerText = "Kirim & Ambil Uang Otomatis";
 
             } catch (e) {
-                alert("Sistem OCR sibuk membaca teks gambar. Silakan coba ganti foto yang lebih terang atau dekat.");
+                alert("Gagal memproses gambar. Pastikan posisi foto tegak, tulisan tidak terpotong, dan kondisi cahaya terang.");
                 btn.disabled = false;
-                btn.innerText = "Kirim & Ambil Uang Otomatis";
+                btnText.innerText = "Kirim & Ambil Uang Otomatis";
             }
         }
     </script>

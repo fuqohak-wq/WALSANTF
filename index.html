@@ -3,92 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kirim Uang Saku - Yayasan Yahyawiyyah</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Kirim Uang Walisantri - YAYASAN YAHYAWIYYAH</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        .Glow { box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+    </style>
 </head>
-<body>
-    <div class="app-container">
-        <header>
-            <h2>🕌 Yayasan Yahyawiyyah</h2>
-            <p>Sistem Informasi Kirim Uang Saku Santri</p>
-        </header>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex items-center justify-center p-4">
 
-        <main>
-            <div id="loading" class="loading-box">🔄 Memuat data santri, mohon tunggu...</div>
-            
-            <form id="formTransfer" class="hidden">
-                <!-- Langkah 1: Pilih Santri -->
-                <div class="form-group">
-                    <label for="santriSelect">Pilih Nama Santri / Anak:</label>
-                    <select id="santriSelect" required>
-                        <option value="">-- Pilih Santri --</option>
-                    </select>
-                </div>
+    <div class="bg-slate-800 p-6 rounded-2xl w-full max-w-md border border-slate-700 shadow-2xl">
+        <div class="text-center mb-6">
+            <h1 class="text-xl font-bold text-blue-400 tracking-wide uppercase">YAYASAN YAHYAWIYYAH</h1>
+            <p class="text-xs text-slate-400 mt-1">Sistem Informasi Transfer Keuangan Keluarga PUSA</p>
+        </div>
 
-                <!-- Info Santri Terpilih -->
-                <div id="santriInfo" class="info-box hidden">
-                    <p><strong>NIK:</strong> <span id="infoNik">-</span></p>
-                    <p><strong>Kode Unik Anak:</strong> <span id="infoKode" class="badge">-</span></p>
-                </div>
+        <script>
+            const API_URL = "GANTI_DENGAN_URL_WEB_APP_APPS_SCRIPT_MAS_FUQOHAK";
+        </script>
 
-                <!-- Langkah 2: Input Nominal -->
-                <div class="form-group">
-                    <label for="inputNominal">Nominal Uang Saku (Rp):</label>
-                    <input type="number" id="inputNominal" placeholder="Contoh: 500000" min="10000" required disabled>
-                    <small>*Minimal transfer Rp 10.000</small>
-                </div>
-
-                <!-- Langkah 3: Input No HP Wali -->
-                <div class="form-group">
-                    <label for="inputHp">No. HP WhatsApp Wali Murid:</label>
-                    <input type="tel" id="inputHp" placeholder="Contoh: 08123456789" required disabled>
-                </div>
-
-                <!-- Live Preview Perhitungan -->
-                <div id="previewBox" class="preview-box hidden">
-                    <h4>Rincian Tagihan Transfer</h4>
-                    <div class="preview-row">
-                        <span>Nominal Pokok:</span>
-                        <span id="viewPokok">Rp 0</span>
-                    </div>
-                    <div class="preview-row">
-                        <span>Kode Unik Anak:</span>
-                        <span id="viewKode" class="text-danger">+000</span>
-                    </div>
-                    <hr>
-                    <div class="preview-row total-row">
-                        <span>Total Wajib Transfer:</span>
-                        <span id="viewTotal">Rp 0</span>
-                    </div>
-                </div>
-
-                <button type="submit" id="btnSubmit" disabled>Dapatkan Instruksi Transfer</button>
-            </form>
-
-            <!-- Halaman Invoice/Instruksi Setelah Submit -->
-            <div id="invoiceBox" class="invoice-box hidden">
-                <div class="success-icon">✅</div>
-                <h3>Permintaan Transfer Berhasil Dibuat!</h3>
-                <p class="invoice-desc">Mohon transfer tepat sampai 3 digit terakhir agar sistem dapat memverifikasi otomatis.</p>
-                
-                <div class="bank-card">
-                    <h4>REKENING TUJUAN:</h4>
-                    <p class="bank-name">BANK BRI</p>
-                    <p class="bank-norek">0038-01-003305-30-9</p>
-                    <p class="bank-owner">a.n. YAYASAN YAHYAWIYYAH</p>
-                </div>
-
-                <div class="amount-card">
-                    <span>JUMLAH YANG HARUS DITRANSFER:</span>
-                    <h2 id="invoiceTotal">Rp 500.001</h2>
-                    <small>⚠️ Perhatikan 3 digit terakhir jangan sampai bulat atau salah!</small>
-                </div>
-
-                <button id="btnWA" class="btn-whatsapp">💬 Konfirmasi via WhatsApp Admin</button>
-                <button id="btnReset" class="btn-secondary">Kembali ke Form</button>
+        <div id="step-1" class="space-y-4">
+            <div class="bg-blue-950/40 p-3 rounded-lg border border-blue-900/50 text-xs text-blue-300">
+                💡 Silakan cari NIK atau Nama Lengkap Anak/Ustadz terlebih dahulu untuk mendapatkan Kode Unik.
             </div>
-        </main>
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Cari Santri / Ustadz</label>
+                <input type="text" id="search-input" oninput="cariData()" placeholder="Ketik Nama atau NIK..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition">
+            </div>
+            
+            <div id="search-results" class="space-y-2 max-h-48 overflow-y-auto hidden"></div>
+        </div>
+
+        <div id="step-2" class="space-y-4 hidden mt-4 border-t border-slate-700/50 pt-4">
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
+                <span class="text-xs text-slate-400 block uppercase font-bold tracking-wider">Target Pengiriman:</span>
+                <span id="target-nama" class="text-base font-bold text-emerald-400 block mt-1"></span>
+                <span id="target-status" class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-blue-500/20 text-blue-300 border border-blue-500/30"></span>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Nominal Pokok Kiriman (Rp)</label>
+                <input type="number" id="nominal-pokok" oninput="hitungTotal()" placeholder="Contoh: 500000" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition text-emerald-400 font-bold text-lg">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Nomor HP Pengirim (WhatsApp)</label>
+                <input type="tel" id="hp-pengirim" placeholder="Contoh: 081234567xxx" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition">
+            </div>
+
+            <div id="box-instruksi" class="bg-slate-900/50 border border-dashed border-slate-700 p-4 rounded-xl space-y-3 hidden">
+                <div class="text-center">
+                    <span class="text-xs text-slate-400 block">TOTAL YANG HARUS DITRANSFER</span>
+                    <span id="nominal-total-html" class="text-2xl font-black text-blue-400 tracking-tight block mt-1"></span>
+                    <span class="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 inline-block mt-1">⚠️ Wajib transfer presisi sampai 3 digit terakhir!</span>
+                </div>
+                <div class="text-xs border-t border-slate-800 pt-3 space-y-1.5 text-slate-300">
+                    <p>🏦 <strong id="rek-bank">-</strong>: <span id="rek-nomor" class="font-mono text-blue-300 font-bold">-</span></p>
+                    <p>👤 A.n: <strong id="rek-an">-</strong></p>
+                </div>
+            </div>
+
+            <button onclick="kirimPengajuan()" id="btn-submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition text-sm shadow-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" disabled>
+                Konfirmasi Saya Sudah Transfer
+            </button>
+        </div>
+
+        <div class="text-[10px] text-slate-500 text-center mt-6 border-t border-slate-800 pt-4">
+            &copy; 2026 Fuqohak Executive Tech. All Rights Reserved.
+        </div>
     </div>
-    <script src="script.js"></script>
+
+    <script>
+        let dbSantri = [];
+        let santriTerpilih = null;
+
+        // Ambil data master saat halaman dibuka pertama kali
+        window.onload = async function() {
+            try {
+                const res = await fetch(`${API_URL}?api=1`);
+                const hasil = await res.json();
+                if(hasil.status === "success") {
+                    dbSantri = hasil.santri;
+                    // Isi Info Rekening
+                    document.getElementById('rek-bank').innerText = hasil.rekening.bank;
+                    document.getElementById('rek-nomor').innerText = hasil.rekening.nomor;
+                    document.getElementById('rek-an').innerText = hasil.rekening.atas_nama;
+                }
+            } catch(e) {
+                alert("Gagal memuat database database dari Google Sheets. Pastikan API_URL benar dan sudah di-deploy Anyone!");
+            }
+        };
+
+        // Fitur Live Search Baris Data
+        function cariData() {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            const resDiv = document.getElementById('search-results');
+            resDiv.innerHTML = "";
+
+            if(query.length < 2) {
+                resDiv.classList.add('hidden');
+                return;
+            }
+
+            const filtered = dbSantri.filter(s => s.nama.toLowerCase().includes(query) || s.nik.includes(query));
+            
+            if(filtered.length > 0) {
+                resDiv.classList.remove('hidden');
+                filtered.forEach(s => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full text-left bg-slate-700/50 hover:bg-slate-700 p-3 rounded-xl text-xs flex justify-between items-center transition border border-slate-700";
+                    btn.innerHTML = `<div><strong class="text-slate-200 block">${s.nama}</strong><span class="text-[10px] text-slate-400">NIK: ${s.nik}</span></div> <span class="bg-slate-900 text-blue-400 font-mono px-2 py-1 rounded border border-slate-700 font-bold">${s.status} (${s.kode})</span>`;
+                    btn.onclick = () => pilihSantri(s);
+                    resDiv.appendChild(btn);
+                });
+            } else {
+                resDiv.classList.remove('hidden');
+                resDiv.innerHTML = `<div class="text-xs text-slate-500 p-3 text-center bg-slate-900 rounded-xl border border-slate-800">Nama/NIK tidak ditemukan</div>`;
+            }
+        }
+
+        function pilihSantri(santri) {
+            santriTerpilih = santri;
+            document.getElementById('search-results').classList.add('hidden');
+            document.getElementById('search-input').value = santri.nama;
+            
+            // Buka step 2
+            document.getElementById('step-2').classList.remove('hidden');
+            document.getElementById('target-nama').innerText = santri.nama;
+            document.getElementById('target-status').innerText = santri.status;
+            
+            // Reset input nominal
+            document.getElementById('nominal-pokok').value = "";
+            document.getElementById('box-instruksi').classList.add('hidden');
+            document.getElementById('btn-submit').disabled = true;
+        }
+
+        // Rumus Penggabungan Kode Unik
+        function hitungTotal() {
+            const nPokok = parseInt(document.getElementById('nominal-pokok').value) || 0;
+            const boxInstruksi = document.getElementById('box-instruksi');
+            const btnSubmit = document.getElementById('btn-submit');
+
+            if(nPokok >= 10000 && santriTerpilih) {
+                boxInstruksi.classList.remove('hidden');
+                
+                // Rumus matematika mengambil kode unik belakang
+                const kodeInt = parseInt(santriTerpilih.kode) || 0;
+                const nTotal = nPokok + kodeInt;
+
+                // Format Rupiah Tampilan
+                document.getElementById('nominal-total-html').innerText = "Rp " + nTotal.toLocaleString('id-ID');
+                btnSubmit.disabled = false;
+            } else {
+                boxInstruksi.classList.add('hidden');
+                btnSubmit.disabled = true;
+            }
+        }
+
+        // Tembak Data POST ke Apps Script
+        async function kirimPengajuan() {
+            const btn = document.getElementById('btn-submit');
+            const nPokok = parseInt(document.getElementById('nominal-pokok').value) || 0;
+            const kodeInt = parseInt(santriTerpilih.kode) || 0;
+            const nTotal = nPokok + kodeInt;
+            const hp = document.getElementById('hp-pengirim').value.trim();
+
+            if(!hp) {
+                alert("Nomor HP WhatsApp wajib diisi untuk verifikasi!");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = "Memproses Pengajuan...";
+
+            const payload = {
+                aksi: "ajukanTransfer",
+                nik: santriTerpilih.nik,
+                nama: santriTerpilih.nama,
+                hp: hp,
+                nominal_pokok: nPokok,
+                nominal_total: nTotal,
+                device: navigator.userAgent
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
+                const hasil = await response.json();
+
+                if(hasil.status === "success") {
+                    alert(`Alhamdulillah! Pengajuan transfer Anda berhasil dicatat.\n\nID TRANSAKSI: ${hasil.id_transaksi}\nMohon tunggu pengurus memverifikasi mutasi bank.`);
+                    // Reset Form
+                    location.reload();
+                } else {
+                    alert("Gagal menyimpan: " + hasil.message);
+                    btn.disabled = false;
+                    btn.innerText = "Konfirmasi Saya Sudah Transfer";
+                }
+            } catch(e) {
+                alert("Terjadi kesalahan jaringan ke server backend.");
+                btn.disabled = false;
+                btn.innerText = "Konfirmasi Saya Sudah Transfer";
+            }
+        }
+    </script>
 </body>
 </html>

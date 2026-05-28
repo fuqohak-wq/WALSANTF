@@ -2,7 +2,7 @@
 // ==========================================
 // GANTI DENGAN URL WEB APP APPS SCRIPT ANDA
 // ==========================================
-const API_URL = "PASTE_URL_WEBAPP_APPS_SCRIPT_DISINI";
+const API_URL = "https://script.google.com/macros/s/AKfycbz4WIiha9JSemWqoC4603207orwCm3eYd3XlMwXzNZBTLHvWsITLlyecHnjB4hvr-i03w/exec";
 
 // ==========================================
 // ELEMENT HTML

@@ -2,109 +2,116 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sistem Pembayaran Digital Otomatis PPMUY - YAYASAN YAHYAWIYYAH</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        /* Hilangkan panah spinner di input nominal biar rapi */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
-<body class="bg-gradient-to-br from-teal-50 via-emerald-50 to-amber-50 text-slate-800 min-h-screen flex items-center justify-center p-2">
+<body class="bg-gradient-to-br from-emerald-900 via-teal-950 to-slate-900 text-slate-100 min-h-screen flex flex-col justify-between p-3 antialiased">
 
-    <div class="bg-white/95 backdrop-blur-md p-4 rounded-2xl w-full max-w-sm border border-emerald-100 shadow-xl shadow-emerald-900/5 my-auto">
+    <header class="w-full space-y-1.5">
+        <div class="bg-white/10 backdrop-blur-sm px-3 py-2 rounded-xl border border-white/10 flex justify-between items-center text-xs font-bold">
+            <span id="txt-masehi" class="text-emerald-300">📅 Loading...</span>
+            <span id="txt-hijriah" class="text-amber-300">⏳ Hijriah...</span>
+        </div>
+
+        <div class="text-center py-1">
+            <h1 class="text-[11px] font-black text-amber-400 tracking-widest uppercase">YAYASAN YAHYAWIYYAH</h1>
+            <h2 class="text-base font-extrabold text-white tracking-tight leading-tight">SISTEM PEMBAYARAN OTOMATIS PPMUY</h2>
+        </div>
+
+        <div class="bg-amber-400/10 border border-amber-400/20 px-3 py-1 rounded-xl text-center">
+            <p id="txt-doa" class="text-xs italic text-amber-200 font-medium leading-tight">"Memuat untaian doa..."</p>
+        </div>
         
-        <div class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-2.5 rounded-xl shadow-sm mb-3 space-y-1 text-[11px]">
-            <div class="flex justify-between items-center font-semibold">
-                <span id="txt-masehi">📅 Loading...</span>
-                <span id="txt-hijriah" class="text-amber-200">⏳ Hijriah...</span>
+        <div class="bg-emerald-800/40 border border-emerald-500/20 px-3 py-1.5 rounded-xl flex justify-between items-center text-xs font-bold">
+            <div class="flex items-center gap-1.5">
+                <span>🕌</span>
+                <span id="sholat-sekarang" class="text-emerald-200">Memuat Jadwal...</span>
             </div>
-            <div class="border-t border-emerald-500/40 pt-1 flex justify-between items-center text-[10px]">
-                <div class="flex items-center gap-1">
-                    <span>🕌</span>
-                    <span id="sholat-sekarang" class="font-medium">Memuat Jadwal...</span>
-                </div>
-                <div id="sholat-jam" class="bg-emerald-700/50 px-1.5 py-0.5 rounded font-mono font-bold text-amber-200">--:--</div>
+            <div id="sholat-jam" class="bg-emerald-900/80 px-2 py-0.5 rounded font-mono font-black text-amber-300 border border-emerald-700/50">--:--</div>
+        </div>
+    </header>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbz4WIiha9JSemWqoC4603207orwCm3eYd3XlMwXzNZBTLHvWsITLlyecHnjB4hvr-i03w/exec";
+    </script>
+
+    <main class="w-full flex-1 flex flex-col justify-center my-2 space-y-3">
+        
+        <div id="step-1" class="w-full bg-white text-slate-900 p-4 rounded-2xl shadow-xl space-y-2">
+            <label class="block text-xs font-black uppercase tracking-wider text-emerald-900">Cari Nama Santri / Ustadz :</label>
+            <div class="relative">
+                <input type="text" id="search-input" oninput="cariData()" placeholder="Ketik Nama Anak Anda di sini..." class="w-full bg-slate-100 border-2 border-emerald-200 focus:border-emerald-600 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none transition">
+                <span class="absolute right-4 top-3 text-lg">🔍</span>
             </div>
+            <div id="search-results" class="space-y-1.5 max-h-44 overflow-y-auto hidden pt-1"></div>
         </div>
 
-        <div class="text-center mb-3">
-            <h1 class="text-[9px] font-extrabold text-amber-600 tracking-widest uppercase">YAYASAN YAHYAWIYYAH</h1>
-            <h2 class="text-sm font-black text-emerald-700 leading-tight">SISTEM PEMBAYARAN DIGITAL OTOMATIS PPMUY</h2>
-        </div>
-
-        <div class="bg-amber-50/70 border border-amber-200/50 px-3 py-1.5 rounded-xl text-center mb-3">
-            <p id="txt-doa" class="text-[11px] italic text-emerald-900 font-medium leading-tight">"Memuat untaian doa..."</p>
-        </div>
-
-        <script>
-            const API_URL = "https://script.google.com/macros/s/AKfycbz4WIiha9JSemWqoC4603207orwCm3eYd3XlMwXzNZBTLHvWsITLlyecHnjB4hvr-i03w/exec";
-        </script>
-
-        <div id="step-1" class="space-y-2">
-            <div>
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-emerald-800 mb-1">Cari Nama Santri / Ustadz</label>
-                <div class="relative">
-                    <input type="text" id="search-input" oninput="cariData()" placeholder="Ketik Nama atau NIK..." class="w-full bg-slate-50 border border-emerald-200 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs focus:outline-none transition font-medium">
-                    <span class="absolute right-3 top-2 text-xs">🔍</span>
-                </div>
-            </div>
-            <div id="search-results" class="space-y-1 max-h-36 overflow-y-auto hidden"></div>
-        </div>
-
-        <div id="step-2" class="space-y-2.5 hidden mt-2.5 border-t border-slate-100 pt-2.5">
+        <div id="step-2" class="w-full space-y-3 hidden">
             
-            <div class="bg-gradient-to-r from-emerald-900 to-teal-950 px-3 py-2 rounded-xl text-white flex justify-between items-center shadow-sm">
+            <div class="bg-gradient-to-r from-amber-500 to-amber-600 p-3.5 rounded-2xl text-slate-950 flex justify-between items-center shadow-md">
                 <div>
-                    <span class="text-[9px] text-emerald-300 block uppercase font-bold tracking-wider">Penerima Dana:</span>
-                    <span id="target-nama" class="text-xs font-bold text-amber-300"></span>
+                    <span class="text-[10px] uppercase font-black tracking-wider text-amber-950 block">Penerima Dana/Nafkah:</span>
+                    <span id="target-nama" class="text-lg font-black tracking-tight block leading-tight"></span>
+                    <span id="target-nik" class="text-xs font-bold text-amber-950 block"></span>
                 </div>
-                <span id="target-status" class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-emerald-800 text-emerald-200 border border-emerald-600/30"></span>
+                <span id="target-status" class="px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider bg-slate-950 text-amber-400"></span>
             </div>
 
-            <div>
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-emerald-800 mb-1">Jumlah Uang yang Dikirim (Rp)</label>
-                <input type="number" id="nominal-pokok" oninput="hitungTotal()" placeholder="Contoh: 500000" class="w-full bg-slate-50 border border-emerald-200 focus:border-emerald-500 rounded-xl px-3 py-2 text-base font-bold text-emerald-600 focus:outline-none transition text-center shadow-inner">
+            <div class="bg-white text-slate-900 p-4 rounded-2xl shadow-xl space-y-1.5">
+                <label class="block text-xs font-black uppercase tracking-wider text-emerald-900 text-center">Masukkan Jumlah Uang (Rp) :</label>
+                <input type="number" id="nominal-pokok" oninput="hitungTotal()" placeholder="Contoh: 500000" class="w-full bg-slate-100 border-2 border-emerald-300 focus:border-emerald-600 rounded-xl px-3 py-2 text-2xl font-black text-center text-emerald-700 focus:outline-none transition shadow-inner">
             </div>
 
-            <div id="box-instruksi" class="bg-gradient-to-b from-amber-50/40 to-amber-100/20 border border-dashed border-amber-300 p-2.5 rounded-xl space-y-2 hidden">
+            <div id="box-instruksi" class="bg-white text-slate-900 p-4 rounded-2xl shadow-xl space-y-3 hidden">
                 
-                <div class="text-center bg-white/80 p-2 rounded-lg border border-amber-200/60 shadow-sm">
-                    <span class="text-[10px] text-amber-800 font-bold block uppercase tracking-wider">TOTAL WAJIB DITRANSFER</span>
-                    <div class="flex items-center justify-center gap-2 mt-0.5">
-                        <span id="nominal-total-html" class="text-2xl font-black text-emerald-700 tracking-tight"></span>
-                        <button onclick="salinTeks('nominal-total-raw', 'Nominal')" class="bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md transition cursor-pointer active:scale-95 shadow-sm">📋 Salin</button>
+                <div class="text-center bg-emerald-50 p-3 rounded-xl border-2 border-emerald-200 shadow-inner">
+                    <span class="text-xs text-emerald-950 font-black block uppercase tracking-wider">TOTAL YANG WAJIB DITRANSFER</span>
+                    <div class="flex items-center justify-center gap-3 mt-1">
+                        <span id="nominal-total-html" class="text-3xl font-black text-emerald-800 tracking-tight"></span>
+                        <button onclick="salinTeks('nominal-total-raw', 'Nominal')" class="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black px-3 py-1.5 rounded-lg transition cursor-pointer active:scale-95 shadow">📋 SALIN</button>
                     </div>
-                    <span class="text-[8px] text-red-600 font-bold block mt-1">⚠️ Nilai transfer harus persis hingga 3 angka terakhir!</span>
+                    <span class="text-[10px] text-red-600 font-black block mt-1.5">⚠️ ANGKA HARUS SAMA PERSIS JANGAN DIBULATKAN!</span>
                 </div>
                 
-                <div class="text-[11px] text-slate-700 bg-white/80 p-2 rounded-lg border border-amber-200/60 space-y-1">
-                    <p class="flex justify-between items-center">
-                        <span>🏦 Bank: <strong id="rek-bank" class="text-emerald-800">BRI</strong></span>
-                        <span id="rek-an" class="text-[10px] font-semibold text-slate-500 text-right">YAYASAN YAHYAWIYYAH</span>
-                    </p>
-                    <div class="flex justify-between items-center border-t border-slate-100 pt-1">
-                        <span class="font-mono text-xs font-bold text-blue-800 bg-blue-50/60 px-1.5 py-0.5 rounded border border-blue-100/50" id="rek-nomor">003801003305309</span>
-                        <button onclick="salinTeks('rek-nomor', 'Nomor Rekening')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-md transition cursor-pointer active:scale-95 shadow-sm">📋 Salin Rek</button>
+                <div class="text-sm bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+                    <div class="flex justify-between items-center font-bold text-slate-700">
+                        <span>🏦 Bank: <strong id="rek-bank" class="text-emerald-800 text-base font-black">BRI</strong></span>
+                        <span id="rek-an" class="text-xs font-black text-slate-500 text-right uppercase">YAYASAN YAHYAWIYYAH</span>
+                    </div>
+                    <div class="flex justify-between items-center border-t border-slate-200 pt-2">
+                        <span class="font-mono text-lg font-black text-blue-900 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200" id="rek-nomor">003801003305309</span>
+                        <button onclick="salinTeks('rek-nomor', 'Nomor Rekening')" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black px-3 py-1.5 rounded-lg transition cursor-pointer active:scale-95 shadow">📋 SALIN REK</button>
                     </div>
                 </div>
 
-                <div class="pt-0.5">
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-emerald-800 mb-1 text-center">Foto / Unggah Struk Bukti Transfer</label>
-                    <input type="file" id="file-struk" accept="image/*" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-emerald-600 file:text-white bg-white p-1 rounded-lg border border-emerald-200 shadow-inner cursor-pointer">
+                <div class="bg-amber-500/10 border-2 border-dashed border-amber-500 p-2.5 rounded-xl">
+                    <label class="block text-xs font-black uppercase tracking-wider text-amber-900 mb-1.5 text-center">FOTO / UNGGAH BUKTI TRANSFER (STRUK)</label>
+                    <input type="file" id="file-struk" accept="image/*" class="w-full text-xs text-slate-700 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-emerald-700 file:text-white bg-white p-1 rounded-xl border border-emerald-200 cursor-pointer shadow-sm">
                 </div>
             </div>
 
-            <button onclick="prosesValidasiOcr()" id="btn-submit" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold py-3 rounded-xl transition-all text-xs shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer uppercase tracking-wider flex justify-center items-center gap-2" disabled>
-                <span id="btn-text">Kirim & Ambil Uang Otomatis</span>
+        </div>
+    </main>
+
+    <footer class="w-full space-y-2">
+        <div id="area-tombol-submit" class="hidden">
+            <button onclick="prosesValidasiOcr()" id="btn-submit" class="w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-black py-4 rounded-2xl transition-all text-sm shadow-lg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer uppercase tracking-wide flex justify-center items-center gap-2 border-b-4 border-amber-700 active:border-b-0" disabled>
+                <span id="btn-text" class="text-base font-black">Kirim & Proses Otomatis</span>
             </button>
         </div>
 
-        <div class="text-[9px] text-slate-400 text-center mt-3 border-t border-slate-100 pt-2 font-medium">
-            &copy; 2026 Fuqohak Executive Tech. Compression OCR Engine V2.
+        <div class="text-[10px] text-emerald-400/60 text-center border-t border-white/5 pt-1.5 font-bold">
+            &copy; 2026 Fuqohak Executive Tech. Anti-Duplicate OCR Engine V2.
         </div>
-    </div>
+    </footer>
 
     <span id="nominal-total-raw" class="hidden">0</span>
     <canvas id="canvas-kompresor" class="hidden"></canvas>
@@ -124,20 +131,39 @@
             const acak = Math.floor(Math.random() * daftarDoa.length);
             document.getElementById('txt-doa').innerText = daftarDoa[acak];
             const skrg = new Date();
+            
+            // Tanggal Masehi
             const opsiMasehi = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             document.getElementById('txt-masehi').innerText = "📅 " + skrg.toLocaleDateString('id-ID', opsiMasehi);
+            
+            // Tanggal Hijriah
             try {
                 const opsiHijriah = { day: 'numeric', month: 'long', year: 'numeric' };
                 const formatterHijriah = new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', opsiHijriah);
                 document.getElementById('txt-hijriah').innerText = formatterHijriah.format(skrg) + " H";
             } catch (e) { document.getElementById('txt-hijriah').innerText = "Dzulhijjah 1447 H"; }
 
+            // Logika Jadwal Sholat Dinamis Akurat Berdasarkan Waktu Menit
             const jam = skrg.getHours();
-            let sholat = "Dzuhur"; let waktu = "11:58";
-            if (jam >= 4 && jam < 11) { sholat = "Dzuhur"; waktu = "11:54"; }
-            else if (jam >= 11 && jam < 15) { sholat = "Ashar"; waktu = "15:15"; }
-            else { sholat = "Maghrib"; waktu = "17:52"; }
-            document.getElementById('sholat-sekarang').innerText = `Menuju ${sholat}`;
+            const menit = skrg.getMinutes();
+            const waktuMenitSekarang = (jam * 60) + menit;
+
+            let sholat = "Subuh"; 
+            let waktu = "04:22";
+
+            if (waktuMenitSekarang >= 262 && waktuMenitSekarang < 714) {
+                sholat = "Dzuhur"; waktu = "11:54";
+            } else if (waktuMenitSekarang >= 714 && waktuMenitSekarang < 915) {
+                sholat = "Ashar"; waktu = "15:15";
+            } else if (waktuMenitSekarang >= 915 && waktuMenitSekarang < 1072) {
+                sholat = "Maghrib"; waktu = "17:52";
+            } else if (waktuMenitSekarang >= 1072 && waktuMenitSekarang < 1145) {
+                sholat = "Isya"; waktu = "19:05";
+            } else {
+                sholat = "Subuh"; waktu = "04:22";
+            }
+
+            document.getElementById('sholat-sekarang').innerText = `Menuju Waktu ${sholat}`;
             document.getElementById('sholat-jam').innerText = waktu;
         }
 
@@ -166,8 +192,8 @@
                 resDiv.classList.remove('hidden');
                 filtered.forEach(s => {
                     const btn = document.createElement('button');
-                    btn.className = "w-full text-left bg-emerald-50/60 hover:bg-emerald-100/80 p-2.5 rounded-xl text-[11px] flex justify-between items-center transition border border-emerald-100/50 cursor-pointer text-emerald-950 mt-1";
-                    btn.innerHTML = `<div><span class="block text-emerald-900 font-bold">${s.nama}</span><span class="text-[9px] text-slate-400">NIK: ${s.nik}</span></div> <span class="bg-white px-1.5 py-0.5 rounded text-[8px] text-emerald-700 border border-emerald-200 font-bold uppercase">${s.status}</span>`;
+                    btn.className = "w-full text-left bg-slate-50 hover:bg-emerald-100 p-3.5 rounded-xl text-xs flex justify-between items-center transition border-2 border-slate-200 cursor-pointer text-slate-900 mt-1 shadow-sm active:scale-95";
+                    btn.innerHTML = `<div><span class="block text-base font-black text-emerald-950">${s.nama}</span><span class="text-xs font-bold text-slate-500">NIK: ${s.nik}</span></div> <span class="bg-emerald-800 px-2 py-0.5 rounded text-[10px] text-white border border-emerald-900 font-black uppercase">${s.status}</span>`;
                     btn.onclick = () => pilihSantri(s);
                     resDiv.appendChild(btn);
                 });
@@ -178,8 +204,12 @@
             santriTerpilih = santri;
             document.getElementById('search-results').classList.add('hidden');
             document.getElementById('search-input').value = santri.nama;
+            
             document.getElementById('step-2').classList.remove('hidden');
+            document.getElementById('area-tombol-submit').classList.remove('hidden');
+            
             document.getElementById('target-nama').innerText = santri.nama;
+            document.getElementById('target-nik').innerText = "NIK: " + santri.nik;
             document.getElementById('target-status').innerText = santri.status;
             document.getElementById('nominal-pokok').value = "";
             document.getElementById('box-instruksi').classList.add('hidden');
@@ -251,19 +281,19 @@
             }
 
             btn.disabled = true;
-            btnText.innerText = "MENGOMPRES UKURAN GAMBAR...";
+            btnText.innerText = "MENGOMPRES GAMBAR...";
 
             try {
                 const fileGambarMentah = fileInput.files[0];
                 const base64Kompresi = await kompresGambarSisiKlien(fileGambarMentah);
 
-                btnText.innerText = "MENYIAPKAN MESIN PEMBACA (0%)...";
+                btnText.innerText = "MENYIAPKAN MESIN (0%)...";
 
                 const worker = await Tesseract.createWorker('ind', 1, {
                     logger: m => {
                         if(m.status === 'recognizing text') {
                             const persen = Math.floor(m.progress * 100);
-                            btnText.innerText = `MEMBACA DATA STRUK (${persen}%)`;
+                            btnText.innerText = `MEMBACA STRUK (${persen}%)`;
                         }
                     }
                 });
@@ -291,7 +321,7 @@
                 } else if (noRefTerdeteksi === "") {
                     alert("Validasi Gagal! Nomor referensi bank tidak ditemukan atau tidak terbaca jelas pada struk.");
                 } else {
-                    btnText.innerText = "MENYIMPAN DATA KE SHEETS...";
+                    btnText.innerText = "MENYIMPAN DATA...";
                     
                     const payload = {
                         aksi: "simpanTransaksiDenganFileB64",
@@ -321,12 +351,12 @@
                 }
 
                 btn.disabled = false;
-                btnText.innerText = "Kirim & Ambil Uang Otomatis";
+                btnText.innerText = "Kirim & Proses Otomatis";
 
             } catch (e) {
                 alert("Gagal memproses gambar. Pastikan posisi foto tegak, tulisan tidak terpotong, dan kondisi cahaya terang.");
                 btn.disabled = false;
-                btnText.innerText = "Kirim & Ambil Uang Otomatis";
+                btnText.innerText = "Kirim & Proses Otomatis";
             }
         }
     </script>

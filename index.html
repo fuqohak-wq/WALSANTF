@@ -6,10 +6,9 @@
     <title>Sistem Pembayaran Digital Otomatis PPMUY - YAYASAN YAHYAWIYYAH</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=600;700;800;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        /* Hilangkan panah spinner di input nominal biar rapi */
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
@@ -132,18 +131,15 @@
             document.getElementById('txt-doa').innerText = daftarDoa[acak];
             const skrg = new Date();
             
-            // Tanggal Masehi
             const opsiMasehi = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             document.getElementById('txt-masehi').innerText = "📅 " + skrg.toLocaleDateString('id-ID', opsiMasehi);
             
-            // Tanggal Hijriah
             try {
                 const opsiHijriah = { day: 'numeric', month: 'long', year: 'numeric' };
                 const formatterHijriah = new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', opsiHijriah);
                 document.getElementById('txt-hijriah').innerText = formatterHijriah.format(skrg) + " H";
             } catch (e) { document.getElementById('txt-hijriah').innerText = "Dzulhijjah 1447 H"; }
 
-            // Logika Jadwal Sholat Dinamis Akurat Berdasarkan Waktu Menit
             const jam = skrg.getHours();
             const menit = skrg.getMinutes();
             const waktuMenitSekarang = (jam * 60) + menit;
@@ -303,8 +299,13 @@
                 const textClean = rawText.toUpperCase().replace(/[\.\,]/g, ''); 
                 await worker.terminate();
 
+                // =================================================================
+                // 🔒 PERBAIKAN CORE LOGIC: VALIDASI ANGKA UTUH PERSIS (ANTI-BULAT)
+                // =================================================================
                 const targetNominal = nominalTotalGlobal.toString();
-                const adaNominal = textClean.includes(targetNominal);
+                const semuaAngkaDiStruk = textClean.match(/\d+/g) || [];
+                const adaNominal = semuaAngkaDiStruk.includes(targetNominal);
+
                 const statusSukses = textClean.includes("BERHASIL") || textClean.includes("SUKSES") || textClean.includes("SUCCESS");
                 const namaYayasan = textClean.includes("YAHYAWIYYAH");
                 const nomorRekValid = textClean.includes("3305") || textClean.includes("0038");
@@ -315,7 +316,7 @@
                 if (!statusSukses) {
                     alert("Validasi Gagal! Status transaksi tidak terbaca 'Berhasil' atau 'Sukses'. Pastikan struk bukan berstatus gagal/pending.");
                 } else if (!adaNominal) {
-                    alert(`Validasi Gagal! Angka kode unik wajib "${nominalTotalGlobal}" tidak terbaca pada gambar. Mohon perjelas posisi foto.`);
+                    alert(`Validasi Gagal! Angka nominal wajib dengan kode unik "${nominalTotalGlobal}" tidak ditemukan secara tepat pada struk. Transfer nilai bulat otomatis ditolak!`);
                 } else if (!namaYayasan && !nomorRekValid) {
                     alert("Validasi Gagal! Rekening tujuan terdeteksi bukan milik YAYASAN YAHYAWIYYAH.");
                 } else if (noRefTerdeteksi === "") {

@@ -183,7 +183,6 @@
             resDiv.innerHTML = "";
             if(query.length < 2) { resDiv.classList.add('hidden'); return; }
 
-            // Pencarian tetap mendukung ketik nama/nik, tapi tampilan drop-down menyembunyikan info NIK
             const filtered = dbSantri.filter(s => s.nama.toLowerCase().includes(query) || s.nik.includes(query));
             if(filtered.length > 0) {
                 resDiv.classList.remove('hidden');
@@ -300,25 +299,18 @@
                 const textClean = rawText.toUpperCase().replace(/[\.\,]/g, ''); 
                 await worker.terminate();
 
+                // 🔍 PROSES VALIDASI YANG DI-LONGGARKAN (TANPA CEK KATA "BERHASIL")
                 const targetNominal = nominalTotalGlobal.toString();
                 const semuaAngkaDiStruk = textClean.match(/\d+/g) || [];
                 const adaNominal = semuaAngkaDiStruk.includes(targetNominal);
 
-                const statusSukses = textClean.includes("BERHASIL") || textClean.includes("SUKSES") || textClean.includes("SUCCESS");
-                const namaYayasan = textClean.includes("YAHYAWIYYAH");
-                const nomorRekValid = textClean.includes("3305") || textClean.includes("0038");
-                
                 const matchRef = textClean.match(/\d{8,15}/);
                 const noRefTerdeteksi = matchRef ? matchRef[0] : "";
 
-                if (!statusSukses) {
-                    alert("Validasi Gagal! Status transaksi tidak terbaca 'Berhasil' atau 'Sukses'. Pastikan struk bukan berstatus gagal/pending.");
-                } else if (!adaNominal) {
+                if (!adaNominal) {
                     alert(`Validasi Gagal! Angka nominal wajib dengan kode unik "${nominalTotalGlobal}" tidak ditemukan secara tepat pada struk. Transfer nilai bulat otomatis ditolak!`);
-                } else if (!namaYayasan && !nomorRekValid) {
-                    alert("Validasi Gagal! Rekening tujuan terdeteksi bukan milik YAYASAN YAHYAWIYYAH.");
                 } else if (noRefTerdeteksi === "") {
-                    alert("Validasi Gagal! Nomor referensi bank tidak ditemukan atau tidak terbaca jelas pada struk.");
+                    alert("Validasi Gagal! Nomor referensi bank atau nomor transaksi tidak ditemukan / tidak terbaca jelas pada screenshot struk.");
                 } else {
                     btnText.innerText = "MENYIMPAN DATA...";
                     

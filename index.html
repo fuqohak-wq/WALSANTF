@@ -59,7 +59,7 @@
                 <div>
                     <span class="text-[10px] uppercase font-black tracking-wider text-amber-950 block">Penerima Dana/Nafkah:</span>
                     <span id="target-nama" class="text-lg font-black tracking-tight block leading-tight"></span>
-                    <span id="target-nik" class="text-xs font-bold text-amber-950 block"></span>
+                    <span id="target-nik" class="text-xs font-bold text-amber-950 hidden"></span>
                 </div>
                 <span id="target-status" class="px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider bg-slate-950 text-amber-400"></span>
             </div>
@@ -183,13 +183,14 @@
             resDiv.innerHTML = "";
             if(query.length < 2) { resDiv.classList.add('hidden'); return; }
 
+            // Pencarian tetap mendukung ketik nama/nik, tapi tampilan drop-down menyembunyikan info NIK
             const filtered = dbSantri.filter(s => s.nama.toLowerCase().includes(query) || s.nik.includes(query));
             if(filtered.length > 0) {
                 resDiv.classList.remove('hidden');
                 filtered.forEach(s => {
                     const btn = document.createElement('button');
                     btn.className = "w-full text-left bg-slate-50 hover:bg-emerald-100 p-3.5 rounded-xl text-xs flex justify-between items-center transition border-2 border-slate-200 cursor-pointer text-slate-900 mt-1 shadow-sm active:scale-95";
-                    btn.innerHTML = `<div><span class="block text-base font-black text-emerald-950">${s.nama}</span><span class="text-xs font-bold text-slate-500">NIK: ${s.nik}</span></div> <span class="bg-emerald-800 px-2 py-0.5 rounded text-[10px] text-white border border-emerald-900 font-black uppercase">${s.status}</span>`;
+                    btn.innerHTML = `<div><span class="block text-base font-black text-emerald-950">${s.nama}</span></div> <span class="bg-emerald-800 px-2 py-0.5 rounded text-[10px] text-white border border-emerald-900 font-black uppercase">${s.status}</span>`;
                     btn.onclick = () => pilihSantri(s);
                     resDiv.appendChild(btn);
                 });
@@ -299,9 +300,6 @@
                 const textClean = rawText.toUpperCase().replace(/[\.\,]/g, ''); 
                 await worker.terminate();
 
-                // =================================================================
-                // 🔒 PERBAIKAN CORE LOGIC: VALIDASI ANGKA UTUH PERSIS (ANTI-BULAT)
-                // =================================================================
                 const targetNominal = nominalTotalGlobal.toString();
                 const semuaAngkaDiStruk = textClean.match(/\d+/g) || [];
                 const adaNominal = semuaAngkaDiStruk.includes(targetNominal);

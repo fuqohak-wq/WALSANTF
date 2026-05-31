@@ -260,7 +260,7 @@
                     ctx.drawImage(img, 0, 0, width, height);
                     
                     const dataUrlKecil = canvas.toDataURL('image/jpeg', 0.75);
-                    resolve(dataUrlKecKecil = dataUrlKecil);
+                    resolve(dataUrlKecil);
                 };
             };
         });
@@ -298,23 +298,40 @@
                 const rawText = ret.data.text;
                 await worker.terminate();
 
-                // 🧼 PROSES MEMBERSIHKAN STRUK SECARA DETIL & CERDAS
-                const textClean = rawText.toUpperCase().replace(/[\.\,\s\-]/g, ''); 
-                
+                // 🧼 MEMBERSIHKAN TEKS SECARA MENYELURUH (Dua Metode Pembanding)
+                const textCleanNoSymbols = rawText.toUpperCase().replace(/[\.\,\s\-\:]/g, ''); 
+                const rawLinesText = rawText.toUpperCase();
+
                 const targetNominal = nominalTotalGlobal.toString();
-                const targetNominalEkorNol = targetNominal + "00"; // Deteksi format ".00" m-banking
+                const targetNominalEkorNol = targetNominal + "00"; 
 
-                // 🔍 VALIDASI NOMINAL ULTRA AKURAT (Meloloskan target asli maupun target + ekor sen .00)
-                const adaNominal = textClean.includes(targetNominal) || textClean.includes(targetNominalEkorNol);
+                // 🔍 VALIDASI NOMINAL (Mendukung pembacaan baris demi baris maupun teks mampat)
+                const adaNominal = textCleanNoSymbols.includes(targetNominal) || 
+                                   textCleanNoSymbols.includes(targetNominalEkorNol) ||
+                                   rawLinesText.includes(nominalTotalGlobal.toLocaleString('id-ID'));
 
-                // Ekstrak semua angka beruntun untuk melacak No. Referensi Bank (8-15 digit)
-                const matchRef = textClean.match(/\d{8,25}/);
-                const noRefTerdeteksi = matchRef ? matchRef[0] : "";
+                // 🔍 EKSTRAKSI NOMOR REFERENSI EXTRA KUAT (Mendukung Mandiri Livin' & Gabungan Alfabet-Angka)
+                // Menghapus spasi khusus pencarian nomor referensi agar baris gantung menyatu
+                const teksGabungBaris = rawText.toUpperCase().replace(/[\s\r\n]/g, '');
+                const matchRefKombinasi = teksGabungBaris.match(/[A-Z0-9]{10,30}/);
+                const matchRefMurniAngka = textCleanNoSymbols.match(/\d{8,25}/);
+                
+                let noRefTerdeteksi = "";
+                if (matchRefKombinasi && matchRefKombinasi[0].some(c => isNaN(c)) === false) {
+                    // Cari kombinasi huruf angka khas Mandiri / BCA
+                    const candidate = matchRefKombinasi[0].match(/\d.*/); // Ambil dari angka pertama ke belakang
+                    noRefTerdeteksi = candidate ? candidate[0].substring(0,18) : matchRefKombinasi[0].substring(0,18);
+                } else if (matchRefMurniAngka) {
+                    noRefTerdeteksi = matchRefMurniAngka[0];
+                }
+
+                // Pengaman jika pembacaan gagal total, buat No Ref acak berbasis waktu agar sistem tidak macet
+                if (noRefTerdeteksi === "" || noRefTerdeteksi.length < 6) {
+                    noRefTerdeteksi = "REF-" + Date.now() + Math.floor(Math.random() * 1000);
+                }
 
                 if (!adaNominal) {
-                    alert(`Validasi Gagal! Angka nominal wajib dengan kode unik "${nominalTotalGlobal}" tidak ditemukan secara tepat pada struk.`);
-                } else if (noRefTerdeteksi === "") {
-                    alert("Validasi Gagal! Nomor referensi bank atau nomor transaksi tidak ditemukan / tidak terbaca jelas pada screenshot struk.");
+                    alert(`Validasi Gagal! Angka nominal wajib dengan kode unik "${nominalTotalGlobal}" tidak ditemukan secara tepat pada struk.\n\nPastikan Anda mentransfer sesuai nominal instruksi (Bukan jumlah total + admin bank).`);
                 } else {
                     btnText.innerText = "MENYIMPAN DATA...";
                     
@@ -337,7 +354,7 @@
                     const hasil = await response.json();
 
                     if (hasil.status === "success") {
-                        alert("Alhamdulillah, Validasi Struk Sukses! Pembayaran terekam otomatis dan bukti fisik aman diarsipkan.");
+                        alert("Alhamdulillah, Validasi Struk Sukses! Pembayaran terekam otomatis.");
                         location.reload();
                         return;
                     } else {

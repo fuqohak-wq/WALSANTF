@@ -89,7 +89,7 @@
             </button>
         </div>
         <div class="text-[10px] text-emerald-400/60 text-center border-t border-white/5 pt-1.5 font-bold">
-            &copy; 2026 Fuqohak Executive Tech. Smart Flexible Locking Engine V5.3.
+            &copy; 2026 Fuqohak Executive Tech. Adaptive Intelligence Engine V5.4.
         </div>
     </footer>
 
@@ -179,7 +179,7 @@
             navigator.clipboard.writeText(teksYgDisalin).then(() => { alert(`Alhamdulillah, ${jenisInfo} berhasil disalin!`); });
         }
 
-        // KANVAS OPTIMASI GRADIEN KONTRAST (V5.3 - Dioptimalkan untuk Text Kecil E-Wallet)
+        // KANVAS HIGH-CONTRAST V5.4 (Didesain ulang agar text landscape/miring tetap tajam)
         const optimasiGambarSisiKlien = (file) => new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -205,14 +205,14 @@
                     
                     for (let i = 0; i < data.length; i += 4) {
                         let r = data[i], g = data[i+1], b = data[i+2];
-                        let grayscale = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-                        // Penajaman adaptif: Tidak merusak text bertumpuk watermark e-wallet
-                        let v = grayscale < 170 ? grayscale * 0.4 : Math.min(255, grayscale * 1.25);
+                        let grayscale = 0.299 * r + 0.587 * g + 0.114 * b;
+                        // Filter biner adaptif untuk membersihkan watermark background perbankan
+                        let v = grayscale < 180 ? 0 : 255; 
                         data[i] = data[i+1] = data[i+2] = v;
                     }
                     
                     ctx.putImageData(imgData, 0, 0);
-                    resolve(canvas.toDataURL('image/jpeg', 0.92));
+                    resolve(canvas.toDataURL('image/jpeg', 0.90));
                 };
             };
         });
@@ -228,64 +228,46 @@
             }
 
             btn.disabled = true;
-            btnText.innerText = "SMART SCANNING ACTIVE...";
+            btnText.innerText = "PROSES VERIFIKASI ADAPTIF...";
 
             try {
                 const fileGambarMentah = fileInput.files[0];
                 const base64HasilFilter = await optimasiGambarSisiKlien(fileGambarMentah);
 
                 const worker = await Tesseract.createWorker('ind', 1);
-                
-                // Pembacaan menyeluruh text alfanumerik kapital
                 await worker.setParameters({ tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' });
+                
                 const ret = await worker.recognize(base64HasilFilter);
-                const rawText = ret.data.text.toUpperCase().replace(/[\.\-\*]/g, '');
+                // Bersihkan text dari semua karakter sampah pengganggu deteksi (termasuk spasi hancur)
+                const rawTextClean = ret.data.text.toUpperCase().replace(/[^A-Z0-9]/g, '');
                 await worker.terminate();
 
-                // 🎯 SMART VALIDASI A: Deteksi Nama Yayasan OR Ekor Rekening Tujuan (Mengatasi Struk Sensor DANA)
-                const keywordYayasan = ["YAYASAN", "YAHYAWIYYAH", "YAHYA", "WIYYAH", "PPMUY"];
-                const ekorRekeningYayasan = "5309"; 
-                
-                const adaNamaYayasan = keywordYayasan.some(key => rawText.includes(key));
-                const adaEkorRekening = rawText.includes(ekorRekeningYayasan);
+                // 🎯 ADAPTIVE LOCK 1: Deteksi Identitas Yayasan (Metode Substring Match)
+                const kataKunciValid = ["YAYASAN", "YAHYA", "WIYYAH", "PPMUY", "5309"];
+                const apakahStrukYayasan = kataKunciValid.some(key => rawTextClean.includes(key));
 
-                if (!adaNamaYayasan && !adaEkorRekening) {
-                    alert("VALIDASI GAGAL! Struk tidak memuat nama 'YAYASAN YAHYAWIYYAH' atau nomor rekening tujuan '5309'. Pastikan ini struk transfer yang benar.");
+                if (!apakahStrukYayasan) {
+                    alert("VALIDASI GAGAL! Atribut 'YAYASAN YAHYAWIYYAH' atau nomor rekening '5309' tidak terdeteksi di dalam foto. Pastikan posisi struk tegak, tidak terpotong, dan pencahayaan terang.");
                     btn.disabled = false; btnText.innerText = "Kirim & Proses Otomatis";
                     return;
                 }
 
-                // 🎯 SMART VALIDASI B: Pencocokan Nominal Eksak melalui Metode Tokenizing
-                const listKataStruk = rawText.split(/[\s\n\r]+/);
+                // 🎯 ADAPTIVE LOCK 2: Deteksi Angka Nominal Tagihan Secara Mutlak
                 const targetNominal = nominalTotalGlobal.toString();
-                const targetNominalEkorNol = targetNominal + "00";
-                let adaNominalMurniSah = false;
+                const targetNominalSen = targetNominal + "00"; // Menangani nominal berakhiran .00 milik BCA
+                
+                const nominalCocokMurni = rawTextClean.includes(targetNominal);
+                const nominalCocokSen = rawTextClean.includes(targetNominalSen);
 
-                for (let kata of listKataStruk) {
-                    let angkaSaja = kata.replace(/[^0-9]/g, '');
-                    if (angkaSaja === targetNominal || angkaSaja === targetNominalEkorNol) {
-                        adaNominalMurniSah = true;
-                        break;
-                    }
-                }
-
-                if (!adaNominalMurniSah) {
-                    alert(`VALIDASI GAGAL! Angka nominal tagihan "${targetNominal}" tidak ditemukan secara tepat/utuh pada struk. Mohon periksa kembali kesesuaian nilai transfer Anda.`);
+                if (!nominalCocokMurni && !nominalCocokSen) {
+                    alert(`VALIDASI GAGAL! Angka nominal tagihan Rp ${parseInt(targetNominal).toLocaleString('id-ID')} tidak ditemukan pada teks struk. Harap transfer sesuai nilai kode unik, jangan dibulatkan.`);
                     btn.disabled = false; btnText.innerText = "Kirim & Proses Otomatis";
                     return;
                 }
 
-                // 🎯 SMART VALIDASI C: Ekstraksi Nomor Referensi Fleksibel (Fallback via Sidik Jari Teks)
-                const textCleanAlfanumerik = rawText.replace(/[^A-Z0-9]/g, '');
-                const matchRefSpesifik = textCleanAlfanumerik.match(/[A-Z0-9]{12,30}/);
-                
-                let noRefTerdeteksi = "";
-                if (matchRefSpesifik) {
-                    noRefTerdeteksi = matchRefSpesifik[0];
-                } else {
-                    // Jika nomor ref terpotong di m-banking, buat sidik jari unik berbasis kombinasi panjang teks & waktu menit itu
-                    noRefTerdeteksi = "REF-FP-" + textCleanAlfanumerik.length + "-" + Math.floor(Date.now() / 60000);
-                }
+                // 🎯 ADAPTIVE LOCK 3: Pencarian Nomor Referensi Unik (Anti Ganda)
+                const matchRefID = rawTextClean.match(/[A-Z0-9]{12,32}/);
+                let noRefFinal = matchRefID ? matchRefID[0] : "REF-AUTO-" + Math.floor(Date.now() / 1000);
 
                 btnText.innerText = "MENYIMPAN DATA AMAN...";
 
@@ -298,14 +280,14 @@
                     image_base64: base64HasilFilter, 
                     file_name: `STRUK_${santriTerpilih.nik}_${Date.now()}.jpg`,
                     device: navigator.userAgent,
-                    no_ref: noRefTerdeteksi
+                    no_ref: noRefFinal
                 };
 
                 const response = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
                 const hasil = await response.json();
 
                 if (hasil.status === "success") {
-                    alert("Alhamdulillah, Bukti Transfer Berhasil Diverifikasi Secara Akurat!");
+                    alert("Alhamdulillah, Bukti Transfer Sah & Data Berhasil Disimpan!");
                     location.reload();
                 } else {
                     alert(hasil.message);
@@ -315,7 +297,7 @@
 
             } catch (e) {
                 console.error(e);
-                alert("Terjadi kesalahan sistem pembacaan gambar.");
+                alert("Gagal memproses gambar. Pastikan kondisi foto struk jelas.");
                 btn.disabled = false; btnText.innerText = "Kirim & Proses Otomatis";
             }
         }

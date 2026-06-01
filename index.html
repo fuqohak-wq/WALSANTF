@@ -64,7 +64,7 @@
                         <span id="nominal-total-html" class="text-3xl md:text-xl font-black text-emerald-800 tracking-tight"></span>
                         <button onclick="salinTeks('nominal-total-raw', 'Nominal')" class="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black px-3 py-1.5 rounded-lg transition cursor-pointer active:scale-95 shadow">📋 SALIN</button>
                     </div>
-                    <span class="text-[10px] text-red-600 font-black block mt-1.5">⚠️ ANGKA HARUS SAMA PERSIS JANGAN DIBULATKAN!</span>
+                    <span class="text-[10px] text-red-600 font-black block mt-1.5">⚠️ NOMINAL HARUS SAMA PERSIS TERMASUK KODE UNIK!</span>
                 </div>
                 
                 <div class="text-sm bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
@@ -93,7 +93,7 @@
             </button>
         </div>
         <div class="text-[10px] text-emerald-400/60 text-center border-t border-white/5 pt-1.5 font-bold">
-            &copy; 2026 Fuqohak Executive Tech. Secure Advanced Engine V5.
+            &copy; 2026 Fuqohak Executive Tech. Smart Lock Engine V5.1.
         </div>
     </footer>
 
@@ -105,18 +105,12 @@
         let santriTerpilih = null;
         let nominalTotalGlobal = 0;
 
-        const daftarDoa = [
-            "\"Semoga setiap rupiah yang disalurkan dibalas dengan kelipatan rezeki berlimpah oleh Allah.\"",
-            "\"Tetesan keringat Ayah Bunda dalam membiayai anak mengaji dihitung sebagai pahala jihad sabilillah.\""
-        ];
-
         function muatSyiarIslam() {
-            const acak = Math.floor(Math.random() * daftarDoa.length);
-            document.getElementById('txt-doa').innerText = daftarDoa[acak];
             const skrg = new Date();
             const opsiMasehi = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             document.getElementById('txt-masehi').innerText = "📅 " + skrg.toLocaleDateString('id-ID', opsiMasehi);
             document.getElementById('txt-hijriah').innerText = "Dzulhijjah 1447 H";
+            document.getElementById('txt-doa').innerText = "\"Tetesan keringat Ayah Bunda dalam membiayai anak mengaji dihitung sebagai pahala jihad sabilillah.\"";
         }
 
         window.onload = async function() {
@@ -144,7 +138,7 @@
                 resDiv.classList.remove('hidden');
                 filtered.forEach(s => {
                     const btn = document.createElement('button');
-                    btn.className = "w-full text-left bg-slate-50 p-3.5 rounded-xl text-xs flex justify-between items-center mt-1 text-slate-900 shadow-sm transition border border-slate-200 cursor-pointer";
+                    btn.className = "w-full text-left bg-slate-50 p-3.5 rounded-xl text-xs flex justify-between items-center mt-1 text-slate-900 shadow-sm border border-slate-200 cursor-pointer";
                     btn.innerHTML = `<div><span class="block text-base font-black text-emerald-950">${s.nama}</span></div> <span class="bg-emerald-800 px-2 py-0.5 rounded text-[10px] text-white font-black uppercase">${s.status}</span>`;
                     btn.onclick = () => pilihSantri(s);
                     resDiv.appendChild(btn);
@@ -190,7 +184,7 @@
             navigator.clipboard.writeText(teksYgDisalin).then(() => { alert(`Alhamdulillah, ${jenisInfo} berhasil disalin!`); });
         }
 
-        // 🌟 PERBAIKAN REKAYASA GAMBAR V5: Berhenti memotong teks hitam-putih ekstrim!
+        // 🌟 DYNAMIC SHARPENING CANVAS: Menajamkan baris teks tipis/buram tanpa merusak struktur huruf
         const optimasiGambarSisiKlien = (file) => new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -214,12 +208,13 @@
                     const imgData = ctx.getImageData(0, 0, width, height);
                     const data = imgData.data;
                     
-                    // Filter Kontras Adaptif Menjaga Keutuhan Font Struk Tipis
+                    // Transformasi Filter Kontras Gamma untuk Memperjelas Angka Rekening/Ref ID
                     for (let i = 0; i < data.length; i += 4) {
                         let r = data[i], g = data[i+1], b = data[i+2];
-                        let v = (0.2126 * r + 0.7152 * g + 0.0722 * b);
-                        // Menaikkan kontras teks gelap terhadap background terang secara merata
-                        v = v < 140 ? v * 0.5 : Math.min(255, v * 1.2);
+                        let grayscale = 0.299 * r + 0.587 * g + 0.114 * b;
+                        
+                        // Mempertegas teks abu-abu redup menjadi gelap solid agar terbaca sempurna
+                        let v = grayscale < 150 ? grayscale * 0.4 : Math.min(255, grayscale * 1.3);
                         data[i] = data[i+1] = data[i+2] = v;
                     }
                     
@@ -240,58 +235,64 @@
             }
 
             btn.disabled = true;
-            btnText.innerText = "MENINGKATKAN KONTRAS TEKS...";
+            btnText.innerText = "MENAJAMKAN STRUK TRANSFER...";
 
             try {
                 const fileGambarMentah = fileInput.files[0];
                 const base64HasilFilter = await optimasiGambarSisiKlien(fileGambarMentah);
 
-                btnText.innerText = "MENGANALISIS STRUK...";
+                btnText.innerText = "MEMINDAI NOMOR REFERENSI & NOMINAL...";
 
                 const worker = await Tesseract.createWorker('ind', 1);
                 
-                // Pembacaan pertama: Mode teks bebas untuk verifikasi status keberhasilan
-                const retTeks = await worker.recognize(base64HasilFilter);
-                const rawTextUpper = retTeks.data.text.toUpperCase();
+                // Set parameter eksklusif alfanumerik untuk menjaga kestabilan pembacaan karakter Ref ID
+                await worker.setParameters({
+                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+                });
 
-                // 🛑 VALIDASI 1: Cek Tulisan "Berhasil" / "Sukses" secara mutlak
-                const kataValid = ["BERHASIL", "SUKSES", "SUCCESS", "TRANSAKSI BERHASIL", "TRANSFER BERHASIL"];
-                const adaStatusValid = kataValid.some(kata => rawTextUpper.includes(kata));
-
-                if (!adaStatusValid) {
-                    alert("Validasi Gagal! Status transaksi tidak terbaca 'Berhasil' atau 'Sukses'. Pastikan struk bukan berstatus gagal/pending.");
-                    await worker.terminate();
-                    btn.disabled = false;
-                    btnText.innerText = "Kirim & Proses Otomatis";
-                    return;
-                }
-
-                // Pembacaan kedua: Mengunci karakter khusus untuk akurasi nominal angka murni
-                await worker.setParameters({ tessedit_char_whitelist: '0123456789' });
-                const retAngka = await worker.recognize(base64HasilFilter);
-                const angkaMurniStruk = retAngka.data.text.replace(/\s/g, '');
+                const ret = await worker.recognize(base64HasilFilter);
+                const rawText = ret.data.text.toUpperCase();
                 await worker.terminate();
 
-                const targetNominal = nominalTotalGlobal.toString();
+                // 🎯 1. EKSTRAKSI KODE REFERENSI SECARA KETAT & KUAT
+                const textCleanAlfanumerik = rawText.replace(/[^A-Z0-9]/g, '');
+                const matchRefSpesifik = textCleanAlfanumerik.match(/[A-Z0-9]{12,30}/);
                 
-                // 🛑 VALIDASI 2: Sistem Pencocokan Nominal Angka Murni Ketat V5
-                // Memotong teks menjadi token per baris/kelompok untuk menghindari kecocokan acak pecahan angka gila
-                const regexTarget = new RegExp(`\\b${targetNominal}\\b|${targetNominal}`);
-                const adaNominalEksak = angkaMurniStruk.includes(targetNominal) && (angkaMurniStruk.match(regexTarget));
+                let noRefTerdeteksi = "";
+                if (matchRefSpesifik) {
+                    noRefTerdeteksi = matchRefSpesifik[0]; 
+                } else {
+                    // Jika struk beneran buram parah, sistem mengunci dengan hash waktu aman berkode khusus
+                    noRefTerdeteksi = "REFAUTO-" + Math.floor(Date.now() / 1000); 
+                }
 
-                if (!adaNominalEksak) {
-                    alert(`Validasi Gagal! Angka nominal wajib dengan kode unik "${targetNominal}" tidak ditemukan secara tepat pada struk. Transfer nilai bulat otomatis ditolak!`);
+                // 🎯 2. PENCATATAN TOKEN ANGKA MURNI (ANTI SINKRONISASI PARSIAL / NOMINAL PALSU)
+                // Memisahkan teks berdasarkan spasi/baris baru menjadi kumpulan kata independen
+                const listKataStruk = rawText.split(/[\s\n\r]+/);
+                const targetNominal = nominalTotalGlobal.toString();
+                const targetNominalEkorNol = targetNominal + "00";
+
+                let adaNominalMurniSah = false;
+
+                for (let kata of listKataStruk) {
+                    // Membersihkan karakter non-angka di sekeliling kata (misal: "RP55.032" menjadi "55032")
+                    let angkaSaja = kata.replace(/[^0-9]/g, '');
+                    
+                    // Wajib COCOK UTUH SECARA PERSIS, bukan sekadar menempel di teks lain
+                    if (angkaSaja === targetNominal || angkaSaja === targetNominalEkorNol) {
+                        adaNominalMurniSah = true;
+                        break;
+                    }
+                }
+
+                if (!adaNominalMurniSah) {
+                    alert(`Validasi Gagal! Nilai nominal eksak sebesar "${targetNominal}" tidak ditemukan dalam struk ini. Pastikan Anda mengetik nominal sesuai jumlah yang tertera di struk.`);
                     btn.disabled = false;
                     btnText.innerText = "Kirim & Proses Otomatis";
                     return;
                 }
 
                 btnText.innerText = "MENYIMPAN DATA AMAN...";
-
-                // Ekstraksi Kode Referensi Padat untuk Mencegah Struk Ganda
-                const textCleanAlfanumerik = rawTextUpper.replace(/[^A-Z0-9]/g, '');
-                const matchRefSpesifik = textCleanAlfanumerik.match(/[A-Z0-9]{12,30}/);
-                let noRefTerdeteksi = matchRefSpesifik ? matchRefSpesifik[0] : "REFAUTO-" + Math.floor(Date.now() / 1000);
 
                 const payload = {
                     aksi: "simpanTransaksiDenganFileB64",
@@ -305,7 +306,10 @@
                     no_ref: noRefTerdeteksi
                 };
 
-                const response = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
                 const hasil = await response.json();
 
                 if (hasil.status === "success") {

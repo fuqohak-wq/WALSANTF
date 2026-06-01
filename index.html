@@ -236,7 +236,7 @@
             navigator.clipboard.writeText(teksYgDisalin).then(() => { alert(`Alhamdulillah, ${jenisInfo} berhasil disalin!`); });
         }
 
-        const kompresGambarSisiKlien = (file) => new Promise((resolve) => {
+        const kompresGambarSisiKlien = (file) => new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = (event) => {
@@ -259,10 +259,12 @@
                     canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    const dataUrlKecil = canvas.toDataURL('image/jpeg', 0.75);
+                    const dataUrlKecil = canvas.toDataURL('image/jpeg', 0.80);
                     resolve(dataUrlKecil);
                 };
+                img.onerror = (err) => reject(err);
             };
+            reader.onerror = (err) => reject(err);
         });
 
         async function prosesValidasiOcr() {
@@ -298,40 +300,29 @@
                 const rawText = ret.data.text;
                 await worker.terminate();
 
-                // 🧼 MEMBERSIHKAN TEKS SECARA MENYELURUH (Dua Metode Pembanding)
-                const textCleanNoSymbols = rawText.toUpperCase().replace(/[\.\,\s\-\:]/g, ''); 
-                const rawLinesText = rawText.toUpperCase();
-
+                // 🧼 MEMBERSIHKAN TEKS SECARA TOTAL (Menghilangkan semua simbol & spasi)
+                const textClean = rawText.toUpperCase().replace(/[^A-Z0-9]/g, ''); 
+                
                 const targetNominal = nominalTotalGlobal.toString();
                 const targetNominalEkorNol = targetNominal + "00"; 
 
-                // 🔍 VALIDASI NOMINAL (Mendukung pembacaan baris demi baris maupun teks mampat)
-                const adaNominal = textCleanNoSymbols.includes(targetNominal) || 
-                                   textCleanNoSymbols.includes(targetNominalEkorNol) ||
-                                   rawLinesText.includes(nominalTotalGlobal.toLocaleString('id-ID'));
+                // 🔍 VALIDASI NOMINAL (Mendukung pembacaan mampat tanpa spasi/titik)
+                const adaNominal = textClean.includes(targetNominal) || textClean.includes(targetNominalEkorNol);
 
-                // 🔍 EKSTRAKSI NOMOR REFERENSI EXTRA KUAT (Mendukung Mandiri Livin' & Gabungan Alfabet-Angka)
-                // Menghapus spasi khusus pencarian nomor referensi agar baris gantung menyatu
-                const teksGabungBaris = rawText.toUpperCase().replace(/[\s\r\n]/g, '');
-                const matchRefKombinasi = teksGabungBaris.match(/[A-Z0-9]{10,30}/);
-                const matchRefMurniAngka = textCleanNoSymbols.match(/\d{8,25}/);
+                // 🔍 EKSTRAKSI NOMOR REFERENSI BANK (Mendukung kombinasi panjang BRImo & Livin)
+                const teksGabungBaris = rawText.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                const matchRefKombinasi = teksGabungBaris.match(/[A-Z0-9]{10,40}/);
                 
                 let noRefTerdeteksi = "";
-                if (matchRefKombinasi && matchRefKombinasi[0].some(c => isNaN(c)) === false) {
-                    // Cari kombinasi huruf angka khas Mandiri / BCA
-                    const candidate = matchRefKombinasi[0].match(/\d.*/); // Ambil dari angka pertama ke belakang
-                    noRefTerdeteksi = candidate ? candidate[0].substring(0,18) : matchRefKombinasi[0].substring(0,18);
-                } else if (matchRefMurniAngka) {
-                    noRefTerdeteksi = matchRefMurniAngka[0];
-                }
-
-                // Pengaman jika pembacaan gagal total, buat No Ref acak berbasis waktu agar sistem tidak macet
-                if (noRefTerdeteksi === "" || noRefTerdeteksi.length < 6) {
-                    noRefTerdeteksi = "REF-" + Date.now() + Math.floor(Math.random() * 1000);
+                if (matchRefKombinasi) {
+                    noRefTerdeteksi = matchRefKombinasi[0].substring(0, 25);
+                } else {
+                    // Fallback jika tidak terdeteksi, gunakan timestamp unik agar transaksi tetap aman masuk sheet
+                    noRefTerdeteksi = "REFAUTO-" + Date.now();
                 }
 
                 if (!adaNominal) {
-                    alert(`Validasi Gagal! Angka nominal wajib dengan kode unik "${nominalTotalGlobal}" tidak ditemukan secara tepat pada struk.\n\nPastikan Anda mentransfer sesuai nominal instruksi (Bukan jumlah total + admin bank).`);
+                    alert(`Validasi Gagal! Angka nominal wajib dengan kode unik "${nominalTotalGlobal}" tidak ditemukan secara tepat pada struk.\n\nPastikan foto beresolusi baik dan nominal yang Anda transfer benar.`);
                 } else {
                     btnText.innerText = "MENYIMPAN DATA...";
                     
@@ -366,6 +357,7 @@
                 btnText.innerText = "Kirim & Proses Otomatis";
 
             } catch (e) {
+                console.error(e);
                 alert("Gagal memproses gambar. Pastikan posisi foto tegak, tulisan tidak terpotong, dan kondisi cahaya terang.");
                 btn.disabled = false;
                 btnText.innerText = "Kirim & Proses Otomatis";

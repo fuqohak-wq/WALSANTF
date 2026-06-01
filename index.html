@@ -23,9 +23,6 @@
             <h1 class="text-[10px] md:text-[11px] font-black text-amber-400 tracking-widest uppercase">YAYASAN YAHYAWIYYAH</h1>
             <h2 class="text-base md:text-lg font-extrabold text-white tracking-tight leading-tight">SISTEM PEMBAYARAN OTOMATIS PPMUY</h2>
         </div>
-        <div class="bg-amber-400/10 border border-amber-400/20 px-3 py-1 rounded-xl text-center">
-            <p id="txt-doa" class="text-xs md:text-sm italic text-amber-200 font-medium leading-tight">"Memuat untaian doa..."</p>
-        </div>
     </header>
 
     <script>
@@ -62,9 +59,8 @@
                     <span class="text-xs text-emerald-950 font-black block uppercase tracking-wider">TOTAL YANG WAJIB DITRANSFER</span>
                     <div class="flex items-center justify-center gap-3 mt-1">
                         <span id="nominal-total-html" class="text-3xl md:text-xl font-black text-emerald-800 tracking-tight"></span>
-                        <button onclick="salinTeks('nominal-total-raw', 'Nominal')" class="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black px-3 py-1.5 rounded-lg transition cursor-pointer active:scale-95 shadow">📋 SALIN</button>
+                        <button onclick="salinTeks('nominal-total-raw', 'Nominal')" class="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black px-3 py-1.5 rounded-lg transition shadow">📋 SALIN</button>
                     </div>
-                    <span class="text-[10px] text-red-600 font-black block mt-1.5">⚠️ NOMINAL HARUS SAMA PERSIS TERMASUK KODE UNIK!</span>
                 </div>
                 
                 <div class="text-sm bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
@@ -74,7 +70,7 @@
                     </div>
                     <div class="flex justify-between items-center border-t border-slate-200 pt-2">
                         <span class="font-mono text-lg md:text-base font-black text-blue-900 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200" id="rek-nomor">003801003305309</span>
-                        <button onclick="salinTeks('rek-nomor', 'Nomor Rekening')" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black px-3 py-1.5 rounded-lg transition cursor-pointer active:scale-95 shadow">📋 SALIN REK</button>
+                        <button onclick="salinTeks('rek-nomor', 'Nomor Rekening')" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black px-3 py-1.5 rounded-lg transition shadow">📋 SALIN REK</button>
                     </div>
                 </div>
 
@@ -93,7 +89,7 @@
             </button>
         </div>
         <div class="text-[10px] text-emerald-400/60 text-center border-t border-white/5 pt-1.5 font-bold">
-            &copy; 2026 Fuqohak Executive Tech. Smart Lock Engine V5.1.
+            &copy; 2026 Fuqohak Executive Tech. Strict Enterprise Engine V5.2.
         </div>
     </footer>
 
@@ -110,7 +106,6 @@
             const opsiMasehi = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             document.getElementById('txt-masehi').innerText = "📅 " + skrg.toLocaleDateString('id-ID', opsiMasehi);
             document.getElementById('txt-hijriah').innerText = "Dzulhijjah 1447 H";
-            document.getElementById('txt-doa').innerText = "\"Tetesan keringat Ayah Bunda dalam membiayai anak mengaji dihitung sebagai pahala jihad sabilillah.\"";
         }
 
         window.onload = async function() {
@@ -138,7 +133,7 @@
                 resDiv.classList.remove('hidden');
                 filtered.forEach(s => {
                     const btn = document.createElement('button');
-                    btn.className = "w-full text-left bg-slate-50 p-3.5 rounded-xl text-xs flex justify-between items-center mt-1 text-slate-900 shadow-sm border border-slate-200 cursor-pointer";
+                    btn.className = "w-full text-left bg-slate-50 p-3.5 rounded-xl text-xs flex justify-between items-center mt-1 text-slate-900 shadow-sm border border-slate-200";
                     btn.innerHTML = `<div><span class="block text-base font-black text-emerald-950">${s.nama}</span></div> <span class="bg-emerald-800 px-2 py-0.5 rounded text-[10px] text-white font-black uppercase">${s.status}</span>`;
                     btn.onclick = () => pilihSantri(s);
                     resDiv.appendChild(btn);
@@ -184,7 +179,7 @@
             navigator.clipboard.writeText(teksYgDisalin).then(() => { alert(`Alhamdulillah, ${jenisInfo} berhasil disalin!`); });
         }
 
-        // 🌟 DYNAMIC SHARPENING CANVAS: Menajamkan baris teks tipis/buram tanpa merusak struktur huruf
+        // KANVAS OPTIMASI TINGKAH TINGGI V5.2 (Grayscale Adaptif Pro)
         const optimasiGambarSisiKlien = (file) => new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -195,7 +190,7 @@
                     const canvas = document.getElementById('canvas-kompresor');
                     const ctx = canvas.getContext('2d');
                     
-                    const TARGET_WIDTH = 1200;
+                    const TARGET_WIDTH = 1300; // Menaikkan resolusi sedikit untuk ketajaman teks kecil
                     let width = img.width;
                     let height = img.height;
                     height *= TARGET_WIDTH / width;
@@ -208,13 +203,11 @@
                     const imgData = ctx.getImageData(0, 0, width, height);
                     const data = imgData.data;
                     
-                    // Transformasi Filter Kontras Gamma untuk Memperjelas Angka Rekening/Ref ID
                     for (let i = 0; i < data.length; i += 4) {
                         let r = data[i], g = data[i+1], b = data[i+2];
                         let grayscale = 0.299 * r + 0.587 * g + 0.114 * b;
-                        
-                        // Mempertegas teks abu-abu redup menjadi gelap solid agar terbaca sempurna
-                        let v = grayscale < 150 ? grayscale * 0.4 : Math.min(255, grayscale * 1.3);
+                        // Penajaman kontras huruf tipis bank
+                        let v = grayscale < 160 ? grayscale * 0.35 : Math.min(255, grayscale * 1.35);
                         data[i] = data[i+1] = data[i+2] = v;
                     }
                     
@@ -235,50 +228,65 @@
             }
 
             btn.disabled = true;
-            btnText.innerText = "MENAJAMKAN STRUK TRANSFER...";
+            btnText.innerText = "ENGINE MULTI-SCANNING AKTIF...";
 
             try {
                 const fileGambarMentah = fileInput.files[0];
                 const base64HasilFilter = await optimasiGambarSisiKlien(fileGambarMentah);
 
-                btnText.innerText = "MEMINDAI NOMOR REFERENSI & NOMINAL...";
-
                 const worker = await Tesseract.createWorker('ind', 1);
                 
-                // Set parameter eksklusif alfanumerik untuk menjaga kestabilan pembacaan karakter Ref ID
-                await worker.setParameters({
-                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-                });
+                // SCAN LAPIS 1: Membaca teks bebas huruf kapital untuk validasi nama dan entitas text
+                const retTeks = await worker.recognize(base64HasilFilter);
+                const rawTextUpper = retTeks.data.text.toUpperCase().replace(/[\.\-]/g, '');
 
-                const ret = await worker.recognize(base64HasilFilter);
-                const rawText = ret.data.text.toUpperCase();
-                await worker.terminate();
-
-                // 🎯 1. EKSTRAKSI KODE REFERENSI SECARA KETAT & KUAT
-                const textCleanAlfanumerik = rawText.replace(/[^A-Z0-9]/g, '');
-                const matchRefSpesifik = textCleanAlfanumerik.match(/[A-Z0-9]{12,30}/);
+                // 🛑 VALIDASI A: Nama & Rekening Yayasan Tujuan (WAJIB ADA)
+                const keywordYayasan = ["YAYASAN", "YAHYAWIYYAH", "YAHYA", "WIYYAH", "PPMUY"];
+                const targetRekeningYayasan = "003801003305309";
                 
-                let noRefTerdeteksi = "";
-                if (matchRefSpesifik) {
-                    noRefTerdeteksi = matchRefSpesifik[0]; 
-                } else {
-                    // Jika struk beneran buram parah, sistem mengunci dengan hash waktu aman berkode khusus
-                    noRefTerdeteksi = "REFAUTO-" + Math.floor(Date.now() / 1000); 
+                const adaNamaYayasan = keywordYayasan.some(key => rawTextUpper.includes(key));
+                const adaRekeningYayasan = rawTextUpper.includes(targetRekeningYayasan);
+
+                if (!adaNamaYayasan || !adaRekeningYayasan) {
+                    alert("VALIDASI GAGAL! Struk tidak ditujukan ke Rekening BRI YAYASAN YAHYAWIYYAH (003801003305309). Sistem otomatis memblokir struk bank/toko lain.");
+                    await worker.terminate();
+                    btn.disabled = false; btnText.innerText = "Kirim & Proses Otomatis";
+                    return;
                 }
 
-                // 🎯 2. PENCATATAN TOKEN ANGKA MURNI (ANTI SINKRONISASI PARSIAL / NOMINAL PALSU)
-                // Memisahkan teks berdasarkan spasi/baris baru menjadi kumpulan kata independen
-                const listKataStruk = rawText.split(/[\s\n\r]+/);
+                // 🛑 VALIDASI B: Deteksi Keberadaan Identitas Pengirim (Nama & No Rekening Pengirim)
+                const keywordPengirim = ["DARI", "PENGIRIM", "REKENING ASAL", "SUMBER", "SENDER", "NAMA", "DEBET"];
+                const adaIndikasiPengirim = keywordPengirim.some(key => rawTextUpper.includes(key));
+                
+                // Mencari apakah ada angka mandiri min 6-10 digit berjejer sebagai asumsi nomor rekening asal pengirim
+                const matchRekPengirim = rawTextUpper.replace(/[^0-9]/g, '').match(/[0-9]{6,20}/);
+
+                if (!adaIndikasiPengirim || !matchRekPengirim) {
+                    alert("VALIDASI GAGAL! Informasi Nama Pengirim atau Nomor Rekening Asal tidak terdeteksi pada struk. Pastikan struk tercetak jelas.");
+                    await worker.terminate();
+                    btn.disabled = false; btnText.innerText = "Kirim & Proses Otomatis";
+                    return;
+                }
+
+                // SCAN LAPIS 2: Mengunci Whitelist angka murni untuk akurasi nominal & Ref ID
+                await worker.setParameters({ tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' });
+                const retAngka = await worker.recognize(base64HasilFilter);
+                const rawTextAlfanumerik = retAngka.data.text.toUpperCase();
+                await worker.terminate();
+
+                // 🛑 VALIDASI C: Pencocokan Nomor Referensi (Ref ID)
+                const textCleanAlfanumerik = rawTextAlfanumerik.replace(/[^A-Z0-9]/g, '');
+                const matchRefSpesifik = textCleanAlfanumerik.match(/[A-Z0-9]{12,30}/);
+                let noRefTerdeteksi = matchRefSpesifik ? matchRefSpesifik[0] : "REFAUTO-" + Math.floor(Date.now() / 1000);
+
+                // 🛑 VALIDASI D: Pencocokan Nominal Eksak (Token Match)
+                const listKataStruk = rawTextAlfanumerik.split(/[\s\n\r]+/);
                 const targetNominal = nominalTotalGlobal.toString();
                 const targetNominalEkorNol = targetNominal + "00";
-
                 let adaNominalMurniSah = false;
 
                 for (let kata of listKataStruk) {
-                    // Membersihkan karakter non-angka di sekeliling kata (misal: "RP55.032" menjadi "55032")
                     let angkaSaja = kata.replace(/[^0-9]/g, '');
-                    
-                    // Wajib COCOK UTUH SECARA PERSIS, bukan sekadar menempel di teks lain
                     if (angkaSaja === targetNominal || angkaSaja === targetNominalEkorNol) {
                         adaNominalMurniSah = true;
                         break;
@@ -286,12 +294,12 @@
                 }
 
                 if (!adaNominalMurniSah) {
-                    alert(`Validasi Gagal! Nilai nominal eksak sebesar "${targetNominal}" tidak ditemukan dalam struk ini. Pastikan Anda mengetik nominal sesuai jumlah yang tertera di struk.`);
-                    btn.disabled = false;
-                    btnText.innerText = "Kirim & Proses Otomatis";
+                    alert(`VALIDASI GAGAL! Angka nominal tagihan "${targetNominal}" tidak ditemukan secara tepat/utuh di baris manapun dalam struk.`);
+                    btn.disabled = false; btnText.innerText = "Kirim & Proses Otomatis";
                     return;
                 }
 
+                // JIKA SEMUA VALIDASI AMAN, KIRIM KE GOOGLE SHEET
                 btnText.innerText = "MENYIMPAN DATA AMAN...";
 
                 const payload = {
@@ -306,27 +314,22 @@
                     no_ref: noRefTerdeteksi
                 };
 
-                const response = await fetch(API_URL, {
-                    method: "POST",
-                    body: JSON.stringify(payload)
-                });
+                const response = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
                 const hasil = await response.json();
 
                 if (hasil.status === "success") {
-                    alert("Alhamdulillah, Bukti Transfer Berhasil Diverifikasi Secara Akurat!");
+                    alert("Alhamdulillah, Seluruh Struktur Struk Terverifikasi Sah & Otomatis Disimpan!");
                     location.reload();
                 } else {
                     alert(hasil.message);
                 }
 
-                btn.disabled = false;
-                btnText.innerText = "Kirim & Proses Otomatis";
+                btn.disabled = false; btnText.innerText = "Kirim & Proses Otomatis";
 
             } catch (e) {
                 console.error(e);
                 alert("Terjadi kesalahan sistem pembacaan gambar.");
-                btn.disabled = false;
-                btnText.innerText = "Kirim & Proses Otomatis";
+                btn.disabled = false; btnText.innerText = "Kirim & Proses Otomatis";
             }
         }
     </script>

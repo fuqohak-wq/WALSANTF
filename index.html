@@ -28,6 +28,14 @@
         <div class="bg-amber-400/10 border border-amber-400/20 px-3 py-1 rounded-xl text-center">
             <p id="txt-doa" class="text-xs italic text-amber-200 font-medium leading-tight">"Memuat untaian doa..."</p>
         </div>
+        
+        <div class="bg-emerald-800/40 border border-emerald-500/20 px-3 py-1.5 rounded-xl flex justify-between items-center text-xs font-bold">
+            <div class="flex items-center gap-1.5">
+                <span>🕌</span>
+                <span id="sholat-sekarang" class="text-emerald-200">Memuat Jadwal...</span>
+            </div>
+            <div id="sholat-jam" class="bg-emerald-900/80 px-2 py-0.5 rounded font-mono font-black text-amber-300 border border-emerald-700/50">--:--</div>
+        </div>
     </header>
 
     <script>
@@ -67,6 +75,19 @@
                     <span class="text-xs text-emerald-950 font-black block uppercase tracking-wider">TOTAL YANG WAJIB DITRANSFER</span>
                     <div class="flex items-center justify-center gap-3 mt-1">
                         <span id="nominal-total-html" class="text-3xl font-black text-emerald-800 tracking-tight"></span>
+                        <button onclick="salinTeks('nominal-total-raw', 'Nominal')" class="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black px-3 py-1.5 rounded-lg transition cursor-pointer active:scale-95 shadow">📋 SALIN</button>
+                    </div>
+                    <span class="text-[10px] text-red-600 font-black block mt-1.5">⚠️ MENERIMA SEMUA BUKTI TRANSFER (BANK & ALL E-WALLET).</span>
+                </div>
+                
+                <div class="text-sm bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+                    <div class="flex justify-between items-center font-bold text-slate-700">
+                        <span>🏦 Bank: <strong id="rek-bank" class="text-emerald-800 text-base font-black">BRI</strong></span>
+                        <span id="rek-an" class="text-xs font-black text-slate-500 text-right uppercase">YAYASAN YAHYAWIYYAH</span>
+                    </div>
+                    <div class="flex justify-between items-center border-t border-slate-200 pt-2">
+                        <span class="font-mono text-lg font-black text-blue-900 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200" id="rek-nomor">003801003305309</span>
+                        <button onclick="salinTeks('rek-nomor', 'Nomor Rekening')" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black px-3 py-1.5 rounded-lg transition cursor-pointer active:scale-95 shadow">📋 SALIN REK</button>
                     </div>
                 </div>
 
@@ -86,12 +107,11 @@
             </button>
         </div>
         <div class="text-[10px] text-emerald-400/60 text-center border-t border-white/5 pt-1.5 font-bold">
-            &copy; 2026 Fuqohak Executive Tech. Advanced Image Engine V4.
+            &copy; 2026 Fuqohak Executive Tech. Advanced Image Engine V4.1.
         </div>
     </footer>
 
     <span id="nominal-total-raw" class="hidden">0</span>
-    
     <canvas id="canvas-kompresor" class="hidden"></canvas>
 
     <script>
@@ -99,11 +119,51 @@
         let santriTerpilih = null;
         let nominalTotalGlobal = 0;
 
+        const daftarDoa = [
+            "\"Semoga setiap rupiah yang disalurkan dibalas dengan kelipatan rezeki berlimpah oleh Allah.\"",
+            "\"Tetesan keringat Ayah Bunda dalam membiayai anak mengaji dihitung sebagai pahala jihad sabilillah.\"",
+            "\"Ya Allah lancarkanlah rezeki pemberi nafkah hari ini, dan cerdaskanlah hafalan buah hatinya.\""
+        ];
+
+        function muatSyiarIslam() {
+            const acak = Math.floor(Math.random() * daftarDoa.length);
+            document.getElementById('txt-doa').innerText = daftarDoa[acak];
+            const skrg = new Date();
+            
+            const opsiMasehi = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('txt-masehi').innerText = "📅 " + skrg.toLocaleDateString('id-ID', opsiMasehi);
+            
+            try {
+                const opsiHijriah = { day: 'numeric', month: 'long', year: 'numeric' };
+                const formatterHijriah = new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', opsiHijriah);
+                document.getElementById('txt-hijriah').innerText = formatterHijriah.format(skrg) + " H";
+            } catch (e) { document.getElementById('txt-hijriah').innerText = "Dzulhijjah 1447 H"; }
+
+            const jam = skrg.getHours();
+            const menit = skrg.getMinutes();
+            const waktuMenitSekarang = (jam * 60) + menit;
+
+            let sholat = "Subuh"; waktu = "04:22";
+            if (waktuMenitSekarang >= 262 && waktuMenitSekarang < 714) { sholat = "Dzuhur"; waktu = "11:54"; }
+            else if (waktuMenitSekarang >= 714 && waktuMenitSekarang < 915) { sholat = "Ashar"; waktu = "15:15"; }
+            else if (waktuMenitSekarang >= 915 && waktuMenitSekarang < 1072) { sholat = "Maghrib"; waktu = "17:52"; }
+            else if (waktuMenitSekarang >= 1072 && waktuMenitSekarang < 1145) { sholat = "Isya"; waktu = "19:05"; }
+
+            document.getElementById('sholat-sekarang').innerText = `Menuju Waktu ${sholat}`;
+            document.getElementById('sholat-jam').innerText = waktu;
+        }
+
         window.onload = async function() {
+            muatSyiarIslam();
             try {
                 const res = await fetch(API_URL);
                 const hasil = await res.json();
-                if(hasil.status === "success") dbSantri = hasil.santri;
+                if(hasil.status === "success") {
+                    dbSantri = hasil.santri;
+                    if(hasil.rekening.bank) document.getElementById('rek-bank').innerText = hasil.rekening.bank;
+                    if(hasil.rekening.nomor) document.getElementById('rek-nomor').innerText = hasil.rekening.nomor;
+                    if(hasil.rekening.atas_nama) document.getElementById('rek-an').innerText = hasil.rekening.atas_nama;
+                }
             } catch(e) { console.log("Gagal memuat database."); }
         };
 
@@ -118,7 +178,7 @@
                 resDiv.classList.remove('hidden');
                 filtered.forEach(s => {
                     const btn = document.createElement('button');
-                    btn.className = "w-full text-left bg-slate-50 p-3.5 rounded-xl text-xs flex justify-between items-center mt-1 text-slate-900 shadow-sm";
+                    btn.className = "w-full text-left bg-slate-50 p-3.5 rounded-xl text-xs flex justify-between items-center mt-1 text-slate-900 shadow-sm transition active:scale-95 border border-slate-200 cursor-pointer";
                     btn.innerHTML = `<div><span class="block text-base font-black text-emerald-950">${s.nama}</span></div> <span class="bg-emerald-800 px-2 py-0.5 rounded text-[10px] text-white font-black uppercase">${s.status}</span>`;
                     btn.onclick = () => pilihSantri(s);
                     resDiv.appendChild(btn);
@@ -158,7 +218,12 @@
             }
         }
 
-        // 🧠 MESIN PREPROCESSING GAMBAR: MENINGKATKAN KONTRAS & MEMBERSIHKAN DERAU (ANTI-MIRING / ANTI-BURAM)
+        function salinTeks(elementId, jenisInfo) {
+            let teksYgDisalin = document.getElementById(elementId).innerText;
+            if(elementId === 'rek-nomor') { teksYgDisalin = teksYgDisalin.replace(/\s/g, ''); }
+            navigator.clipboard.writeText(teksYgDisalin).then(() => { alert(`Alhamdulillah, ${jenisInfo} berhasil disalin!`); });
+        }
+
         const optimasiGambarSisiKlien = (file) => new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -169,7 +234,6 @@
                     const canvas = document.getElementById('canvas-kompresor');
                     const ctx = canvas.getContext('2d');
                     
-                    // Standarisasi dimensi struk untuk kerapatan piksel optimal
                     const TARGET_WIDTH = 1200;
                     let width = img.width;
                     let height = img.height;
@@ -180,20 +244,15 @@
                     canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // Ambil data piksel gambar untuk dimanipulasi menjadi hitam-putih murni (Thresholding)
                     const imgData = ctx.getImageData(0, 0, width, height);
                     const data = imgData.data;
                     
                     for (let i = 0; i < data.length; i += 4) {
-                        // Rumus konversi kecerahan Grayscale standar (Luminance)
                         const kecerahan = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
-                        
-                        // Efek Thresholding: Jika agak gelap jadikan hitam pekat, jika terang jadikan putih bersih
-                        // Ini memisahkan teks nomor referensi secara ekstrem dari background struk
                         const nilaiFinal = kecerahan < 130 ? 0 : 255; 
-                        data[i]     = nilaiFinal; // Red
-                        data[i+1]   = nilaiFinal; // Green
-                        data[i+2]   = nilaiFinal; // Blue
+                        data[i]     = nilaiFinal; 
+                        data[i+1]   = nilaiFinal; 
+                        data[i+2]   = nilaiFinal; 
                     }
                     
                     ctx.putImageData(imgData, 0, 0);
@@ -207,7 +266,6 @@
             const btn = document.getElementById('btn-submit');
             const btnText = document.getElementById('btn-text');
             const fileInput = document.getElementById('file-struk');
-            const nPokok = parseInt(document.getElementById('nominal-pokok').value) || 0;
 
             if (fileInput.files.length === 0) {
                 alert("Silakan pilih/foto struk transfer terlebih dahulu!");
@@ -219,12 +277,10 @@
 
             try {
                 const fileGambarMentah = fileInput.files[0];
-                // Proses gambar agar menjadi hitam putih beresolusi tajam
                 const base64HasilFilter = await optimasiGambarSisiKlien(fileGambarMentah);
 
                 btnText.innerText = "MENYALAKAN OCR TESSERACT...";
 
-                // Mengonfigurasi kamus teks OCR agar hanya fokus pada karakter valid Alfanumerik
                 const worker = await Tesseract.createWorker('ind', 1, {
                     logger: m => {
                         if(m.status === 'recognizing text') {
@@ -234,7 +290,6 @@
                     }
                 });
 
-                // Perintah eksklusif: Hanya terima huruf besar dan angka demi konsistensi deteksi Ref ID
                 await worker.setParameters({
                     tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
                 });
@@ -243,7 +298,6 @@
                 const rawText = ret.data.text;
                 await worker.terminate();
 
-                // Bersihkan string teks murni untuk pengecekan nominal
                 const angkaMurniStruk = rawText.replace(/[^0-9]/g, '');
                 const targetNominal = nominalTotalGlobal.toString();
                 const targetNominalEkorNol = targetNominal + "00";
@@ -262,16 +316,13 @@
                     return;
                 }
 
-                // 🎯 REKAYASA PENCARIAN NOMOR REFERENSI UTAMA (Sangat Ketat & Konsisten)
-                // Hanya mengambil deretan karakter padat khas Bank/E-wallet (Panjang minimal 12 karakter alfanumerik murni)
                 const textCleanAlfanumerik = rawText.replace(/[^A-Z0-9]/g, '');
                 const matchRefSpesifik = textCleanAlfanumerik.match(/[A-Z0-9]{12,30}/);
                 
                 let noRefTerdeteksi = "";
                 if (matchRefSpesifik) {
-                    noRefTerdeteksi = matchRefSpesifik[0]; // Kode referensi riil murni hasil filter tajam
+                    noRefTerdeteksi = matchRefSpesifik[0]; 
                 } else {
-                    // Jika struk beneran tidak punya nomor ref, gunakan fallback berdasar waktu detik ini
                     noRefTerdeteksi = "REFAUTO-" + Math.floor(Date.now() / 1000); 
                 }
 
@@ -287,9 +338,9 @@
                     aksi: "simpanTransaksiDenganFileB64",
                     nik: santriTerpilih.nik,
                     nama: santriTerpilih.nama,
-                    nominal_pokok: nPokok,
+                    nominal_pokok: parseInt(document.getElementById('nominal-pokok').value) || 0,
                     nominal_total: finalNominalTotal,
-                    image_base64: base64HasilFilter, // Mengirim gambar yang sudah dipertajam ke Drive
+                    image_base64: base64HasilFilter, 
                     file_name: `STRUK_${santriTerpilih.nik}_${Date.now()}.jpg`,
                     device: navigator.userAgent,
                     no_ref: noRefTerdeteksi

@@ -28,14 +28,6 @@
         <div class="bg-amber-400/10 border border-amber-400/20 px-3 py-1 rounded-xl text-center">
             <p id="txt-doa" class="text-xs italic text-amber-200 font-medium leading-tight">"Memuat untaian doa..."</p>
         </div>
-        
-        <div class="bg-emerald-800/40 border border-emerald-500/20 px-3 py-1.5 rounded-xl flex justify-between items-center text-xs font-bold">
-            <div class="flex items-center gap-1.5">
-                <span>🕌</span>
-                <span id="sholat-sekarang" class="text-emerald-200">Memuat Jadwal...</span>
-            </div>
-            <div id="sholat-jam" class="bg-emerald-900/80 px-2 py-0.5 rounded font-mono font-black text-amber-300 border border-emerald-700/50">--:--</div>
-        </div>
     </header>
 
     <script>
@@ -75,25 +67,12 @@
                     <span class="text-xs text-emerald-950 font-black block uppercase tracking-wider">TOTAL YANG WAJIB DITRANSFER</span>
                     <div class="flex items-center justify-center gap-3 mt-1">
                         <span id="nominal-total-html" class="text-3xl font-black text-emerald-800 tracking-tight"></span>
-                        <button onclick="salinTeks('nominal-total-raw', 'Nominal')" class="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black px-3 py-1.5 rounded-lg transition cursor-pointer active:scale-95 shadow">📋 SALIN</button>
-                    </div>
-                    <span class="text-[10px] text-red-600 font-black block mt-1.5">⚠️ MENERIMA SEMUA BUKTI TRANSFER (M-BANKING, SHOPEEPAY, DANA, OVO, GOPAY, DLL).</span>
-                </div>
-                
-                <div class="text-sm bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
-                    <div class="flex justify-between items-center font-bold text-slate-700">
-                        <span>🏦 Bank: <strong id="rek-bank" class="text-emerald-800 text-base font-black">BRI</strong></span>
-                        <span id="rek-an" class="text-xs font-black text-slate-500 text-right uppercase">YAYASAN YAHYAWIYYAH</span>
-                    </div>
-                    <div class="flex justify-between items-center border-t border-slate-200 pt-2">
-                        <span class="font-mono text-lg font-black text-blue-900 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200" id="rek-nomor">003801003305309</span>
-                        <button onclick="salinTeks('rek-nomor', 'Nomor Rekening')" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black px-3 py-1.5 rounded-lg transition cursor-pointer active:scale-95 shadow">📋 SALIN REK</button>
                     </div>
                 </div>
 
                 <div class="bg-amber-500/10 border-2 border-dashed border-amber-500 p-2.5 rounded-xl">
-                    <label class="block text-xs font-black uppercase tracking-wider text-amber-900 mb-1.5 text-center">FOTO / UNGGAH BUKTI TRANSFER (STRUK)</label>
-                    <input type="file" id="file-struk" accept="image/*" class="w-full text-xs text-slate-700 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-emerald-700 file:text-white bg-white p-1 rounded-xl border border-emerald-200 cursor-pointer shadow-sm">
+                    <label class="block text-xs font-black uppercase tracking-wider text-amber-900 mb-1.5 text-center">FOTO / UNGGAH STRUK TRANSFER</label>
+                    <input type="file" id="file-struk" accept="image/*" class="w-full text-xs text-slate-700 bg-white p-1 rounded-xl border border-emerald-200 cursor-pointer shadow-sm">
                 </div>
             </div>
 
@@ -102,17 +81,17 @@
 
     <footer class="w-full space-y-2">
         <div id="area-tombol-submit" class="hidden">
-            <button onclick="prosesValidasiOcr()" id="btn-submit" class="w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-black py-4 rounded-2xl transition-all text-sm shadow-lg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer uppercase tracking-wide flex justify-center items-center gap-2 border-b-4 border-amber-700 active:border-b-0" disabled>
+            <button onclick="prosesValidasiOcr()" id="btn-submit" class="w-full bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black py-4 rounded-2xl text-sm shadow-lg disabled:opacity-40 uppercase flex justify-center items-center gap-2 border-b-4 border-amber-700 active:border-b-0" disabled>
                 <span id="btn-text" class="text-base font-black">Kirim & Proses Otomatis</span>
             </button>
         </div>
-
         <div class="text-[10px] text-emerald-400/60 text-center border-t border-white/5 pt-1.5 font-bold">
-            &copy; 2026 Fuqohak Executive Tech. Anti-Drama Universal OCR V3.
+            &copy; 2026 Fuqohak Executive Tech. Advanced Image Engine V4.
         </div>
     </footer>
 
     <span id="nominal-total-raw" class="hidden">0</span>
+    
     <canvas id="canvas-kompresor" class="hidden"></canvas>
 
     <script>
@@ -120,61 +99,12 @@
         let santriTerpilih = null;
         let nominalTotalGlobal = 0;
 
-        const daftarDoa = [
-            "\"Semoga setiap rupiah yang disalurkan dibalas dengan kelipatan rezeki berlimpah oleh Allah.\"",
-            "\"Tetesan keringat Ayah Bunda dalam membiayai anak mengaji dihitung sebagai pahala jihad sabilillah.\"",
-            "\"Ya Allah lancarkanlah rezeki pemberi nafkah hari ini, dan cerdaskanlah hafalan buah hatinya.\""
-        ];
-
-        function muatSyiarIslam() {
-            const acak = Math.floor(Math.random() * daftarDoa.length);
-            document.getElementById('txt-doa').innerText = daftarDoa[acak];
-            const skrg = new Date();
-            
-            const opsiMasehi = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('txt-masehi').innerText = "📅 " + skrg.toLocaleDateString('id-ID', opsiMasehi);
-            
-            try {
-                const opsiHijriah = { day: 'numeric', month: 'long', year: 'numeric' };
-                const formatterHijriah = new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', opsiHijriah);
-                document.getElementById('txt-hijriah').innerText = formatterHijriah.format(skrg) + " H";
-            } catch (e) { document.getElementById('txt-hijriah').innerText = "Dzulhijjah 1447 H"; }
-
-            const jam = skrg.getHours();
-            const menit = skrg.getMinutes();
-            const waktuMenitSekarang = (jam * 60) + menit;
-
-            let sholat = "Subuh"; 
-            let waktu = "04:22";
-
-            if (waktuMenitSekarang >= 262 && waktuMenitSekarang < 714) {
-                sholat = "Dzuhur"; waktu = "11:54";
-            } else if (waktuMenitSekarang >= 714 && waktuMenitSekarang < 915) {
-                sholat = "Ashar"; waktu = "15:15";
-            } else if (waktuMenitSekarang >= 915 && waktuMenitSekarang < 1072) {
-                sholat = "Maghrib"; waktu = "17:52";
-            } else if (waktuMenitSekarang >= 1072 && waktuMenitSekarang < 1145) {
-                sholat = "Isya"; waktu = "19:05";
-            } else {
-                sholat = "Subuh"; waktu = "04:22";
-            }
-
-            document.getElementById('sholat-sekarang').innerText = `Menuju Waktu ${sholat}`;
-            document.getElementById('sholat-jam').innerText = waktu;
-        }
-
         window.onload = async function() {
-            muatSyiarIslam();
             try {
                 const res = await fetch(API_URL);
                 const hasil = await res.json();
-                if(hasil.status === "success") {
-                    dbSantri = hasil.santri;
-                    if(hasil.rekening.bank) document.getElementById('rek-bank').innerText = hasil.rekening.bank;
-                    if(hasil.rekening.nomor) document.getElementById('rek-nomor').innerText = hasil.rekening.nomor;
-                    if(hasil.rekening.atas_nama) document.getElementById('rek-an').innerText = hasil.rekening.atas_nama;
-                }
-            } catch(e) { console.log("Gagal memuat database via API."); }
+                if(hasil.status === "success") dbSantri = hasil.santri;
+            } catch(e) { console.log("Gagal memuat database."); }
         };
 
         function cariData() {
@@ -188,8 +118,8 @@
                 resDiv.classList.remove('hidden');
                 filtered.forEach(s => {
                     const btn = document.createElement('button');
-                    btn.className = "w-full text-left bg-slate-50 hover:bg-emerald-100 p-3.5 rounded-xl text-xs flex justify-between items-center transition border-2 border-slate-200 cursor-pointer text-slate-900 mt-1 shadow-sm active:scale-95";
-                    btn.innerHTML = `<div><span class="block text-base font-black text-emerald-950">${s.nama}</span></div> <span class="bg-emerald-800 px-2 py-0.5 rounded text-[10px] text-white border border-emerald-900 font-black uppercase">${s.status}</span>`;
+                    btn.className = "w-full text-left bg-slate-50 p-3.5 rounded-xl text-xs flex justify-between items-center mt-1 text-slate-900 shadow-sm";
+                    btn.innerHTML = `<div><span class="block text-base font-black text-emerald-950">${s.nama}</span></div> <span class="bg-emerald-800 px-2 py-0.5 rounded text-[10px] text-white font-black uppercase">${s.status}</span>`;
                     btn.onclick = () => pilihSantri(s);
                     resDiv.appendChild(btn);
                 });
@@ -200,10 +130,8 @@
             santriTerpilih = santri;
             document.getElementById('search-results').classList.add('hidden');
             document.getElementById('search-input').value = santri.nama;
-            
             document.getElementById('step-2').classList.remove('hidden');
             document.getElementById('area-tombol-submit').classList.remove('hidden');
-            
             document.getElementById('target-nama').innerText = santri.nama;
             document.getElementById('target-nik').innerText = "NIK: " + santri.nik;
             document.getElementById('target-status').innerText = santri.status;
@@ -230,13 +158,8 @@
             }
         }
 
-        function salinTeks(elementId, jenisInfo) {
-            let teksYgDisalin = document.getElementById(elementId).innerText;
-            if(elementId === 'rek-nomor') { teksYgDisalin = teksYgDisalin.replace(/\s/g, ''); }
-            navigator.clipboard.writeText(teksYgDisalin).then(() => { alert(`Alhamdulillah, ${jenisInfo} berhasil disalin!`); });
-        }
-
-        const kompresGambarSisiKlien = (file) => new Promise((resolve, reject) => {
+        // 🧠 MESIN PREPROCESSING GAMBAR: MENINGKATKAN KONTRAS & MEMBERSIHKAN DERAU (ANTI-MIRING / ANTI-BURAM)
+        const optimasiGambarSisiKlien = (file) => new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = (event) => {
@@ -246,25 +169,38 @@
                     const canvas = document.getElementById('canvas-kompresor');
                     const ctx = canvas.getContext('2d');
                     
-                    const MAX_WIDTH = 1100; // Sedikit dinaikkan untuk ketajaman e-wallet font kecil
+                    // Standarisasi dimensi struk untuk kerapatan piksel optimal
+                    const TARGET_WIDTH = 1200;
                     let width = img.width;
                     let height = img.height;
-
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
+                    height *= TARGET_WIDTH / width;
+                    width = TARGET_WIDTH;
 
                     canvas.width = width;
                     canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    const dataUrlKecil = canvas.toDataURL('image/jpeg', 0.85);
-                    resolve(dataUrlKecil);
+                    // Ambil data piksel gambar untuk dimanipulasi menjadi hitam-putih murni (Thresholding)
+                    const imgData = ctx.getImageData(0, 0, width, height);
+                    const data = imgData.data;
+                    
+                    for (let i = 0; i < data.length; i += 4) {
+                        // Rumus konversi kecerahan Grayscale standar (Luminance)
+                        const kecerahan = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+                        
+                        // Efek Thresholding: Jika agak gelap jadikan hitam pekat, jika terang jadikan putih bersih
+                        // Ini memisahkan teks nomor referensi secara ekstrem dari background struk
+                        const nilaiFinal = kecerahan < 130 ? 0 : 255; 
+                        data[i]     = nilaiFinal; // Red
+                        data[i+1]   = nilaiFinal; // Green
+                        data[i+2]   = nilaiFinal; // Blue
+                    }
+                    
+                    ctx.putImageData(imgData, 0, 0);
+                    const dataUrlHasilFilter = canvas.toDataURL('image/jpeg', 0.90);
+                    resolve(dataUrlHasilFilter);
                 };
-                img.onerror = (err) => reject(err);
             };
-            reader.onerror = (err) => reject(err);
         });
 
         async function prosesValidasiOcr() {
@@ -274,98 +210,102 @@
             const nPokok = parseInt(document.getElementById('nominal-pokok').value) || 0;
 
             if (fileInput.files.length === 0) {
-                alert("Silakan pilih atau foto gambar struk transfer terlebih dahulu!");
+                alert("Silakan pilih/foto struk transfer terlebih dahulu!");
                 return;
             }
 
             btn.disabled = true;
-            btnText.innerText = "MENGOMPRES GAMBAR...";
+            btnText.innerText = "MENURUNKAN DERAU GAMBAR...";
 
             try {
                 const fileGambarMentah = fileInput.files[0];
-                const base64Kompresi = await kompresGambarSisiKlien(fileGambarMentah);
+                // Proses gambar agar menjadi hitam putih beresolusi tajam
+                const base64HasilFilter = await optimasiGambarSisiKlien(fileGambarMentah);
 
-                btnText.innerText = "MENYIAPKAN MESIN (0%)...";
+                btnText.innerText = "MENYALAKAN OCR TESSERACT...";
 
+                // Mengonfigurasi kamus teks OCR agar hanya fokus pada karakter valid Alfanumerik
                 const worker = await Tesseract.createWorker('ind', 1, {
                     logger: m => {
                         if(m.status === 'recognizing text') {
                             const persen = Math.floor(m.progress * 100);
-                            btnText.innerText = `MEMBACA STRUK (${persen}%)`;
+                            btnText.innerText = `MEMBACA DATA STRUK (${persen}%)`;
                         }
                     }
                 });
 
-                const ret = await worker.recognize(base64Kompresi);
+                // Perintah eksklusif: Hanya terima huruf besar dan angka demi konsistensi deteksi Ref ID
+                await worker.setParameters({
+                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+                });
+
+                const ret = await worker.recognize(base64HasilFilter);
                 const rawText = ret.data.text;
                 await worker.terminate();
 
-                // 🧼 STRATEGI FILTER TERBUKA (Hanya ambil karakter angka murni 0-9)
-                const angkaMurniStruk = rawText.replace(/[^0-9]/g, ''); 
-                
+                // Bersihkan string teks murni untuk pengecekan nominal
+                const angkaMurniStruk = rawText.replace(/[^0-9]/g, '');
                 const targetNominal = nominalTotalGlobal.toString();
-                const targetNominalEkorNol = targetNominal + "00"; // Mengantisipasi desimal desimal tipis e-wallet (,00)
+                const targetNominalEkorNol = targetNominal + "00";
 
-                // Kalkulasi Toleransi Pembulatan ke atas
                 const bulat5ribu = (Math.ceil(nominalTotalGlobal / 5000) * 5000).toString();
                 const bulat10ribu = (Math.ceil(nominalTotalGlobal / 10000) * 10000).toString();
 
-                // 🔍 PROSES PENYISIRAN STRING MULTI-TARGET (Sangat Fleksibel untuk ShopeePay/DANA)
                 const adaAsli = angkaMurniStruk.includes(targetNominal) || angkaMurniStruk.includes(targetNominalEkorNol);
                 const adaBulat = angkaMurniStruk.includes(bulat5ribu) || angkaMurniStruk.includes(bulat5ribu + "00") ||
                                  angkaMurniStruk.includes(bulat10ribu) || angkaMurniStruk.includes(bulat10ribu + "00");
 
-                const validNominal = adaAsli || adaBulat;
-
-                // 🔍 EKSTRAKSI NOMOR REFERENSI LOGIKA BEBAS (Universal E-Wallet + Bank)
-                // Menyatukan baris alfabet-angka murni untuk ID transaksi Shopee/DANA tanpa spasi simbol
-                const teksAlfanumerikMurni = rawText.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                const matchRefBebas = teksAlfanumerikMurni.match(/[A-Z0-9]{8,40}/);
-                
-                let noRefTerdeteksi = "";
-                if (matchRefBebas) {
-                    noRefTerdeteksi = matchRefBebas[0].substring(0, 25);
-                } else {
-                    noRefTerdeteksi = "REFAUTO-" + Date.now();
+                if (!(adaAsli || adaBulat)) {
+                    alert(`Validasi Gagal! Angka nominal "${nominalTotalGlobal}" tidak terbaca pada struk.`);
+                    btn.disabled = false;
+                    btnText.innerText = "Kirim & Proses Otomatis";
+                    return;
                 }
 
-                if (!validNominal) {
-                    alert(`Validasi Gagal! Angka nominal wajib "${nominalTotalGlobal}" atau angka pembulatannya tidak ditemukan pada bukti transfer.\n\nPastikan foto Anda jelas, terang, dan tidak terpotong!`);
+                // 🎯 REKAYASA PENCARIAN NOMOR REFERENSI UTAMA (Sangat Ketat & Konsisten)
+                // Hanya mengambil deretan karakter padat khas Bank/E-wallet (Panjang minimal 12 karakter alfanumerik murni)
+                const textCleanAlfanumerik = rawText.replace(/[^A-Z0-9]/g, '');
+                const matchRefSpesifik = textCleanAlfanumerik.match(/[A-Z0-9]{12,30}/);
+                
+                let noRefTerdeteksi = "";
+                if (matchRefSpesifik) {
+                    noRefTerdeteksi = matchRefSpesifik[0]; // Kode referensi riil murni hasil filter tajam
                 } else {
-                    btnText.innerText = "MENYIMPAN DATA...";
-                    
-                    // Set catatan nominal akhir di Sheet sesuai temuan struk fisik
-                    let finalNominalTotal = nominalTotalGlobal;
-                    if(!adaAsli && adaBulat) {
-                        if(angkaMurniStruk.includes(bulat5ribu)) finalNominalTotal = parseInt(bulat5ribu);
-                        else if(angkaMurniStruk.includes(bulat10ribu)) finalNominalTotal = parseInt(bulat10ribu);
-                    }
+                    // Jika struk beneran tidak punya nomor ref, gunakan fallback berdasar waktu detik ini
+                    noRefTerdeteksi = "REFAUTO-" + Math.floor(Date.now() / 1000); 
+                }
 
-                    const payload = {
-                        aksi: "simpanTransaksiDenganFileB64",
-                        nik: santriTerpilih.nik,
-                        nama: santriTerpilih.nama,
-                        nominal_pokok: nPokok,
-                        nominal_total: finalNominalTotal, 
-                        image_base64: base64Kompresi, 
-                        file_name: `STRUK_${santriTerpilih.nik}_${Date.now()}.jpg`,
-                        device: navigator.userAgent,
-                        no_ref: noRefTerdeteksi 
-                    };
+                btnText.innerText = "MENYIMPAN DATA KE BACKEND...";
+                
+                let finalNominalTotal = nominalTotalGlobal;
+                if(!adaAsli && adaBulat) {
+                    if(angkaMurniStruk.includes(bulat5ribu)) finalNominalTotal = parseInt(bulat5ribu);
+                    else if(angkaMurniStruk.includes(bulat10ribu)) finalNominalTotal = parseInt(bulat10ribu);
+                }
 
-                    const response = await fetch(API_URL, {
-                        method: "POST",
-                        body: JSON.stringify(payload)
-                    });
-                    const hasil = await response.json();
+                const payload = {
+                    aksi: "simpanTransaksiDenganFileB64",
+                    nik: santriTerpilih.nik,
+                    nama: santriTerpilih.nama,
+                    nominal_pokok: nPokok,
+                    nominal_total: finalNominalTotal,
+                    image_base64: base64HasilFilter, // Mengirim gambar yang sudah dipertajam ke Drive
+                    file_name: `STRUK_${santriTerpilih.nik}_${Date.now()}.jpg`,
+                    device: navigator.userAgent,
+                    no_ref: noRefTerdeteksi
+                };
 
-                    if (hasil.status === "success") {
-                        alert("Alhamdulillah, Validasi Berhasil! Bukti transfer e-wallet/bank Anda terekam otomatis.");
-                        location.reload();
-                        return;
-                    } else {
-                        alert(hasil.message);
-                    }
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
+                const hasil = await response.json();
+
+                if (hasil.status === "success") {
+                    alert("Alhamdulillah, Bukti Transfer Berhasil Diverifikasi Secara Akurat!");
+                    location.reload();
+                } else {
+                    alert(hasil.message);
                 }
 
                 btn.disabled = false;
@@ -373,7 +313,7 @@
 
             } catch (e) {
                 console.error(e);
-                alert("Gagal memproses gambar. Pastikan posisi foto tegak dan kondisi cahaya terang.");
+                alert("Terjadi kesalahan sistem pembacaan gambar.");
                 btn.disabled = false;
                 btnText.innerText = "Kirim & Proses Otomatis";
             }

@@ -89,7 +89,7 @@
             </button>
         </div>
         <div class="text-[10px] text-emerald-400/60 text-center border-t border-white/5 pt-1.5 font-bold">
-            &copy; 2026 Fuqohak Executive Tech. Strict Enterprise Engine V5.2.
+            &copy; 2026 Fuqohak Executive Tech. Smart Flexible Locking Engine V5.3.
         </div>
     </footer>
 
@@ -179,7 +179,7 @@
             navigator.clipboard.writeText(teksYgDisalin).then(() => { alert(`Alhamdulillah, ${jenisInfo} berhasil disalin!`); });
         }
 
-        // KANVAS OPTIMASI TINGKAH TINGGI V5.2 (Grayscale Adaptif Pro)
+        // KANVAS OPTIMASI GRADIEN KONTRAST (V5.3 - Dioptimalkan untuk Text Kecil E-Wallet)
         const optimasiGambarSisiKlien = (file) => new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -190,7 +190,7 @@
                     const canvas = document.getElementById('canvas-kompresor');
                     const ctx = canvas.getContext('2d');
                     
-                    const TARGET_WIDTH = 1300; // Menaikkan resolusi sedikit untuk ketajaman teks kecil
+                    const TARGET_WIDTH = 1200; 
                     let width = img.width;
                     let height = img.height;
                     height *= TARGET_WIDTH / width;
@@ -205,14 +205,14 @@
                     
                     for (let i = 0; i < data.length; i += 4) {
                         let r = data[i], g = data[i+1], b = data[i+2];
-                        let grayscale = 0.299 * r + 0.587 * g + 0.114 * b;
-                        // Penajaman kontras huruf tipis bank
-                        let v = grayscale < 160 ? grayscale * 0.35 : Math.min(255, grayscale * 1.35);
+                        let grayscale = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                        // Penajaman adaptif: Tidak merusak text bertumpuk watermark e-wallet
+                        let v = grayscale < 170 ? grayscale * 0.4 : Math.min(255, grayscale * 1.25);
                         data[i] = data[i+1] = data[i+2] = v;
                     }
                     
                     ctx.putImageData(imgData, 0, 0);
-                    resolve(canvas.toDataURL('image/jpeg', 0.95));
+                    resolve(canvas.toDataURL('image/jpeg', 0.92));
                 };
             };
         });
@@ -228,7 +228,7 @@
             }
 
             btn.disabled = true;
-            btnText.innerText = "ENGINE MULTI-SCANNING AKTIF...";
+            btnText.innerText = "SMART SCANNING ACTIVE...";
 
             try {
                 const fileGambarMentah = fileInput.files[0];
@@ -236,51 +236,27 @@
 
                 const worker = await Tesseract.createWorker('ind', 1);
                 
-                // SCAN LAPIS 1: Membaca teks bebas huruf kapital untuk validasi nama dan entitas text
-                const retTeks = await worker.recognize(base64HasilFilter);
-                const rawTextUpper = retTeks.data.text.toUpperCase().replace(/[\.\-]/g, '');
-
-                // 🛑 VALIDASI A: Nama & Rekening Yayasan Tujuan (WAJIB ADA)
-                const keywordYayasan = ["YAYASAN", "YAHYAWIYYAH", "YAHYA", "WIYYAH", "PPMUY"];
-                const targetRekeningYayasan = "003801003305309";
-                
-                const adaNamaYayasan = keywordYayasan.some(key => rawTextUpper.includes(key));
-                const adaRekeningYayasan = rawTextUpper.includes(targetRekeningYayasan);
-
-                if (!adaNamaYayasan || !adaRekeningYayasan) {
-                    alert("VALIDASI GAGAL! Struk tidak ditujukan ke Rekening BRI YAYASAN YAHYAWIYYAH (003801003305309). Sistem otomatis memblokir struk bank/toko lain.");
-                    await worker.terminate();
-                    btn.disabled = false; btnText.innerText = "Kirim & Proses Otomatis";
-                    return;
-                }
-
-                // 🛑 VALIDASI B: Deteksi Keberadaan Identitas Pengirim (Nama & No Rekening Pengirim)
-                const keywordPengirim = ["DARI", "PENGIRIM", "REKENING ASAL", "SUMBER", "SENDER", "NAMA", "DEBET"];
-                const adaIndikasiPengirim = keywordPengirim.some(key => rawTextUpper.includes(key));
-                
-                // Mencari apakah ada angka mandiri min 6-10 digit berjejer sebagai asumsi nomor rekening asal pengirim
-                const matchRekPengirim = rawTextUpper.replace(/[^0-9]/g, '').match(/[0-9]{6,20}/);
-
-                if (!adaIndikasiPengirim || !matchRekPengirim) {
-                    alert("VALIDASI GAGAL! Informasi Nama Pengirim atau Nomor Rekening Asal tidak terdeteksi pada struk. Pastikan struk tercetak jelas.");
-                    await worker.terminate();
-                    btn.disabled = false; btnText.innerText = "Kirim & Proses Otomatis";
-                    return;
-                }
-
-                // SCAN LAPIS 2: Mengunci Whitelist angka murni untuk akurasi nominal & Ref ID
+                // Pembacaan menyeluruh text alfanumerik kapital
                 await worker.setParameters({ tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' });
-                const retAngka = await worker.recognize(base64HasilFilter);
-                const rawTextAlfanumerik = retAngka.data.text.toUpperCase();
+                const ret = await worker.recognize(base64HasilFilter);
+                const rawText = ret.data.text.toUpperCase().replace(/[\.\-\*]/g, '');
                 await worker.terminate();
 
-                // 🛑 VALIDASI C: Pencocokan Nomor Referensi (Ref ID)
-                const textCleanAlfanumerik = rawTextAlfanumerik.replace(/[^A-Z0-9]/g, '');
-                const matchRefSpesifik = textCleanAlfanumerik.match(/[A-Z0-9]{12,30}/);
-                let noRefTerdeteksi = matchRefSpesifik ? matchRefSpesifik[0] : "REFAUTO-" + Math.floor(Date.now() / 1000);
+                // 🎯 SMART VALIDASI A: Deteksi Nama Yayasan OR Ekor Rekening Tujuan (Mengatasi Struk Sensor DANA)
+                const keywordYayasan = ["YAYASAN", "YAHYAWIYYAH", "YAHYA", "WIYYAH", "PPMUY"];
+                const ekorRekeningYayasan = "5309"; 
+                
+                const adaNamaYayasan = keywordYayasan.some(key => rawText.includes(key));
+                const adaEkorRekening = rawText.includes(ekorRekeningYayasan);
 
-                // 🛑 VALIDASI D: Pencocokan Nominal Eksak (Token Match)
-                const listKataStruk = rawTextAlfanumerik.split(/[\s\n\r]+/);
+                if (!adaNamaYayasan && !adaEkorRekening) {
+                    alert("VALIDASI GAGAL! Struk tidak memuat nama 'YAYASAN YAHYAWIYYAH' atau nomor rekening tujuan '5309'. Pastikan ini struk transfer yang benar.");
+                    btn.disabled = false; btnText.innerText = "Kirim & Proses Otomatis";
+                    return;
+                }
+
+                // 🎯 SMART VALIDASI B: Pencocokan Nominal Eksak melalui Metode Tokenizing
+                const listKataStruk = rawText.split(/[\s\n\r]+/);
                 const targetNominal = nominalTotalGlobal.toString();
                 const targetNominalEkorNol = targetNominal + "00";
                 let adaNominalMurniSah = false;
@@ -294,12 +270,23 @@
                 }
 
                 if (!adaNominalMurniSah) {
-                    alert(`VALIDASI GAGAL! Angka nominal tagihan "${targetNominal}" tidak ditemukan secara tepat/utuh di baris manapun dalam struk.`);
+                    alert(`VALIDASI GAGAL! Angka nominal tagihan "${targetNominal}" tidak ditemukan secara tepat/utuh pada struk. Mohon periksa kembali kesesuaian nilai transfer Anda.`);
                     btn.disabled = false; btnText.innerText = "Kirim & Proses Otomatis";
                     return;
                 }
 
-                // JIKA SEMUA VALIDASI AMAN, KIRIM KE GOOGLE SHEET
+                // 🎯 SMART VALIDASI C: Ekstraksi Nomor Referensi Fleksibel (Fallback via Sidik Jari Teks)
+                const textCleanAlfanumerik = rawText.replace(/[^A-Z0-9]/g, '');
+                const matchRefSpesifik = textCleanAlfanumerik.match(/[A-Z0-9]{12,30}/);
+                
+                let noRefTerdeteksi = "";
+                if (matchRefSpesifik) {
+                    noRefTerdeteksi = matchRefSpesifik[0];
+                } else {
+                    // Jika nomor ref terpotong di m-banking, buat sidik jari unik berbasis kombinasi panjang teks & waktu menit itu
+                    noRefTerdeteksi = "REF-FP-" + textCleanAlfanumerik.length + "-" + Math.floor(Date.now() / 60000);
+                }
+
                 btnText.innerText = "MENYIMPAN DATA AMAN...";
 
                 const payload = {
@@ -318,7 +305,7 @@
                 const hasil = await response.json();
 
                 if (hasil.status === "success") {
-                    alert("Alhamdulillah, Seluruh Struktur Struk Terverifikasi Sah & Otomatis Disimpan!");
+                    alert("Alhamdulillah, Bukti Transfer Berhasil Diverifikasi Secara Akurat!");
                     location.reload();
                 } else {
                     alert(hasil.message);

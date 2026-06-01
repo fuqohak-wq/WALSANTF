@@ -77,7 +77,7 @@
                         <span id="nominal-total-html" class="text-3xl font-black text-emerald-800 tracking-tight"></span>
                         <button onclick="salinTeks('nominal-total-raw', 'Nominal')" class="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black px-3 py-1.5 rounded-lg transition cursor-pointer active:scale-95 shadow">📋 SALIN</button>
                     </div>
-                    <span class="text-[10px] text-red-600 font-black block mt-1.5">⚠️ SEBAIKNYA TRANSFER SAMA PERSIS. NAMUN JIKA DIBULATKAN KE ATAS (MISAL KELIPATAN 5.000/10.000), SISTEM TETAP MENERIMA.</span>
+                    <span class="text-[10px] text-red-600 font-black block mt-1.5">⚠️ MENERIMA SEMUA BUKTI TRANSFER (M-BANKING, SHOPEEPAY, DANA, OVO, GOPAY, DLL).</span>
                 </div>
                 
                 <div class="text-sm bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
@@ -108,7 +108,7 @@
         </div>
 
         <div class="text-[10px] text-emerald-400/60 text-center border-t border-white/5 pt-1.5 font-bold">
-            &copy; 2026 Fuqohak Executive Tech. Anti-Duplicate OCR Engine V2.
+            &copy; 2026 Fuqohak Executive Tech. Anti-Drama Universal OCR V3.
         </div>
     </footer>
 
@@ -246,7 +246,7 @@
                     const canvas = document.getElementById('canvas-kompresor');
                     const ctx = canvas.getContext('2d');
                     
-                    const MAX_WIDTH = 1000;
+                    const MAX_WIDTH = 1100; // Sedikit dinaikkan untuk ketajaman e-wallet font kecil
                     let width = img.width;
                     let height = img.height;
 
@@ -259,7 +259,7 @@
                     canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    const dataUrlKecil = canvas.toDataURL('image/jpeg', 0.80);
+                    const dataUrlKecil = canvas.toDataURL('image/jpeg', 0.85);
                     resolve(dataUrlKecil);
                 };
                 img.onerror = (err) => reject(err);
@@ -300,44 +300,45 @@
                 const rawText = ret.data.text;
                 await worker.terminate();
 
-                // 🧼 MEMBERSIHKAN TEKS SECARA TOTAL
-                const textClean = rawText.toUpperCase().replace(/[^A-Z0-9]/g, ''); 
+                // 🧼 STRATEGI FILTER TERBUKA (Hanya ambil karakter angka murni 0-9)
+                const angkaMurniStruk = rawText.replace(/[^0-9]/g, ''); 
                 
                 const targetNominal = nominalTotalGlobal.toString();
-                const targetNominalEkorNol = targetNominal + "00"; 
+                const targetNominalEkorNol = targetNominal + "00"; // Mengantisipasi desimal desimal tipis e-wallet (,00)
 
-                // 🧮 LOGIKA TOLERANSI PEMBULATAN KE ATAS (Kelipatan 5.000 & 10.000)
+                // Kalkulasi Toleransi Pembulatan ke atas
                 const bulat5ribu = (Math.ceil(nominalTotalGlobal / 5000) * 5000).toString();
                 const bulat10ribu = (Math.ceil(nominalTotalGlobal / 10000) * 10000).toString();
 
-                // 🔍 VALIDASI NOMINAL MULTI-LAYER (Asli vs Pembulatan)
-                const adaNominalAsli = textClean.includes(targetNominal) || textClean.includes(targetNominalEkorNol);
-                const adaNominalBulat = textClean.includes(bulat5ribu) || textClean.includes(bulat5ribu + "00") ||
-                                        textClean.includes(bulat10ribu) || textClean.includes(bulat10ribu + "00");
+                // 🔍 PROSES PENYISIRAN STRING MULTI-TARGET (Sangat Fleksibel untuk ShopeePay/DANA)
+                const adaAsli = angkaMurniStruk.includes(targetNominal) || angkaMurniStruk.includes(targetNominalEkorNol);
+                const adaBulat = angkaMurniStruk.includes(bulat5ribu) || angkaMurniStruk.includes(bulat5ribu + "00") ||
+                                 angkaMurniStruk.includes(bulat10ribu) || angkaMurniStruk.includes(bulat10ribu + "00");
 
-                const validNominal = adaNominalAsli || adaNominalBulat;
+                const validNominal = adaAsli || adaBulat;
 
-                // 🔍 EKSTRAKSI NOMOR REFERENSI BANK
-                const teksGabungBaris = rawText.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                const matchRefKombinasi = teksGabungBaris.match(/[A-Z0-9]{10,40}/);
+                // 🔍 EKSTRAKSI NOMOR REFERENSI LOGIKA BEBAS (Universal E-Wallet + Bank)
+                // Menyatukan baris alfabet-angka murni untuk ID transaksi Shopee/DANA tanpa spasi simbol
+                const teksAlfanumerikMurni = rawText.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                const matchRefBebas = teksAlfanumerikMurni.match(/[A-Z0-9]{8,40}/);
                 
                 let noRefTerdeteksi = "";
-                if (matchRefKombinasi) {
-                    noRefTerdeteksi = matchRefKombinasi[0].substring(0, 25);
+                if (matchRefBebas) {
+                    noRefTerdeteksi = matchRefBebas[0].substring(0, 25);
                 } else {
                     noRefTerdeteksi = "REFAUTO-" + Date.now();
                 }
 
                 if (!validNominal) {
-                    alert(`Validasi Gagal! Angka nominal wajib dengan kode unik "${nominalTotalGlobal}" (atau pembulatannya) tidak ditemukan secara tepat pada struk.`);
+                    alert(`Validasi Gagal! Angka nominal wajib "${nominalTotalGlobal}" atau angka pembulatannya tidak ditemukan pada bukti transfer.\n\nPastikan foto Anda jelas, terang, dan tidak terpotong!`);
                 } else {
                     btnText.innerText = "MENYIMPAN DATA...";
                     
-                    // Jika lolos lewat jalur pembulatan, set nominal total yang dicatat sesuai angka pembulatan yang ditemukan di struk
+                    // Set catatan nominal akhir di Sheet sesuai temuan struk fisik
                     let finalNominalTotal = nominalTotalGlobal;
-                    if(!adaNominalAsli && adaNominalBulat) {
-                        if(textClean.includes(bulat5ribu)) finalNominalTotal = parseInt(bulat5ribu);
-                        else if(textClean.includes(bulat10ribu)) finalNominalTotal = parseInt(bulat10ribu);
+                    if(!adaAsli && adaBulat) {
+                        if(angkaMurniStruk.includes(bulat5ribu)) finalNominalTotal = parseInt(bulat5ribu);
+                        else if(angkaMurniStruk.includes(bulat10ribu)) finalNominalTotal = parseInt(bulat10ribu);
                     }
 
                     const payload = {
@@ -345,7 +346,7 @@
                         nik: santriTerpilih.nik,
                         nama: santriTerpilih.nama,
                         nominal_pokok: nPokok,
-                        nominal_total: finalNominalTotal, // Menyimpan nilai asli/bulat sesuai isi struk fisik
+                        nominal_total: finalNominalTotal, 
                         image_base64: base64Kompresi, 
                         file_name: `STRUK_${santriTerpilih.nik}_${Date.now()}.jpg`,
                         device: navigator.userAgent,
@@ -359,7 +360,7 @@
                     const hasil = await response.json();
 
                     if (hasil.status === "success") {
-                        alert("Alhamdulillah, Validasi Struk Sukses! Pembayaran dengan toleransi pembulatan terekam otomatis.");
+                        alert("Alhamdulillah, Validasi Berhasil! Bukti transfer e-wallet/bank Anda terekam otomatis.");
                         location.reload();
                         return;
                     } else {
@@ -372,7 +373,7 @@
 
             } catch (e) {
                 console.error(e);
-                alert("Gagal memproses gambar. Pastikan posisi foto tegak, tulisan tidak terpotong, dan kondisi cahaya terang.");
+                alert("Gagal memproses gambar. Pastikan posisi foto tegak dan kondisi cahaya terang.");
                 btn.disabled = false;
                 btnText.innerText = "Kirim & Proses Otomatis";
             }

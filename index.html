@@ -77,7 +77,7 @@
                         <span id="nominal-total-html" class="text-3xl font-black text-emerald-800 tracking-tight"></span>
                         <button onclick="salinTeks('nominal-total-raw', 'Nominal')" class="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black px-3 py-1.5 rounded-lg transition cursor-pointer active:scale-95 shadow">📋 SALIN</button>
                     </div>
-                    <span class="text-[10px] text-red-600 font-black block mt-1.5">⚠️ ANGKA HARUS SAMA PERSIS JANGAN DIBULATKAN!</span>
+                    <span class="text-[10px] text-red-600 font-black block mt-1.5">⚠️ SEBAIKNYA TRANSFER SAMA PERSIS. NAMUN JIKA DIBULATKAN KE ATAS (MISAL KELIPATAN 5.000/10.000), SISTEM TETAP MENERIMA.</span>
                 </div>
                 
                 <div class="text-sm bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
@@ -300,16 +300,24 @@
                 const rawText = ret.data.text;
                 await worker.terminate();
 
-                // 🧼 MEMBERSIHKAN TEKS SECARA TOTAL (Menghilangkan semua simbol & spasi)
+                // 🧼 MEMBERSIHKAN TEKS SECARA TOTAL
                 const textClean = rawText.toUpperCase().replace(/[^A-Z0-9]/g, ''); 
                 
                 const targetNominal = nominalTotalGlobal.toString();
                 const targetNominalEkorNol = targetNominal + "00"; 
 
-                // 🔍 VALIDASI NOMINAL (Mendukung pembacaan mampat tanpa spasi/titik)
-                const adaNominal = textClean.includes(targetNominal) || textClean.includes(targetNominalEkorNol);
+                // 🧮 LOGIKA TOLERANSI PEMBULATAN KE ATAS (Kelipatan 5.000 & 10.000)
+                const bulat5ribu = (Math.ceil(nominalTotalGlobal / 5000) * 5000).toString();
+                const bulat10ribu = (Math.ceil(nominalTotalGlobal / 10000) * 10000).toString();
 
-                // 🔍 EKSTRAKSI NOMOR REFERENSI BANK (Mendukung kombinasi panjang BRImo & Livin)
+                // 🔍 VALIDASI NOMINAL MULTI-LAYER (Asli vs Pembulatan)
+                const adaNominalAsli = textClean.includes(targetNominal) || textClean.includes(targetNominalEkorNol);
+                const adaNominalBulat = textClean.includes(bulat5ribu) || textClean.includes(bulat5ribu + "00") ||
+                                        textClean.includes(bulat10ribu) || textClean.includes(bulat10ribu + "00");
+
+                const validNominal = adaNominalAsli || adaNominalBulat;
+
+                // 🔍 EKSTRAKSI NOMOR REFERENSI BANK
                 const teksGabungBaris = rawText.toUpperCase().replace(/[^A-Z0-9]/g, '');
                 const matchRefKombinasi = teksGabungBaris.match(/[A-Z0-9]{10,40}/);
                 
@@ -317,21 +325,27 @@
                 if (matchRefKombinasi) {
                     noRefTerdeteksi = matchRefKombinasi[0].substring(0, 25);
                 } else {
-                    // Fallback jika tidak terdeteksi, gunakan timestamp unik agar transaksi tetap aman masuk sheet
                     noRefTerdeteksi = "REFAUTO-" + Date.now();
                 }
 
-                if (!adaNominal) {
-                    alert(`Validasi Gagal! Angka nominal wajib dengan kode unik "${nominalTotalGlobal}" tidak ditemukan secara tepat pada struk.\n\nPastikan foto beresolusi baik dan nominal yang Anda transfer benar.`);
+                if (!validNominal) {
+                    alert(`Validasi Gagal! Angka nominal wajib dengan kode unik "${nominalTotalGlobal}" (atau pembulatannya) tidak ditemukan secara tepat pada struk.`);
                 } else {
                     btnText.innerText = "MENYIMPAN DATA...";
                     
+                    // Jika lolos lewat jalur pembulatan, set nominal total yang dicatat sesuai angka pembulatan yang ditemukan di struk
+                    let finalNominalTotal = nominalTotalGlobal;
+                    if(!adaNominalAsli && adaNominalBulat) {
+                        if(textClean.includes(bulat5ribu)) finalNominalTotal = parseInt(bulat5ribu);
+                        else if(textClean.includes(bulat10ribu)) finalNominalTotal = parseInt(bulat10ribu);
+                    }
+
                     const payload = {
                         aksi: "simpanTransaksiDenganFileB64",
                         nik: santriTerpilih.nik,
                         nama: santriTerpilih.nama,
                         nominal_pokok: nPokok,
-                        nominal_total: nominalTotalGlobal,
+                        nominal_total: finalNominalTotal, // Menyimpan nilai asli/bulat sesuai isi struk fisik
                         image_base64: base64Kompresi, 
                         file_name: `STRUK_${santriTerpilih.nik}_${Date.now()}.jpg`,
                         device: navigator.userAgent,
@@ -345,7 +359,7 @@
                     const hasil = await response.json();
 
                     if (hasil.status === "success") {
-                        alert("Alhamdulillah, Validasi Struk Sukses! Pembayaran terekam otomatis.");
+                        alert("Alhamdulillah, Validasi Struk Sukses! Pembayaran dengan toleransi pembulatan terekam otomatis.");
                         location.reload();
                         return;
                     } else {

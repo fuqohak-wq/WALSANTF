@@ -70,7 +70,7 @@
                 <div id="form-sudah-transfer" class="space-y-1.5 hidden">
                     <label class="block text-xs font-black uppercase tracking-wider text-amber-900 text-center">Masukkan Angka yang Sudah Terlanjur Ditransfer (Rp):</label>
                     <input type="number" id="nominal-terlanjur" oninput="hitungTotalSudahTransfer()" placeholder="Contoh: 500000" class="w-full bg-slate-100 border-2 border-amber-300 focus:border-amber-600 rounded-xl px-3 py-2 text-xl font-black text-center text-amber-700 focus:outline-none transition">
-                    <span class="block text-[10px] text-center text-slate-500 font-bold italic leading-tight">Sistem akan otomatis mengunci nominal ini agar struk Anda langsung lolos verifikasi.</span>
+                    <span class="block text-[10px] text-center text-slate-500 font-bold italic leading-tight">Sistem akan otomatis mengunci nominal ini. Nominal pokok di database akan langsung dikurangi kode unik anak.</span>
                 </div>
             </div>
 
@@ -268,6 +268,7 @@
                 document.getElementById('box-bank-info').classList.add('hidden'); 
                 document.getElementById('label-instruksi-total').innerText = "NOMINAL STRUK YANG DIKUNCI SISTEM";
                 
+                // Mengunci target angka bulat di struk sesuai ketikan ortu
                 nominalTotalGlobal = nTerlanjur;
                 
                 document.getElementById('nominal-total-html').innerText = "Rp " + nominalTotalGlobal.toLocaleString('id-ID');
@@ -403,11 +404,16 @@
 
                 btnText.innerText = "MENYIMPAN DATA AMAN...";
 
+                // LOGIKA HITUNG MUNDUR OTOMATIS SAAT PENYIMPANAN
+                const hitungNominalPokok = modeKalkulatorGlobal === "belum"
+                    ? (parseInt(document.getElementById('nominal-pokok').value) || 0)
+                    : (nominalTotalGlobal - (parseInt(santriTerpilih.kode) || 0));
+
                 const payload = {
                     aksi: "simpanTransaksiDenganFileB64",
                     nik: santriTerpilih.nik,
                     nama: santriTerpilih.nama,
-                    nominal_pokok: modeKalkulatorGlobal === "belum" ? (parseInt(document.getElementById('nominal-pokok').value) || 0) : nominalTotalGlobal,
+                    nominal_pokok: hitungNominalPokok,
                     nominal_total: nominalTotalGlobal,
                     image_base64: base64HasilFilter, 
                     file_name: `STRUK_${santriTerpilih.nik}_${Date.now()}.jpg`,

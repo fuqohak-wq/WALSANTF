@@ -268,7 +268,6 @@
                 document.getElementById('box-bank-info').classList.add('hidden'); 
                 document.getElementById('label-instruksi-total').innerText = "NOMINAL STRUK YANG DIKUNCI SISTEM";
                 
-                // Mengunci target angka bulat di struk sesuai ketikan ortu
                 nominalTotalGlobal = nTerlanjur;
                 
                 document.getElementById('nominal-total-html').innerText = "Rp " + nominalTotalGlobal.toLocaleString('id-ID');
@@ -304,7 +303,7 @@
                 img.onload = () => {
                     const canvas = document.getElementById('canvas-kompresor');
                     const ctx = canvas.getContext('2d');
-                    const TARGET_WIDTH = 1200;
+                    const TARGET_WIDTH = 1500; // Dinaikkan ke 1500 agar teks kecil m-BCA lebih terbaca
                     let width = img.width;
                     let height = img.height;
                     
@@ -330,14 +329,19 @@
                     
                     const imgData = ctx.getImageData(0, 0, width, height);
                     const data = imgData.data;
+                    
+                    // FILTER BINARIZATION HIGH-CONTRAST (ANTI WATERMARK BACKGROUND STRUK BANK)
                     for (let i = 0; i < data.length; i += 4) {
                         let r = data[i], g = data[i+1], b = data[i+2];
                         let grayscale = 0.299 * r + 0.587 * g + 0.114 * b;
-                        let v = grayscale < 160 ? grayscale * 0.5 : Math.min(255, grayscale * 1.2);
+                        
+                        // Menghapus noise watermark latar belakang secara agresif
+                        let v = grayscale > 140 ? 255 : 0; 
+                        
                         data[i] = data[i+1] = data[i+2] = v;
                     }
                     ctx.putImageData(imgData, 0, 0);
-                    resolve(canvas.toDataURL('image/jpeg', 0.92));
+                    resolve(canvas.toDataURL('image/jpeg', 0.95));
                 };
             };
         });

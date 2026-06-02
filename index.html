@@ -117,7 +117,7 @@
             </button>
         </div>
         <div class="text-[10px] text-emerald-400/60 text-center border-t border-white/5 pt-1.5 font-bold">
-            &copy; 2026 Fuqohak Executive Tech. Premium Interactive Calculator V6.1.
+            &copy; 2026 Fuqohak Executive Tech. Premium Interactive Calculator V6.2.
         </div>
     </footer>
 
@@ -130,7 +130,6 @@
         let nominalTotalGlobal = 0;
         let modeKalkulatorGlobal = "belum";
 
-        // Fungsi Kalender Masehi & Perhitungan Hijriah Otomatis
         function muatSyiarIslam() {
             const skrg = new Date();
             const opsiMasehi = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -303,7 +302,7 @@
                 img.onload = () => {
                     const canvas = document.getElementById('canvas-kompresor');
                     const ctx = canvas.getContext('2d');
-                    const TARGET_WIDTH = 1500; // Dinaikkan ke 1500 agar teks kecil m-BCA lebih terbaca
+                    const TARGET_WIDTH = 1500; 
                     let width = img.width;
                     let height = img.height;
                     
@@ -330,14 +329,10 @@
                     const imgData = ctx.getImageData(0, 0, width, height);
                     const data = imgData.data;
                     
-                    // FILTER BINARIZATION HIGH-CONTRAST (ANTI WATERMARK BACKGROUND STRUK BANK)
                     for (let i = 0; i < data.length; i += 4) {
                         let r = data[i], g = data[i+1], b = data[i+2];
                         let grayscale = 0.299 * r + 0.587 * g + 0.114 * b;
-                        
-                        // Menghapus noise watermark latar belakang secara agresif
                         let v = grayscale > 140 ? 255 : 0; 
-                        
                         data[i] = data[i+1] = data[i+2] = v;
                     }
                     ctx.putImageData(imgData, 0, 0);
@@ -380,6 +375,7 @@
                 await worker.setParameters({ tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' });
                 const ret = await worker.recognize(base64HasilFilter);
                 const rawTextClean = ret.data.text.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                const textMurniTanpaSpasi = ret.data.text.toUpperCase().replace(/\s+/g, '');
                 await worker.terminate();
 
                 const kataKunciValid = ["YAYASAN", "YAHYA", "WIYYAH", "PPMUY", "5309", "YAWY"];
@@ -403,12 +399,26 @@
                     return;
                 }
 
-                const matchRefID = rawTextClean.match(/[A-Z0-9]{12,32}/);
-                let noRefFinal = matchRefID ? matchRefID[0] : "REF-AUTO-" + Math.floor(Date.now() / 1000);
+                // =================================================================
+                // ⚙️ LOGIKA EKSTRAKSI NOMOR REFERENSI PRIORITAS (ANTI KATA 'BERHASIL')
+                // =================================================================
+                let noRefFinal = "";
+                const polaRefBca = textMurniTanpaSpasi.match(/REF([A-Z0-9]{15,30})/);
+                const polaRefDana = textMurniTanpaSpasi.match(/IDDANA([0-9]{15,25})/);
+                const polaAngkaPanjang = textMurniTanpaSpasi.match(/[0-9]{20,28}/);
+
+                if (polaRefBca) {
+                    noRefFinal = polaRefBca[0];
+                } else if (polaRefDana) {
+                    noRefFinal = polaRefDana[0];
+                } else if (polaAngkaPanjang) {
+                    noRefFinal = polaAngkaPanjang[0];
+                } else {
+                    noRefFinal = "REF-AUTO-" + Date.now() + "-" + Math.floor(1000 + Math.random() * 9000);
+                }
 
                 btnText.innerText = "MENYIMPAN DATA AMAN...";
 
-                // LOGIKA HITUNG MUNDUR OTOMATIS SAAT PENYIMPANAN
                 const hitungNominalPokok = modeKalkulatorGlobal === "belum"
                     ? (parseInt(document.getElementById('nominal-pokok').value) || 0)
                     : (nominalTotalGlobal - (parseInt(santriTerpilih.kode) || 0));

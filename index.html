@@ -117,7 +117,7 @@
             </button>
         </div>
         <div class="text-[10px] text-emerald-400/60 text-center border-t border-white/5 pt-1.5 font-bold">
-            &copy; 2026 Fuqohak Executive Tech. Premium Anti-Fraud MultiRadar OCR V7.0.
+            &copy; 2026 Fuqohak Executive Tech. Premium Interactive Calculator V6.2.
         </div>
     </footer>
 
@@ -302,7 +302,7 @@
                 img.onload = () => {
                     const canvas = document.getElementById('canvas-kompresor');
                     const ctx = canvas.getContext('2d');
-                    const TARGET_WIDTH = 1600; // Optimalisasi resolusi tinggi untuk memisahkan teks dan watermark
+                    const TARGET_WIDTH = 1500; 
                     let width = img.width;
                     let height = img.height;
                     
@@ -329,11 +329,10 @@
                     const imgData = ctx.getImageData(0, 0, width, height);
                     const data = imgData.data;
                     
-                    // High-Contrast Adaptive Thresholding Filter
                     for (let i = 0; i < data.length; i += 4) {
                         let r = data[i], g = data[i+1], b = data[i+2];
                         let grayscale = 0.299 * r + 0.587 * g + 0.114 * b;
-                        let v = grayscale > 135 ? 255 : 0; 
+                        let v = grayscale > 140 ? 255 : 0; 
                         data[i] = data[i+1] = data[i+2] = v;
                     }
                     ctx.putImageData(imgData, 0, 0);
@@ -357,7 +356,7 @@
             btn.disabled = true;
             barContainer.classList.remove('hidden');
             barFill.style.width = "10%";
-            btnText.innerText = "MENAJAMKAN TEKS GAMBAR (10%)...";
+            btnText.innerText = "MENGOREKSI POSISI GAMBAR (10%)...";
 
             try {
                 const fileGambarMentah = fileInput.files[0];
@@ -373,69 +372,49 @@
                     }
                 });
 
-                // Membuka whitelist karakter agar OCR bisa membaca huruf kecil dan lambat tanda baca pada No. Ref Bank
-                await worker.setParameters({ tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-:/.' });
+                await worker.setParameters({ tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' });
                 const ret = await worker.recognize(base64HasilFilter);
-                
-                const textMurniTanpaSpasi = ret.data.text.replace(/\s+/g, '');
                 const rawTextClean = ret.data.text.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                const textMurniTanpaSpasi = ret.data.text.toUpperCase().replace(/\s+/g, '');
                 await worker.terminate();
 
-                // 1. VALIDASI ATRIBUT KEPEMILIKAN YAYASAN
-                const kataKunciValid = ["YAYASAN", "YAHYA", "WIYYAH", "PPMUY", "5309", "003801003305309"];
+                const kataKunciValid = ["YAYASAN", "YAHYA", "WIYYAH", "PPMUY", "5309", "YAWY"];
                 const apakahStrukYayasan = kataKunciValid.some(key => rawTextClean.includes(key));
 
                 if (!apakahStrukYayasan) {
-                    alert("⚠️ INTEGRITY ERROR: Atribut 'YAYASAN YAHYAWIYYAH' atau nomor rekening '5309' tidak ditemukan di lembar struk. Pastikan Anda mengirim struk transfer yang benar!");
+                    alert("VALIDASI GAGAL! Atribut 'YAYASAN YAHYAWIYYAH' atau nomor rekening '5309' tidak ditemukan di struk. Mohon gunakan foto struk yang tegak dan jelas.");
                     btn.disabled = false; barContainer.classList.add('hidden'); btnText.innerText = "Kirim & Proses Otomatis";
                     return;
                 }
 
-                // 2. VALIDASI NOMINAL & INTEGRITAS TIGA DIGIT KODE UNIK ANAK
                 const targetNominal = nominalTotalGlobal.toString();
                 const targetNominalSen = targetNominal + "00"; 
+                
                 const nominalCocokMurni = rawTextClean.includes(targetNominal);
                 const nominalCocokSen = rawTextClean.includes(targetNominalSen);
 
-                // Tambahan proteksi: Tiga angka terakhir kode unik wajib terbaca menyatu di dalam struk
-                const stringKodeUnik = santriTerpilih.kode.padStart(3, '0');
-                const pakahKodeUnikTerbaca = rawTextClean.includes(stringKodeUnik);
-
-                if ((!nominalCocokMurni && !nominalCocokSen) || !pakahKodeUnikTerbaca) {
-                    alert(`⚠️ INTEGRITY ERROR: Nominal transfer Rp ${parseInt(targetNominal).toLocaleString('id-ID')} atau 3 digit kode unik (+${stringKodeUnik}) anak Anda tidak terbaca di struk. Mohon gunakan tangkapan layar yang bersih.`);
+                if (!nominalCocokMurni && !nominalCocokSen) {
+                    alert(`VALIDASI GAGAL! Nominal transfer Rp ${parseInt(targetNominal).toLocaleString('id-ID')} tidak ditemukan pada teks struk. Harap periksa kembali kesesuaian nilai transfer Anda.`);
                     btn.disabled = false; barContainer.classList.add('hidden'); btnText.innerText = "Kirim & Proses Otomatis";
                     return;
                 }
 
                 // =================================================================
-                // 🛡️ ANTI-FRAUD MULTI-RADAR: RADAR KHUSUS NO. REFERENSI ASLI BANK
+                // ⚙️ LOGIKA EKSTRAKSI NOMOR REFERENSI PRIORITAS (ANTI KATA 'BERHASIL')
                 // =================================================================
                 let noRefFinal = "";
+                const polaRefBca = textMurniTanpaSpasi.match(/REF([A-Z0-9]{15,30})/);
+                const polaRefDana = textMurniTanpaSpasi.match(/IDDANA([0-9]{15,25})/);
+                const polaAngkaPanjang = textMurniTanpaSpasi.match(/[0-9]{20,28}/);
 
-                // Ekstraksi Berbasis Karakteristik Aplikasi Keuangan
-                const radarBCA = textMurniTanpaSpasi.match(/(?:Ref|No\.Ref|Referensi|No\.Referensi|No\.:|N0\.:)([0-9]{15,28})/i) || textMurniTanpaSpasi.match(/95[0-9]{18,24}/);
-                const radarDANA = textMurniTanpaSpasi.match(/IDDANA[0-9]{15,25}/i) || textMurniTanpaSpasi.match(/DanaId:[0-9]{15,25}/i);
-                const radarShopee = textMurniTanpaSpasi.match(/No\.Transaksi[0-9A-Za-z]{18,30}/i) || textMurniTanpaSpasi.match(/2026[0-9]{14,22}/);
-                const radarBRI = textMurniTanpaSpasi.match(/(?:BRIMORef|No\.Ref|Ref\.:)([0-9]{12,20})/i);
-                const radarUmumAngkaPanjang = textMurniTanpaSpasi.match(/[0-9]{16,28}/);
-
-                if (radarBCA) {
-                    noRefFinal = "BCA-" + radarBCA[1] || radarBCA[0];
-                } else if (radarDANA) {
-                    noRefFinal = radarDANA[0].toUpperCase();
-                } else if (radarShopee) {
-                    noRefFinal = "SPAY-" + radarShopee[0].toUpperCase();
-                } else if (radarBRI) {
-                    noRefFinal = "BRI-" + radarBRI[1] || radarBRI[0];
-                } else if (radarUmumAngkaPanjang && !radarUmumAngkaPanjang[0].includes("003801003305309")) {
-                    noRefFinal = "REF-" + radarUmumAngkaPanjang[0];
-                }
-
-                // BLOKIR TOTAL JIKA NO. REF ASLI TIDAK TERBACA (PENGHAPUSAN REF-AUTO)
-                if (!noRefFinal || noRefFinal.length < 10 || noRefFinal.includes("BERHASIL")) {
-                    alert("❌ ANTI-FRAUD PROTECTION: Sistem gagal memvalidasi Nomor Referensi asli pada struk Anda. Demi keamanan dari pemalsuan, sistem menolak struk ini. Silakan ambil tangkapan layar (screenshot) langsung dari aplikasi perbankan Anda secara utuh, tegak, dan jernih!");
-                    btn.disabled = false; barContainer.classList.add('hidden'); btnText.innerText = "Kirim & Proses Otomatis";
-                    return;
+                if (polaRefBca) {
+                    noRefFinal = polaRefBca[0];
+                } else if (polaRefDana) {
+                    noRefFinal = polaRefDana[0];
+                } else if (polaAngkaPanjang) {
+                    noRefFinal = polaAngkaPanjang[0];
+                } else {
+                    noRefFinal = "REF-AUTO-" + Date.now() + "-" + Math.floor(1000 + Math.random() * 9000);
                 }
 
                 btnText.innerText = "MENYIMPAN DATA AMAN...";

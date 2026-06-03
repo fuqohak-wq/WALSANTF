@@ -35,7 +35,7 @@
             <div class="bg-emerald-800 text-white p-3 rounded-xl shadow">
                 <span class="text-[10px] uppercase font-bold text-emerald-300 block">Anak yang Dipilih:</span>
                 <span id="target-nama" class="text-base font-black block leading-tight"></span>
-                <span id="target-kode" class="inline-block bg-amber-400 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded mt-1">KODE UNIK DI STRUK WAJIB ADA ANGKA: +---</span>
+                <span id="target-kode" class="inline-block bg-amber-400 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded mt-1">SISTEM BERHASIL MENGUNCI IDENTITAS ANAK</span>
             </div>
 
             <div class="space-y-1.5 pt-1">
@@ -43,7 +43,7 @@
                 <label for="file-struk" class="flex flex-col items-center justify-center border-2 border-dashed border-emerald-600 bg-emerald-50/50 hover:bg-emerald-50 rounded-2xl p-5 cursor-pointer transition text-center group">
                     <span id="icon-upload" class="text-3xl mb-1">📸</span>
                     <span id="text-upload-label" class="text-sm font-black text-emerald-950">Klik untuk Pilih Struk</span>
-                    <span id="text-upload-sub" class="text-[10px] text-slate-500 font-medium mt-0.5">Sistem akan otomatis membaca nominal uang & nomor referensi bank.</span>
+                    <span id="text-upload-sub" class="text-[10px] text-slate-500 font-medium mt-0.5">Transfer nominal berapapun akan diterima & diproses otomatis.</span>
                 </label>
                 <input type="file" id="file-struk" accept="image/*" onchange="fileKenaInput(this)" class="hidden">
             </div>
@@ -60,7 +60,7 @@
             </button>
         </div>
         <div class="text-[10px] text-emerald-400/60 text-center pt-3 font-bold">
-            &copy; 2026 PPMUY Auto-Pilot System V8.0 Full-Automation.
+            &copy; 2026 PPMUY Auto-Pilot System V8.5 Flexible-OCR.
         </div>
     </footer>
 
@@ -104,7 +104,7 @@
             document.getElementById('step-upload').classList.remove('hidden');
             document.getElementById('area-tombol-submit').classList.remove('hidden');
             document.getElementById('target-nama').innerText = santri.nama;
-            document.getElementById('target-kode').innerText = "KODE UNIK DI STRUK WAJIB ADA ANGKA: +" + santri.kode.padStart(3, '0');
+            document.getElementById('target-kode').innerText = "KODE UNIK SISTEM: -" + santri.kode;
             document.getElementById('btn-submit').disabled = true;
         }
 
@@ -155,7 +155,7 @@
             btn.disabled = true;
             barContainer.classList.remove('hidden');
             barFill.style.width = "10%";
-            btnText.innerText = "MENAJAMKAN STRUK (10%)...";
+            btnText.innerText = "MENGANALISIS STRUK (10%)...";
 
             try {
                 const fileGambarMentah = fileInput.files[0];
@@ -166,7 +166,7 @@
                         if (progress.status === 'recognizing text') {
                             const persenAngka = Math.floor(progress.progress * 100);
                             barFill.style.width = `${persenAngka}%`;
-                            btnText.innerText = `MEMBACA STRUK... (${persenAngka}%)`;
+                            btnText.innerText = `MEMPROSES DATA... (${persenAngka}%)`;
                         }
                     }
                 });
@@ -177,34 +177,39 @@
                 const textMurniTanpaSpasi = ret.data.text.replace(/\s+/g, '');
                 await worker.terminate();
 
-                // 1. VALIDASI ATRIBUT REKENING TUJUAN
+                // 1. VALIDASI ATRIBUT TUJUAN YAYASAN
                 const kataKunciValid = ["YAYASAN", "YAHYA", "WIYYAH", "PPMUY", "5309", "0038"];
                 const apakahStrukYayasan = kataKunciValid.some(key => rawTextClean.includes(key));
                 if (!apakahStrukYayasan) {
-                    alert("❌ STRUK TOLAK: Atribut 'YAYASAN YAHYAWIYYAH' atau rekening '5309' tidak terbaca di struk. Pastikan ini struk asli!");
+                    alert("❌ STRUK TOLAK: Nama 'YAYASAN YAHYAWIYYAH' atau nomor rekening '5309' tidak terdeteksi. Pastikan mengunggah struk transfer yang benar.");
                     btn.disabled = false; barContainer.classList.add('hidden'); btnText.innerText = "Kirim Bukti Transfer";
                     return;
                 }
 
-                // 2. RADAR RADIKAL MENCARI NOMINAL TOTAL DI DALAM STRUK
-                // Mencari semua deretan angka yang berpotensi menjadi uang transferan
+                // 2. RADAR CERDAS MENCARI NOMINAL UTAMA TRANSFER (BERAPAPUN ANGKA BULATNYA)
                 const daftarAngkaStruk = textMurniTanpaSpasi.replace(/,00$/g, '').match(/\d[\d\.,]*/g) || [];
                 let nominalTotalDitemukan = 0;
-                const stringKodeUnikMurni = santriTerpilih.kode.padStart(3, '0');
 
+                // Urutkan kandidat angka terbesar agar nominal pokok transfer langsung tertangkap duluan
+                let daftarKandidatAngka = [];
                 for (let hitung of daftarAngkaStruk) {
                     let angkaClean = hitung.replace(/[^0-9]/g, '');
                     let nominalKandidat = parseInt(angkaClean);
-                    
-                    // Logika: Nominal transfer harus berakhiran 3 digit kode unik anak
-                    if (nominalKandidat >= 10000 && angkaClean.endsWith(stringKodeUnikMurni)) {
-                        nominalTotalDitemukan = nominalKandidat;
-                        break;
+                    if (nominalKandidat >= 10000 && nominalKandidat <= 50000000) {
+                        daftarKandidatAngka.push(nominalKandidat);
+                    }
+                }
+                
+                if (daftarKandidatAngka.length > 0) {
+                    // Ambil angka terbesar yang bukan nomor rekening tujuan (003801003305309)
+                    let filteredKandidat = daftarKandidatAngka.filter(num => !String(num).includes("5309") && !String(num).includes("0038"));
+                    if (filteredKandidat.length > 0) {
+                        nominalTotalDitemukan = Math.max(...filteredKandidat);
                     }
                 }
 
                 if (nominalTotalDitemukan === 0) {
-                    alert(`❌ ANTI-FRAUD EXTREME: Sistem tidak menemukan nominal transfer yang berakhiran kode unik anak Anda (+${stringKodeUnikMurni}). Pembayaran ditolak secara otomatis untuk mencegah manipulasi.`);
+                    alert(`❌ VALIDASI NOMINAL GAGAL: Jumlah uang transfer di dalam struk tidak terbaca jelas. Mohon upload ulang screenshot dengan kualitas yang lebih tajam.`);
                     btn.disabled = false; barContainer.classList.add('hidden'); btnText.innerText = "Kirim Bukti Transfer";
                     return;
                 }
@@ -224,14 +229,13 @@
                 else if (radarUmumAngkaPanjang && !radarUmumAngkaPanjang[0].includes("003801003305309")) noRefFinal = "REF-" + radarUmumAngkaPanjang[0];
 
                 if (!noRefFinal || noRefFinal.length < 9) {
-                    alert("❌ ANTI-FRAUD PROTECTION: Nomor Referensi unik perbankan gagal dibaca. Silakan upload screenshot struk yang utuh dan jelas.");
+                    alert("❌ ANTI-FRAUD LOG: Nomor Referensi transaksi bank gagal divalidasi. Gunakan screenshot aplikasi bank asli yang tidak terpotong.");
                     btn.disabled = false; barContainer.classList.add('hidden'); btnText.innerText = "Kirim Bukti Transfer";
                     return;
                 }
 
                 btnText.innerText = "MENYIMPAN DATA AMAN...";
 
-                // Mengirimkan data ke Google Sheets untuk dikalkulasi secara otomatis di server
                 const payload = {
                     aksi: "simpanTransaksiOtomatisPenuh",
                     nik: santriTerpilih.nik,
@@ -247,7 +251,7 @@
                 const hasil = await response.json();
 
                 if (hasil.status === "success") {
-                    alert(`Alhamdulillah Sah!\nSistem membaca Anda mentransfer sebesar Rp ${nominalTotalDitemukan.toLocaleString('id-ID')}.\nData tabungan santri telah berhasil diperbarui.`);
+                    alert(`Alhamdulillah Berhasil!\nSistem membaca nominal struk sebesar Rp ${nominalTotalDitemukan.toLocaleString('id-ID')}.\nData tabungan santri telah diperbarui.`);
                     location.reload();
                 } else {
                     alert(hasil.message);

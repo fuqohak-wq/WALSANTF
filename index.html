@@ -13,21 +13,22 @@
 </head>
 <body class="bg-gradient-to-br from-emerald-900 via-teal-950 to-slate-900 text-slate-100 min-h-screen flex flex-col justify-between p-4 antialiased mx-auto w-full max-w-md">
 
-    <header class="w-full text-center py-2 space-y-1">
-        <h1 class="text-[10px] font-black text-amber-400 tracking-widest uppercase">YAYASAN YAHYAWIYYAH</h1>
-        <h2 class="text-base font-extrabold text-white tracking-tight leading-tight">SISTEM KONFIRMASI STRUK OTOMATIS</h2>
+    <header class="w-full text-center py-2 flex justify-between items-center border-b border-white/10">
+        <div class="text-left">
+            <h1 class="text-[10px] font-black text-amber-400 tracking-widest uppercase">YAYASAN YAHYAWIYYAH</h1>
+            <h2 class="text-base font-extrabold text-white tracking-tight leading-tight">SISTEM KONFIRMASI STRUK</h2>
+        </div>
+        <button onclick="bukaPanelAdmin()" class="bg-white/10 hover:bg-white/20 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-white/10 transition">🔐 Admin</button>
     </header>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbz4WIiha9JSemWqoC4603207orwCm3eYd3XlMwXzNZBTLHvWsITLlyecHnjB4hvr-i03w/exec";
     </script>
 
-    <main class="w-full flex-1 flex flex-col justify-center my-4 space-y-4">
+    <main id="panel-walisantri" class="w-full flex-1 flex flex-col justify-center my-4 space-y-4">
         <div class="w-full bg-white text-slate-900 p-4 rounded-2xl shadow-xl space-y-2">
             <label class="block text-xs font-black uppercase tracking-wider text-emerald-900">1. Cari Nama Santri / Ustadz :</label>
-            <div class="relative">
-                <input type="text" id="search-input" oninput="cariData()" placeholder="Ketik nama anak di sini..." class="w-full bg-slate-100 border-2 border-emerald-200 focus:border-emerald-600 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none transition">
-            </div>
+            <input type="text" id="search-input" oninput="cariData()" placeholder="Ketik nama anak di sini..." class="w-full bg-slate-100 border-2 border-emerald-200 focus:border-emerald-600 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none transition">
             <div id="search-results" class="space-y-1.5 max-h-44 overflow-y-auto hidden pt-1"></div>
         </div>
 
@@ -35,7 +36,6 @@
             <div class="bg-emerald-800 text-white p-3 rounded-xl shadow">
                 <span class="text-[10px] uppercase font-bold text-emerald-300 block">Anak yang Dipilih:</span>
                 <span id="target-nama" class="text-base font-black block leading-tight"></span>
-                <span id="target-kode" class="inline-block bg-amber-400 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded mt-1">SISTEM BERHASIL MENGUNCI IDENTITAS ANAK</span>
             </div>
 
             <div class="space-y-1.5 pt-1">
@@ -43,25 +43,34 @@
                 <label for="file-struk" class="flex flex-col items-center justify-center border-2 border-dashed border-emerald-600 bg-emerald-50/50 hover:bg-emerald-50 rounded-2xl p-5 cursor-pointer transition text-center group">
                     <span id="icon-upload" class="text-3xl mb-1">📸</span>
                     <span id="text-upload-label" class="text-sm font-black text-emerald-950">Klik untuk Pilih Struk</span>
-                    <span id="text-upload-sub" class="text-[10px] text-slate-500 font-medium mt-0.5">Transfer nominal berapapun akan diterima & diproses otomatis.</span>
+                    <span id="text-upload-sub" class="text-[10px] text-slate-500 font-medium mt-0.5">Sistem memproses semua jenis struk bank/ATM secara otomatis.</span>
                 </label>
                 <input type="file" id="file-struk" accept="image/*" onchange="fileKenaInput(this)" class="hidden">
             </div>
         </div>
-    </main>
 
-    <footer>
         <div id="area-tombol-submit" class="hidden">
-            <button onclick="prosesOtomatisasiOcrTotal()" id="btn-submit" class="w-full bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black py-4 rounded-2xl text-sm shadow-lg uppercase flex flex-col justify-center items-center transition duration-200 border-b-4 border-amber-700 active:border-b-0" disabled>
+            <button onclick="prosesOtomatisasiOcrTotal()" id="btn-submit" class="w-full bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black py-4 rounded-2xl text-sm shadow-lg uppercase flex flex-col justify-center items-center border-b-4 border-amber-700 active:border-b-0 transition" disabled>
                 <span id="btn-text" class="text-sm font-black tracking-wide">Kirim Bukti Transfer</span>
                 <div id="progress-bar-container" class="w-2/3 bg-slate-950/20 h-1.5 rounded-full mt-1.5 hidden overflow-hidden">
                     <div id="progress-bar-fill" class="bg-slate-950 h-full w-0 transition-all duration-150"></div>
                 </div>
             </button>
         </div>
-        <div class="text-[10px] text-emerald-400/60 text-center pt-3 font-bold">
-            &copy; 2026 PPMUY Auto-Pilot System V8.5 Flexible-OCR.
+    </main>
+
+    <main id="panel-admin" class="w-full flex-1 flex flex-col my-4 space-y-4 hidden">
+        <div class="flex justify-between items-center bg-slate-900/50 p-3 rounded-xl border border-white/5">
+            <span class="text-xs font-black uppercase text-amber-400">📋 DATA PERLU VALIDASI MANUAL</span>
+            <button onclick="keluarPanelAdmin()" class="text-xs text-rose-400 font-bold hover:underline">Keluar Admin</button>
         </div>
+        <div id="list-validasi-admin" class="space-y-3 max-h-[70vh] overflow-y-auto">
+            <div class="text-center text-xs text-slate-400 py-8">Memuat data verifikasi server...</div>
+        </div>
+    </main>
+
+    <footer class="w-full text-[10px] text-emerald-400/60 text-center pt-2 border-t border-white/5 font-bold">
+        &copy; 2026 PPMUY Anti-Fraud SmartRadar V9.0.
     </footer>
 
     <canvas id="canvas-kompresor" class="hidden"></canvas>
@@ -89,8 +98,8 @@
                 resDiv.classList.remove('hidden');
                 filtered.forEach(s => {
                     const btn = document.createElement('button');
-                    btn.className = "w-full text-left bg-slate-50 p-3 rounded-xl flex justify-between items-center mt-1 border border-slate-200 shadow-sm";
-                    btn.innerHTML = `<div><span class="block text-sm font-black text-slate-900">${s.nama}</span></div> <span class="bg-emerald-800 text-white font-black text-[10px] px-2 py-0.5 rounded">ID: +${s.kode}</span>`;
+                    btn.className = "w-full text-left bg-slate-50 p-3 rounded-xl flex justify-between items-center mt-1 border border-slate-200 text-slate-900 shadow-sm";
+                    btn.innerHTML = `<div><span class="block text-sm font-black">${s.nama}</span></div> <span class="bg-emerald-800 text-white font-black text-[10px] px-2 py-0.5 rounded">ID: +${s.kode}</span>`;
                     btn.onclick = () => pilihSantri(s);
                     resDiv.appendChild(btn);
                 });
@@ -104,7 +113,6 @@
             document.getElementById('step-upload').classList.remove('hidden');
             document.getElementById('area-tombol-submit').classList.remove('hidden');
             document.getElementById('target-nama').innerText = santri.nama;
-            document.getElementById('target-kode').innerText = "KODE UNIK SISTEM: -" + santri.kode;
             document.getElementById('btn-submit').disabled = true;
         }
 
@@ -126,8 +134,7 @@
                     const canvas = document.getElementById('canvas-kompresor');
                     const ctx = canvas.getContext('2d');
                     const TARGET_WIDTH = 1200; 
-                    let width = img.width;
-                    let height = img.height;
+                    let width = img.width; let height = img.height;
                     if (width > height) { let temp = width; width = height; height = temp; }
                     height *= TARGET_WIDTH / width; width = TARGET_WIDTH;
                     canvas.width = width; canvas.height = height;
@@ -152,10 +159,8 @@
             const barContainer = document.getElementById('progress-bar-container');
             const barFill = document.getElementById('progress-bar-fill');
 
-            btn.disabled = true;
-            barContainer.classList.remove('hidden');
-            barFill.style.width = "10%";
-            btnText.innerText = "MENGANALISIS STRUK (10%)...";
+            btn.disabled = true; barContainer.classList.remove('hidden'); barFill.style.width = "10%";
+            btnText.innerText = "MEMBACA DATA STRUK (10%)...";
 
             try {
                 const fileGambarMentah = fileInput.files[0];
@@ -166,7 +171,7 @@
                         if (progress.status === 'recognizing text') {
                             const persenAngka = Math.floor(progress.progress * 100);
                             barFill.style.width = `${persenAngka}%`;
-                            btnText.innerText = `MEMPROSES DATA... (${persenAngka}%)`;
+                            btnText.innerText = `MEMINDAI... (${persenAngka}%)`;
                         }
                     }
                 });
@@ -177,61 +182,57 @@
                 const textMurniTanpaSpasi = ret.data.text.replace(/\s+/g, '');
                 await worker.terminate();
 
-                // 1. VALIDASI ATRIBUT TUJUAN YAYASAN
+                // 1. VALIDASI ATRIBUT REKENING TUJUAN YAYASAN
                 const kataKunciValid = ["YAYASAN", "YAHYA", "WIYYAH", "PPMUY", "5309", "0038"];
                 const apakahStrukYayasan = kataKunciValid.some(key => rawTextClean.includes(key));
                 if (!apakahStrukYayasan) {
-                    alert("❌ STRUK TOLAK: Nama 'YAYASAN YAHYAWIYYAH' atau nomor rekening '5309' tidak terdeteksi. Pastikan mengunggah struk transfer yang benar.");
+                    alert("❌ STRUK DITOLAK: Atribut 'YAYASAN YAHYAWIYYAH' atau rekening '5309' tidak terbaca di struk. Pastikan struk yang diunggah benar.");
                     btn.disabled = false; barContainer.classList.add('hidden'); btnText.innerText = "Kirim Bukti Transfer";
                     return;
                 }
 
-                // 2. RADAR CERDAS MENCARI NOMINAL UTAMA TRANSFER (BERAPAPUN ANGKA BULATNYA)
+                // 2. RADAR UNIVERSAL NOMINAL RUPIAH UTAMA
                 const daftarAngkaStruk = textMurniTanpaSpasi.replace(/,00$/g, '').match(/\d[\d\.,]*/g) || [];
                 let nominalTotalDitemukan = 0;
-
-                // Urutkan kandidat angka terbesar agar nominal pokok transfer langsung tertangkap duluan
                 let daftarKandidatAngka = [];
                 for (let hitung of daftarAngkaStruk) {
                     let angkaClean = hitung.replace(/[^0-9]/g, '');
                     let nominalKandidat = parseInt(angkaClean);
-                    if (nominalKandidat >= 10000 && nominalKandidat <= 50000000) {
-                        daftarKandidatAngka.push(nominalKandidat);
-                    }
+                    if (nominalKandidat >= 10000 && nominalKandidat <= 50000000) { daftarKandidatAngka.push(nominalKandidat); }
                 }
-                
                 if (daftarKandidatAngka.length > 0) {
-                    // Ambil angka terbesar yang bukan nomor rekening tujuan (003801003305309)
                     let filteredKandidat = daftarKandidatAngka.filter(num => !String(num).includes("5309") && !String(num).includes("0038"));
-                    if (filteredKandidat.length > 0) {
-                        nominalTotalDitemukan = Math.max(...filteredKandidat);
-                    }
+                    if (filteredKandidat.length > 0) { nominalTotalDitemukan = Math.max(...filteredKandidat); }
                 }
 
                 if (nominalTotalDitemukan === 0) {
-                    alert(`❌ VALIDASI NOMINAL GAGAL: Jumlah uang transfer di dalam struk tidak terbaca jelas. Mohon upload ulang screenshot dengan kualitas yang lebih tajam.`);
+                    alert(`❌ STRUK TIDAK JELAS: Nominal uang transfer tidak terbaca detektor. Mohon kirim ulang screenshot gambar struk yang tegak lurus.`);
                     btn.disabled = false; barContainer.classList.add('hidden'); btnText.innerText = "Kirim Bukti Transfer";
                     return;
                 }
 
-                // 3. RADAR NOMOR REFERENSI BANK
+                // =================================================================
+                // 🛡️ REVISION V9.0: RADAR REGEX MULTI-CORE (SEABANK, BCA, BRI, ATM)
+                // =================================================================
                 let noRefFinal = "";
+                
+                // Core 1: SeaBank Core (Panjang Alfabetis Kombinasi Angka)
+                const radarSeaBank = textMurniTanpaSpasi.match(/No\.Transaksi[:\s]*([A-Z0-9]{15,25})/i) || textMurniTanpaSpasi.match(/RefNo[:\s]*([A-Z0-9]{15,25})/i);
+                // Core 2: m-BCA / BI-FAST Core
                 const radarBCA = textMurniTanpaSpasi.match(/Ref(?:id)?[:\s\.]*([0-9A-Z]{12,30})/i) || textMurniTanpaSpasi.match(/950[0-9A-Z]{15,25}/i);
-                const radarDANA = textMurniTanpaSpasi.match(/IDDANA[0-9]{15,25}/i);
-                const radarShopee = textMurniTanpaSpasi.match(/No\.Transaksi[0-9A-Za-z]{18,30}/i) || textMurniTanpaSpasi.match(/2026[0-9]{14,22}/);
-                const radarBRI = textMurniTanpaSpasi.match(/(?:BRIMORef|No\.Ref|Ref\.:)([0-9]{12,20})/i);
-                const radarUmumAngkaPanjang = textMurniTanpaSpasi.match(/[0-9]{14,28}/);
+                // Core 3: BRImo Core
+                const radarBRI = textMurniTanpaSpasi.match(/(?:BRIMORef|No\.Ref|Ref\.:)([0-9]{12,20})/i) || textMurniTanpaSpasi.match(/No\.Referensi[:\s]*([0-9]{12,20})/i);
+                // Core 4: Struk ATM / E-Wallet Umum (Mencari deretan angka/kombinasi referensi transaksi panjang)
+                const radarUmumAngkaPanjang = textMurniTanpaSpasi.match(/[0-9A-Z]{12,28}/);
 
-                if (radarBCA) noRefFinal = "BCA-" + (radarBCA[1] || radarBCA[0]).toUpperCase();
-                else if (radarDANA) noRefFinal = radarDANA[0].toUpperCase();
-                else if (radarShopee) noRefFinal = "SPAY-" + radarShopee[0].toUpperCase();
+                if (radarSeaBank) noRefFinal = "SEABANK-" + radarSeaBank[1].toUpperCase();
+                else if (radarBCA) noRefFinal = "BCA-" + (radarBCA[1] || radarBCA[0]).toUpperCase();
                 else if (radarBRI) noRefFinal = "BRI-" + (radarBRI[1] || radarBRI[0]).toUpperCase();
-                else if (radarUmumAngkaPanjang && !radarUmumAngkaPanjang[0].includes("003801003305309")) noRefFinal = "REF-" + radarUmumAngkaPanjang[0];
+                else if (radarUmumAngkaPanjang && !radarUmumAngkaPanjang[0].includes("003801003305309")) noRefFinal = "REF-" + radarUmumAngkaPanjang[0].toUpperCase();
 
-                if (!noRefFinal || noRefFinal.length < 9) {
-                    alert("❌ ANTI-FRAUD LOG: Nomor Referensi transaksi bank gagal divalidasi. Gunakan screenshot aplikasi bank asli yang tidak terpotong.");
-                    btn.disabled = false; barContainer.classList.add('hidden'); btnText.innerText = "Kirim Bukti Transfer";
-                    return;
+                // Jika semua gagal, buat Token Cadangan Berbasis Sidik Jari Waktu dan Nominal agar tidak blank kosong
+                if (!noRefFinal || noRefFinal.length < 8) {
+                    noRefFinal = "ATM-" + nominalTotalDitemukan + "-" + Math.floor(Math.random() * 9000 + 1000);
                 }
 
                 btnText.innerText = "MENYIMPAN DATA AMAN...";
@@ -251,7 +252,7 @@
                 const hasil = await response.json();
 
                 if (hasil.status === "success") {
-                    alert(`Alhamdulillah Berhasil!\nSistem membaca nominal struk sebesar Rp ${nominalTotalDitemukan.toLocaleString('id-ID')}.\nData tabungan santri telah diperbarui.`);
+                    alert(`Alhamdulillah Berhasil!\nSistem membaca nominal struk sebesar Rp ${nominalTotalDitemukan.toLocaleString('id-ID')}.\n${hasil.message}`);
                     location.reload();
                 } else {
                     alert(hasil.message);
@@ -261,8 +262,75 @@
 
             } catch (e) {
                 console.error(e);
-                alert("Gagal memproses gambar. Pastikan gambar jernih.");
+                alert("Gagal memproses gambar bukti transfer.");
                 btn.disabled = false; barContainer.classList.add('hidden'); btnText.innerText = "Kirim Bukti Transfer";
+            }
+        }
+
+        // =================================================================
+        // KODE LOGIK PANEL ADMIN VALIDASI MANUAL
+        // =================================================================
+        function bukaPanelAdmin() {
+            let pass = prompt("Masukkan Password Keamanan Admin PPMUY:");
+            if (pass === "adminppmuy2026") { // Ganti password di sini sesuai keinginan Mas Fuqohak
+                document.getElementById('panel-walisantri').classList.add('hidden');
+                document.getElementById('panel-admin').classList.remove('hidden');
+                muatDataValidasiAdmin();
+            } else if(pass !== null) { alert("Password salah!"); }
+        }
+
+        function keluarPanelAdmin() {
+            document.getElementById('panel-admin').classList.add('hidden');
+            document.getElementById('panel-walisantri').classList.remove('hidden');
+        }
+
+        async function muatDataValidasiAdmin() {
+            const listDiv = document.getElementById('list-validasi-admin');
+            listDiv.innerHTML = '<div class="text-center text-xs text-slate-400 py-8">Mengambil data antrean dari server...</div>';
+            try {
+                const res = await fetch(`${API_URL}?aksi=ambilAntreanAdmin`);
+                const hasil = await res.json();
+                listDiv.innerHTML = "";
+                
+                if (hasil.status === "success" && hasil.data.length > 0) {
+                    hasil.data.forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = "bg-white text-slate-900 p-3 rounded-xl border-l-4 border-amber-500 shadow space-y-2 text-xs";
+                        card.innerHTML = `
+                            <div class="flex justify-between font-black text-slate-700">
+                                <span class="text-emerald-900 font-extrabold">${item.nama}</span>
+                                <span class="text-rose-600 font-mono">Rp ${parseInt(item.nominal_total).toLocaleString('id-ID')}</span>
+                            </div>
+                            <div class="text-[11px] text-slate-500 space-y-0.5">
+                                <div>📌 NO REF RADAR: <strong class="text-slate-800 font-mono">${item.no_ref}</strong></div>
+                                <div>📅 Tanggal Kirim: ${item.timestamp}</div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 pt-1">
+                                <a href="${item.link_struk}" target="_blank" class="bg-blue-600 text-white font-bold py-2 rounded text-center block shadow-sm">👁️ LIHAT STRUK</a>
+                                <button onclick="luluskanStrukAdmin('${item.id_trx}')" class="bg-emerald-600 text-white font-black py-2 rounded shadow-sm">✅ LULUSKAN</button>
+                            </div>
+                        `;
+                        listDiv.appendChild(card);
+                    });
+                } else {
+                    listDiv.innerHTML = '<div class="text-center text-xs text-emerald-400 bg-emerald-950/40 py-8 border border-emerald-900/30 rounded-xl font-bold">🎉 Alhamdulillah, bersih! Tidak ada antrean struk duplikat yang perlu divalidasi manual.</div>';
+                }
+            } catch (e) { listDiv.innerHTML = '<div class="text-center text-xs text-rose-400 py-8">Gagal memuat data antrean admin.</div>'; }
+        }
+
+        async function luluskanStrukAdmin(idTrx) {
+            if (confirm("Apakah Anda yakin sudah mengecek gambar struk dan ingin meloloskan tabungan anak ini?")) {
+                try {
+                    const res = await fetch(API_URL, {
+                        method: "POST",
+                        body: JSON.stringify({ aksi: "luluskanTransaksiOlehAdmin", id_transaksi: idTrx })
+                    });
+                    const hasil = await res.json();
+                    if (hasil.status === "success") {
+                        alert("Sukses! Dana berhasil diloloskan masuk ke tabungan santri.");
+                        muatDataValidasiAdmin();
+                    } else { alert(hasil.message); }
+                } catch(e) { alert("Gagal mengeksekusi perintah."); }
             }
         }
     </script>

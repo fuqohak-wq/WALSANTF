@@ -12,7 +12,7 @@
     <style>
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: #064e3b !important; /* Hijau tua default */
+            background-color: #064e3b !important;
             color: #f8fafc !important;
         }
         .tombol-utama {
@@ -80,7 +80,7 @@
     </main>
 
     <footer class="w-full text-[10px] text-emerald-400/60 text-center pt-2 border-t border-white/5 font-bold">
-        &copy; 2026 PPMUY Anti-Fraud SmartRadar V9.6.
+        &copy; 2026 PPMUY Anti-Fraud SmartRadar V9.7.
     </footer>
 
     <canvas id="canvas-kompresor" class="hidden"></canvas>
@@ -188,50 +188,87 @@
 
                 await worker.setParameters({ tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-:/.,' });
                 const ret = await worker.recognize(base64HasilFilter);
+                
                 const rawTextClean = ret.data.text.toUpperCase().replace(/[^A-Z0-9]/g, '');
                 const textMurniTanpaSpasi = ret.data.text.replace(/\s+/g, '');
+                const barisTeksAsli = ret.data.text.split('\n');
                 await worker.terminate();
 
+                // 1. VALIDASI KEASLIAN TUJUAN STRUK
                 const kataKunciValid = ["YAYASAN", "YAHYA", "WIYYAH", "PPMUY", "5309", "0038"];
                 const apakahStrukYayasan = kataKunciValid.some(key => rawTextClean.includes(key));
                 if (!apakahStrukYayasan) {
-                    alert("❌ STRUK DITOLAK: Atribut 'YAYASAN YAHYAWIYYAH' atau rekening '5309' tidak terbaca di struk. Pastikan struk yang diunggah benar.");
+                    alert("❌ STRUK DITOLAK: Teks 'YAYASAN YAHYAWIYYAH' atau rekening '5309' tidak terdeteksi.");
                     btn.disabled = false; barContainer.classList.add('hidden'); btnText.innerText = "Kirim Bukti Transfer";
                     return;
                 }
 
-                const daftarAngkaStruk = textMurniTanpaSpasi.replace(/,00$/g, '').match(/\d[\d\.,]*/g) || [];
+                // 2. RADAR DETEKSI NOMINAL PINTAR (ANTI-TERKECHOH NO. REF)
                 let nominalTotalDitemukan = 0;
-                let daftarKandidatAngka = [];
-                for (let hitung of daftarAngkaStruk) {
-                    let angkaClean = hitung.replace(/[^0-9]/g, '');
-                    let nominalKandidat = parseInt(angkaClean);
-                    if (nominalKandidat >= 10000 && nominalKandidat <= 50000000) { daftarKandidatAngka.push(nominalKandidat); }
+
+                // Metode Utama: Cari baris yang mengandung indikasi kata "NOMINAL", "TOTAL", atau "Rp"
+                for (let baris of barisTeksAsli) {
+                    let barisClean = baris.toUpperCase().replace(/\s+/g, '');
+                    if (barisClean.includes("NOMINAL") || barisClean.includes("TOTAL") || barisClean.includes("RP")) {
+                        let kumpulanAngka = barisClean.match(/\d[\d\.,]*/g);
+                        if (kumpulanAngka) {
+                            for (let ang of kumpulanAngka) {
+                                let nilaiLengkap = parseInt(ang.replace(/[^0-9]/g, ''));
+                                // Batasi nominal logis pembayaran pondok (Rp 10 Ribu s.d Rp 10 Juta)
+                                if (nilaiLengkap >= 10000 && nilaiLengkap <= 10000000) {
+                                    nominalTotalDitemukan = nilaiLengkap;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (nominalTotalDitemukan > 0) break;
                 }
-                if (daftarKandidatAngka.length > 0) {
-                    let filteredKandidat = daftarKandidatAngka.filter(num => !String(num).includes("5309") && !String(num).includes("0038"));
-                    if (filteredKandidat.length > 0) { nominalTotalDitemukan = Math.max(...filteredKandidat); }
+
+                // Metode Cadangan: Jika deteksi baris gagal, sisir seluruh angka dengan filter batasan logis
+                if (nominalTotalDitemukan === 0) {
+                    const daftarAngkaStruk = textMurniTanpaSpasi.replace(/,00$/g, '').match(/\d[\d\.,]*/g) || [];
+                    let kandidatLogis = [];
+                    for (let hitung of daftarAngkaStruk) {
+                        let angkaClean = hitung.replace(/[^0-9]/g, '');
+                        let nominalKandidat = parseInt(angkaClean);
+                        // Angka di atas 10 Juta dipastikan Nomor Referensi/Rekening, otomatis dieliminasi!
+                        if (nominalKandidat >= 10000 && nominalKandidat <= 10000000) {
+                            kandidatLogis.push(nominalKandidat);
+                        }
+                    }
+                    if (kandidatLogis.length > 0) {
+                        // Ambil angka logis terbesar (misal Rp 200.360 dibanding biaya admin Rp 2.500)
+                        nominalTotalDitemukan = Math.max(...kandidatLogis);
+                    }
                 }
 
                 if (nominalTotalDitemukan === 0) {
-                    alert(`❌ STRUK TIDAK JELAS: Nominal uang transfer tidak terbaca detektor. Mohon kirim ulang screenshot gambar struk yang tegak lurus.`);
+                    alert(`❌ STRUK TIDAK JELAS: Nominal transfer tidak terbaca detektor. Mohon gunakan screenshot gambar struk yang lebih tegak dan jelas.`);
                     btn.disabled = false; barContainer.classList.add('hidden'); btnText.innerText = "Kirim Bukti Transfer";
                     return;
                 }
 
+                // 3. RADAR MENCARI NOMOR REFERENSI
                 let noRefFinal = "";
                 const radarSeaBank = textMurniTanpaSpasi.match(/No\.Transaksi[:\s]*([A-Z0-9]{15,25})/i) || textMurniTanpaSpasi.match(/RefNo[:\s]*([A-Z0-9]{15,25})/i);
                 const radarBCA = textMurniTanpaSpasi.match(/Ref(?:id)?[:\s\.]*([0-9A-Z]{12,30})/i) || textMurniTanpaSpasi.match(/950[0-9A-Z]{15,25}/i);
                 const radarBRI = textMurniTanpaSpasi.match(/(?:BRIMORef|No\.Ref|Ref\.:)([0-9]{12,20})/i) || textMurniTanpaSpasi.match(/No\.Referensi[:\s]*([0-9]{12,20})/i);
-                const radarUmumAngkaPanjang = textMurniTanpaSpasi.match(/[0-9A-Z]{12,28}/);
-
+                
                 if (radarSeaBank) noRefFinal = "SEABANK-" + radarSeaBank[1].toUpperCase();
                 else if (radarBCA) noRefFinal = "BCA-" + (radarBCA[1] || radarBCA[0]).toUpperCase();
                 else if (radarBRI) noRefFinal = "BRI-" + (radarBRI[1] || radarBRI[0]).toUpperCase();
-                else if (radarUmumAngkaPanjang && !radarUmumAngkaPanjang[0].includes("003801003305309")) noRefFinal = "REF-" + radarUmumAngkaPanjang[0].toUpperCase();
+                else {
+                    // Jika tidak masuk pola bank utama, cari angka panjang di luar nomor rekening yayasan
+                    const radarAngkaPanjang = textMurniTanpaSpasi.match(/[0-9]{11,25}/g);
+                    if (radarAngkaPanjang) {
+                        let refDitemukan = radarAngkaPanjang.find(num => !num.includes("5309") && !num.includes("0038"));
+                        if (refDitemukan) noRefFinal = "REF-" + refDitemukan;
+                    }
+                }
 
                 if (!noRefFinal || noRefFinal.length < 8) {
-                    noRefFinal = "ATM-" + nominalTotalDitemukan + "-" + Math.floor(Math.random() * 9000 + 1000);
+                    noRefFinal = "TRX-" + nominalTotalDitemukan + "-" + Math.floor(Math.random() * 9000 + 1000);
                 }
 
                 btnText.innerText = "MENYIMPAN DATA AMAN...";

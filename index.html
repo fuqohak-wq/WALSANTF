@@ -4,14 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sistem Pembayaran Digital Otomatis PPMUY - YAYASAN YAHYAWIYYAH</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=600;700;800;900&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #064e3b !important; /* Hijau tua default */
+            color: #f8fafc !important;
+        }
+        .tombol-utama {
+            background: linear-gradient(to right, #fbbf24, #f59e0b);
+            color: #020617;
+        }
     </style>
 </head>
-<body class="bg-gradient-to-br from-emerald-900 via-teal-950 to-slate-900 text-slate-100 min-h-screen flex flex-col justify-between p-4 antialiased mx-auto w-full max-w-md">
+<body class="bg-gradient-to-br from-emerald-950 via-teal-950 to-slate-950 text-slate-100 min-h-screen flex flex-col justify-between p-4 antialiased mx-auto w-full max-w-md">
 
     <header class="w-full text-center py-2 flex justify-between items-center border-b border-white/10">
         <div class="text-left">
@@ -27,7 +37,7 @@
 
     <main id="panel-walisantri" class="w-full flex-1 flex flex-col justify-center my-4 space-y-4">
         <div class="w-full bg-white text-slate-900 p-4 rounded-2xl shadow-xl space-y-2">
-            <label class="block text-xs font-black uppercase tracking-wider text-emerald-900">1. Cari Nama Santri / Ustadz :</label>
+            <label class="block text-xs font-black uppercase tracking-wider text-emerald-950">1. Cari Nama Santri / Ustadz :</label>
             <input type="text" id="search-input" oninput="cariData()" placeholder="Ketik nama anak di sini..." class="w-full bg-slate-100 border-2 border-emerald-200 focus:border-emerald-600 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none transition">
             <div id="search-results" class="space-y-1.5 max-h-44 overflow-y-auto hidden pt-1"></div>
         </div>
@@ -40,7 +50,7 @@
 
             <div class="space-y-1.5 pt-1">
                 <span class="block text-xs font-black uppercase tracking-wider text-slate-700">2. Upload / Foto Struk Transfer :</span>
-                <label for="file-struk" class="flex flex-col items-center justify-center border-2 border-dashed border-emerald-600 bg-emerald-50/50 hover:bg-emerald-50 rounded-2xl p-5 cursor-pointer transition text-center group">
+                <label for="file-struk" class="flex flex-col items-center justify-center border-2 border-dashed border-emerald-600 bg-emerald-50 hover:bg-emerald-100/50 rounded-2xl p-5 cursor-pointer transition text-center group">
                     <span id="icon-upload" class="text-3xl mb-1">📸</span>
                     <span id="text-upload-label" class="text-sm font-black text-emerald-950">Klik untuk Pilih Struk</span>
                     <span id="text-upload-sub" class="text-[10px] text-slate-500 font-medium mt-0.5">Sistem memproses semua jenis struk bank/ATM secara otomatis.</span>
@@ -50,7 +60,7 @@
         </div>
 
         <div id="area-tombol-submit" class="hidden">
-            <button onclick="prosesOtomatisasiOcrTotal()" id="btn-submit" class="w-full bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black py-4 rounded-2xl text-sm shadow-lg uppercase flex flex-col justify-center items-center border-b-4 border-amber-700 active:border-b-0 transition" disabled>
+            <button onclick="prosesOtomatisasiOcrTotal()" id="btn-submit" class="w-full tombol-utama font-black py-4 rounded-2xl text-sm shadow-lg uppercase flex flex-col justify-center items-center border-b-4 border-amber-700 active:border-b-0 transition" disabled>
                 <span id="btn-text" class="text-sm font-black tracking-wide">Kirim Bukti Transfer</span>
                 <div id="progress-bar-container" class="w-2/3 bg-slate-950/20 h-1.5 rounded-full mt-1.5 hidden overflow-hidden">
                     <div id="progress-bar-fill" class="bg-slate-950 h-full w-0 transition-all duration-150"></div>
@@ -70,7 +80,7 @@
     </main>
 
     <footer class="w-full text-[10px] text-emerald-400/60 text-center pt-2 border-t border-white/5 font-bold">
-        &copy; 2026 PPMUY Anti-Fraud SmartRadar V9.5.
+        &copy; 2026 PPMUY Anti-Fraud SmartRadar V9.6.
     </footer>
 
     <canvas id="canvas-kompresor" class="hidden"></canvas>
@@ -253,11 +263,8 @@
             }
         }
 
-        // =================================================================
-        // BACK-OFFICE VALIDASI MANUAL (DENGAN REVISI ADANYA TOMBOL TOLAK)
-        // =================================================================
         function bukaPanelAdmin() {
-            let pass = prompt("Masukkan Password Keamanan Admin PPMUY:");
+            let pass = prompt("Masukkan Password Keamanan Admin:");
             if (pass === "adminppmuy2026") {
                 document.getElementById('panel-walisantri').classList.add('hidden');
                 document.getElementById('panel-admin').classList.remove('hidden');
@@ -281,10 +288,10 @@
                 if (hasil.status === "success" && hasil.data.length > 0) {
                     hasil.data.forEach(item => {
                         const card = document.createElement('div');
-                        card.className = "bg-white text-slate-900 p-4 rounded-xl border-l-4 border-amber-500 shadow space-y-3 text-xs";
+                        card.className = "bg-white text-slate-900 p-4 rounded-xl border-l-4 border-amber-500 shadow space-y-3 text-xs mt-3";
                         card.innerHTML = `
                             <div class="flex justify-between font-black text-slate-700">
-                                <span class="text-emerald-900 font-extrabold text-sm">${item.nama}</span>
+                                <span class="text-emerald-950 font-extrabold text-sm">${item.nama}</span>
                                 <span class="text-rose-600 font-mono text-sm">Rp ${parseInt(item.nominal_total).toLocaleString('id-ID')}</span>
                             </div>
                             <div class="text-[11px] text-slate-500 space-y-0.5 bg-slate-50 p-2 rounded border border-slate-100">
@@ -293,28 +300,28 @@
                             </div>
                             <div class="flex flex-col space-y-1.5 pt-1">
                                 <a href="${item.link_struk}" target="_blank" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded text-center block shadow-sm">👁️ LIHAT STRUK ASLI</a>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <button onclick="tolakStrukAdmin('${item.id_trx}')" class="bg-rose-600 hover:bg-rose-700 text-white font-black py-2.5 rounded shadow-sm">❌ TOLAK</button>
-                                    <button onclick="luluskanStrukAdmin('${item.id_trx}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2.5 rounded shadow-sm">✅ LULUSKAN</button>
+                                <div class="flex space-x-2">
+                                    <button onclick="tolakStrukAdmin('${item.id_trx}')" class="w-1/2 bg-rose-600 hover:bg-rose-700 text-white font-black py-2.5 rounded shadow-sm">❌ TOLAK</button>
+                                    <button onclick="luluskanStrukAdmin('${item.id_trx}')" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2.5 rounded shadow-sm">✅ LULUSKAN</button>
                                 </div>
                             </div>
                         `;
                         listDiv.appendChild(card);
                     });
                 } else {
-                    listDiv.innerHTML = '<div class="text-center text-xs text-emerald-400 bg-emerald-950/40 py-8 border border-emerald-900/30 rounded-xl font-bold">🎉 Alhamdulillah, bersih! Tidak ada antrean struk duplikat yang perlu divalidasi manual.</div>';
+                    listDiv.innerHTML = '<div class="text-center text-xs text-emerald-400 bg-emerald-950/40 py-8 border border-emerald-900/30 rounded-xl font-bold">🎉 Tidak ada antrean struk yang perlu divalidasi.</div>';
                 }
             } catch (e) { listDiv.innerHTML = '<div class="text-center text-xs text-rose-400 py-8">Gagal memuat data antrean admin.</div>'; }
         }
 
         async function luluskanStrukAdmin(idTrx) {
-            if (confirm("Apakah Anda yakin sudah mengecek gambar struk dan ingin MELOLOSKAN tabungan anak ini?")) {
+            if (confirm("Apakah Anda yakin ingin MELOLOSKAN tabungan anak ini?")) {
                 eksekusiKeputusanAdmin("luluskanTransaksiOlehAdmin", idTrx);
             }
         }
 
         async function tolakStrukAdmin(idTrx) {
-            if (confirm("Apakah Anda yakin data struk ini BERMASALAH/PALSU dan ingin MENOLAKNYA? Data log akan diarsipkan dan saldo tabungan anak tidak bertambah.")) {
+            if (confirm("Apakah Anda yakin ingin MENOLAK data struk bermasalah ini?")) {
                 eksekusiKeputusanAdmin("tolakTransaksiOlehAdmin", idTrx);
             }
         }
@@ -327,7 +334,7 @@
                 });
                 const hasil = await res.json();
                 if (hasil.status === "success") {
-                    alert("Keputusan berhasil disimpan ke sistem server pusat.");
+                    alert("Keputusan berhasil disimpan.");
                     muatDataValidasiAdmin();
                 } else { alert(hasil.message); }
             } catch(e) { alert("Gagal mengeksekusi perintah ke server."); }

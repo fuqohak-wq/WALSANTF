@@ -38,6 +38,8 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbz4WIiha9JSemWqoC4603207orwCm3eYd3XlMwXzNZBTLHvWsITLlyecHnjB4hvr-i03w/exec";
         let intervalAdmin = null;
         let intervalBadgeLuar = null;
+        let dbSantri = [];
+        let santriTerpilih = null;
     </script>
 
     <main id="panel-walisantri" class="w-full flex-1 flex flex-col justify-center my-4 space-y-4">
@@ -98,9 +100,33 @@
             try {
                 const res = await fetch(API_URL);
                 const hasil = await res.json();
-                if(hasil.status === "success") { dbSantri = hasil.santri; }
+                if(hasil.status === "success") { 
+                    dbSantri = hasil.santri; 
+                    
+                    // --- FITUR AUTO-SELECT DARI PARAMETER URL ---
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const namaParam = urlParams.get('nama');
+                    if (namaParam && dbSantri.length > 0) {
+                        const searchInput = document.getElementById('search-input');
+                        if (searchInput) {
+                            searchInput.value = namaParam;
+                            cariData();
+                            
+                            // Auto select jika ada kecocokan unik
+                            const queryLower = namaParam.toLowerCase().trim();
+                            const matches = dbSantri.filter(s => s.nama.toLowerCase() === queryLower);
+                            if (matches.length === 1) {
+                                pilihSantri(matches[0]);
+                            } else {
+                                const partialMatches = dbSantri.filter(s => s.nama.toLowerCase().includes(queryLower));
+                                if (partialMatches.length === 1) {
+                                    pilihSantri(partialMatches[0]);
+                                }
+                            }
+                        }
+                    }
+                }
                 
-                // Jalankan cek badge luar pertama kali & pasang loop tiap 20 detik
                 cekJumlahAntreanSaja();
                 intervalBadgeLuar = setInterval(cekJumlahAntreanSaja, 20000);
             } catch(e) { console.log("Gagal memuat database."); }
@@ -304,6 +330,12 @@
 
                 if (hasil.status === "success") {
                     alert(`Alhamdulillah Berhasil!\nSistem membaca nominal struk sebesar Rp ${nominalTotalDitemukan.toLocaleString('id-ID')}.\n${hasil.message}`);
+                    
+                    // --- KIRIM SINYAL MENUJU APLIKASI UTAMA (IFRAME LISTENER) ---
+                    if (window.parent && window.parent !== window) {
+                        window.parent.postMessage({ type: 'TRANSFER_SUCCESS', data: hasil }, '*');
+                    }
+                    
                     location.reload();
                 } else { alert(hasil.message); }
 
@@ -318,11 +350,11 @@
         function bukaPanelAdmin() {
             let pass = prompt("Masukkan Password Keamanan Admin:");
             if (pass === "adminppmuy2026") {
-                if(intervalBadgeLuar) clearInterval(intervalBadgeLuar); // Matikan loop luar biar hemat bandwidth
+                if(intervalBadgeLuar) clearInterval(intervalBadgeLuar);
                 document.getElementById('panel-walisantri').classList.add('hidden');
                 document.getElementById('panel-admin').classList.remove('hidden');
                 muatDataValidasiAdmin();
-                intervalAdmin = setInterval(muatDataValidasiAdmin, 15000); // Sinkronisasi dashboard admin tiap 15 detik
+                intervalAdmin = setInterval(muatDataValidasiAdmin, 15000);
             } else if(pass !== null) { alert("Password salah!"); }
         }
 
@@ -353,7 +385,6 @@
                         const card = document.createElement('div');
                         card.className = "bg-white text-slate-900 p-4 rounded-xl border-l-4 border-amber-500 shadow space-y-3 text-xs mt-3";
                         
-                        // PEMBENAHAN: Mengubah Teks Nominal Jadi Input Box Editable
                         card.innerHTML = `
                             <div class="flex justify-between items-center font-black text-slate-700 gap-2">
                                 <span class="text-emerald-950 font-extrabold text-sm truncate max-w-[180px]">${item.nama}</span>
@@ -388,7 +419,6 @@
         }
 
         async function luluskanStrukAdmin(idTrx) {
-            // Tangkap nilai nominal terbaru yang diketik oleh Admin di input box
             const inputElement = document.getElementById(`input-nom-${idTrx}`);
             const nominalTerbaru = inputElement ? parseInt(inputElement.value) : 0;
 
@@ -413,7 +443,7 @@
                 const payload = { 
                     aksi: aksiKeputusan, 
                     id_transaksi: idTrx,
-                    nominal_koreksi: nominalKoreksi // Kirim nominal koreksi ke backend
+                    nominal_koreksi: nominalKoreksi
                 };
                 const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
                 const hasil = await res.json();

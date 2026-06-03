@@ -28,11 +28,14 @@
             <h1 class="text-[10px] font-black text-amber-400 tracking-widest uppercase">YAYASAN YAHYAWIYYAH</h1>
             <h2 class="text-base font-extrabold text-white tracking-tight leading-tight">SISTEM KONFIRMASI STRUK</h2>
         </div>
-        <button onclick="bukaPanelAdmin()" class="bg-white/10 hover:bg-white/20 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-white/10 transition">🔐 Admin</button>
+        <button onclick="bukaPanelAdmin()" id="btn-nav-admin" class="bg-white/10 hover:bg-white/20 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-white/10 transition flex items-center gap-1">
+            🔐 Admin <span id="badge-antrean" class="hidden bg-rose-600 text-white font-black px-1.5 py-0.5 rounded-full text-[9px]">0</span>
+        </button>
     </header>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbz4WIiha9JSemWqoC4603207orwCm3eYd3XlMwXzNZBTLHvWsITLlyecHnjB4hvr-i03w/exec";
+        let intervalAdmin = null; // Menyimpan timer auto-refresh
     </script>
 
     <main id="panel-walisantri" class="w-full flex-1 flex flex-col justify-center my-4 space-y-4">
@@ -71,7 +74,10 @@
 
     <main id="panel-admin" class="w-full flex-1 flex flex-col my-4 space-y-4 hidden">
         <div class="flex justify-between items-center bg-slate-900/50 p-3 rounded-xl border border-white/5">
-            <span class="text-xs font-black uppercase text-amber-400">📋 DATA PERLU VALIDASI MANUAL</span>
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-black uppercase text-amber-400">📋 DATA PERLU VALIDASI MANUAL</span>
+                <span id="indicator-refresh" class="text-[9px] text-slate-400 animate-pulse">🔄 Auto-sync</span>
+            </div>
             <button onclick="keluarPanelAdmin()" class="text-xs text-rose-400 font-bold hover:underline">Keluar Admin</button>
         </div>
         <div id="list-validasi-admin" class="space-y-3 max-h-[70vh] overflow-y-auto">
@@ -80,7 +86,7 @@
     </main>
 
     <footer class="w-full text-[10px] text-emerald-400/60 text-center pt-2 border-t border-white/5 font-bold">
-        &copy; 2026 PPMUY Anti-Fraud SmartRadar V9.7.
+        &copy; 2026 PPMUY Anti-Fraud SmartRadar V9.9.
     </footer>
 
     <canvas id="canvas-kompresor" class="hidden"></canvas>
@@ -89,13 +95,33 @@
         let dbSantri = [];
         let santriTerpilih = null;
 
+        // FITUR OTOMATIS: LANGSUNG HITUNG ANTRIAN SAAT WEB DIKUNJUNGI
         window.onload = async function() {
             try {
                 const res = await fetch(API_URL);
                 const hasil = await res.json();
-                if(hasil.status === "success") { dbSantri = hasil.santri; }
+                if(hasil.status === "success") { 
+                    dbSantri = hasil.santri; 
+                }
+                // Intip antrean diam-diam untuk memunculkan badge angka merah
+                cekJumlahAntreanSaja();
             } catch(e) { console.log("Gagal memuat database."); }
         };
+
+        // Fungsi Intip Antrean untuk Mengisi Badge Angka Merah
+        async function cekJumlahAntreanSaja() {
+            try {
+                const res = await fetch(`${API_URL}?aksi=ambilAntreanAdmin`);
+                const hasil = await res.json();
+                const badge = document.getElementById('badge-antrean');
+                if (hasil.status === "success" && hasil.data.length > 0) {
+                    badge.innerText = hasil.data.length;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            } catch(e) { console.log("Gagal cek badge."); }
+        }
 
         function cariData() {
             const query = document.getElementById('search-input').value.toLowerCase().trim();
@@ -194,7 +220,6 @@
                 const barisTeksAsli = ret.data.text.split('\n');
                 await worker.terminate();
 
-                // 1. VALIDASI KEASLIAN TUJUAN STRUK
                 const kataKunciValid = ["YAYASAN", "YAHYA", "WIYYAH", "PPMUY", "5309", "0038"];
                 const apakahStrukYayasan = kataKunciValid.some(key => rawTextClean.includes(key));
                 if (!apakahStrukYayasan) {
@@ -203,10 +228,8 @@
                     return;
                 }
 
-                // 2. RADAR DETEKSI NOMINAL PINTAR (ANTI-TERKECHOH NO. REF)
                 let nominalTotalDitemukan = 0;
 
-                // Metode Utama: Cari baris yang mengandung indikasi kata "NOMINAL", "TOTAL", atau "Rp"
                 for (let baris of barisTeksAsli) {
                     let barisClean = baris.toUpperCase().replace(/\s+/g, '');
                     if (barisClean.includes("NOMINAL") || barisClean.includes("TOTAL") || barisClean.includes("RP")) {
@@ -214,7 +237,6 @@
                         if (kumpulanAngka) {
                             for (let ang of kumpulanAngka) {
                                 let nilaiLengkap = parseInt(ang.replace(/[^0-9]/g, ''));
-                                // Batasi nominal logis pembayaran pondok (Rp 10 Ribu s.d Rp 10 Juta)
                                 if (nilaiLengkap >= 10000 && nilaiLengkap <= 10000000) {
                                     nominalTotalDitemukan = nilaiLengkap;
                                     break;
@@ -225,20 +247,17 @@
                     if (nominalTotalDitemukan > 0) break;
                 }
 
-                // Metode Cadangan: Jika deteksi baris gagal, sisir seluruh angka dengan filter batasan logis
                 if (nominalTotalDitemukan === 0) {
                     const daftarAngkaStruk = textMurniTanpaSpasi.replace(/,00$/g, '').match(/\d[\d\.,]*/g) || [];
                     let kandidatLogis = [];
                     for (let hitung of daftarAngkaStruk) {
                         let angkaClean = hitung.replace(/[^0-9]/g, '');
                         let nominalKandidat = parseInt(angkaClean);
-                        // Angka di atas 10 Juta dipastikan Nomor Referensi/Rekening, otomatis dieliminasi!
                         if (nominalKandidat >= 10000 && nominalKandidat <= 10000000) {
                             kandidatLogis.push(nominalKandidat);
                         }
                     }
                     if (kandidatLogis.length > 0) {
-                        // Ambil angka logis terbesar (misal Rp 200.360 dibanding biaya admin Rp 2.500)
                         nominalTotalDitemukan = Math.max(...kandidatLogis);
                     }
                 }
@@ -249,7 +268,6 @@
                     return;
                 }
 
-                // 3. RADAR MENCARI NOMOR REFERENSI
                 let noRefFinal = "";
                 const radarSeaBank = textMurniTanpaSpasi.match(/No\.Transaksi[:\s]*([A-Z0-9]{15,25})/i) || textMurniTanpaSpasi.match(/RefNo[:\s]*([A-Z0-9]{15,25})/i);
                 const radarBCA = textMurniTanpaSpasi.match(/Ref(?:id)?[:\s\.]*([0-9A-Z]{12,30})/i) || textMurniTanpaSpasi.match(/950[0-9A-Z]{15,25}/i);
@@ -259,7 +277,6 @@
                 else if (radarBCA) noRefFinal = "BCA-" + (radarBCA[1] || radarBCA[0]).toUpperCase();
                 else if (radarBRI) noRefFinal = "BRI-" + (radarBRI[1] || radarBRI[0]).toUpperCase();
                 else {
-                    // Jika tidak masuk pola bank utama, cari angka panjang di luar nomor rekening yayasan
                     const radarAngkaPanjang = textMurniTanpaSpasi.match(/[0-9]{11,25}/g);
                     if (radarAngkaPanjang) {
                         let refDitemukan = radarAngkaPanjang.find(num => !num.includes("5309") && !num.includes("0038"));
@@ -305,24 +322,41 @@
             if (pass === "adminppmuy2026") {
                 document.getElementById('panel-walisantri').classList.add('hidden');
                 document.getElementById('panel-admin').classList.remove('hidden');
+                
+                // Panggil data awal & aktifkan sinkronisasi otomatis tiap 30 detik
                 muatDataValidasiAdmin();
+                intervalAdmin = setInterval(muatDataValidasiAdmin, 30000);
             } else if(pass !== null) { alert("Password salah!"); }
         }
 
         function keluarPanelAdmin() {
             document.getElementById('panel-admin').classList.add('hidden');
             document.getElementById('panel-walisantri').classList.remove('hidden');
+            
+            // Matikan interval agar tidak boros kuota server saat keluar dashboard admin
+            if (intervalAdmin) { clearInterval(intervalAdmin); intervalAdmin = null; }
+            cekJumlahAntreanSaja();
         }
 
         async function muatDataValidasiAdmin() {
             const listDiv = document.getElementById('list-validasi-admin');
-            listDiv.innerHTML = '<div class="text-center text-xs text-slate-400 py-8">Mengambil data antrean dari server...</div>';
+            const badge = document.getElementById('badge-antrean');
+            const indikator = document.getElementById('indicator-refresh');
+            
+            if(indikator) indikator.innerText = "🔄 Menyinkronkan...";
+
             try {
                 const res = await fetch(`${API_URL}?aksi=ambilAntreanAdmin`);
                 const hasil = await res.json();
-                listDiv.innerHTML = "";
                 
-                if (hasil.status === "success" && hasil.data.length > 0) {
+                if(indikator) indikator.innerText = "🔄 Auto-sync";
+                
+                // Update badge jumlah secara real-time
+                if(hasil.status === "success" && hasil.data.length > 0) {
+                    badge.innerText = hasil.data.length;
+                    badge.classList.remove('hidden');
+                    
+                    listDiv.innerHTML = "";
                     hasil.data.forEach(item => {
                         const card = document.createElement('div');
                         card.className = "bg-white text-slate-900 p-4 rounded-xl border-l-4 border-amber-500 shadow space-y-3 text-xs mt-3";
@@ -338,7 +372,7 @@
                             <div class="flex flex-col space-y-1.5 pt-1">
                                 <a href="${item.link_struk}" target="_blank" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded text-center block shadow-sm">👁️ LIHAT STRUK ASLI</a>
                                 <div class="flex space-x-2">
-                                    <button onclick="tolakStrukAdmin('${item.id_trx}')" class="w-1/2 bg-rose-600 hover:bg-rose-700 text-white font-black py-2.5 rounded shadow-sm">❌ TOLAK</button>
+                                    <button onclick="tolakStrukAdmin('${item.id_trx}')" class="w-1/2 bg-rose-600 hover:bg-rose-700 text-white font-black py-2.5 rounded shadow-sm">❌amp; TOLAK</button>
                                     <button onclick="luluskanStrukAdmin('${item.id_trx}')" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2.5 rounded shadow-sm">✅ LULUSKAN</button>
                                 </div>
                             </div>
@@ -346,9 +380,14 @@
                         listDiv.appendChild(card);
                     });
                 } else {
+                    badge.classList.add('hidden');
                     listDiv.innerHTML = '<div class="text-center text-xs text-emerald-400 bg-emerald-950/40 py-8 border border-emerald-900/30 rounded-xl font-bold">🎉 Tidak ada antrean struk yang perlu divalidasi.</div>';
                 }
-            } catch (e) { listDiv.innerHTML = '<div class="text-center text-xs text-rose-400 py-8">Gagal memuat data antrean admin.</div>'; }
+            } catch (e) { 
+                if(listDiv.innerHTML.includes("Mengambil data")) {
+                    listDiv.innerHTML = '<div class="text-center text-xs text-rose-400 py-8">Gagal memuat data antrean admin.</div>'; 
+                }
+            }
         }
 
         async function luluskanStrukAdmin(idTrx) {

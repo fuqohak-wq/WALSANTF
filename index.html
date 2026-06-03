@@ -70,7 +70,7 @@
     </main>
 
     <footer class="w-full text-[10px] text-emerald-400/60 text-center pt-2 border-t border-white/5 font-bold">
-        &copy; 2026 PPMUY Anti-Fraud SmartRadar V9.0.
+        &copy; 2026 PPMUY Anti-Fraud SmartRadar V9.5.
     </footer>
 
     <canvas id="canvas-kompresor" class="hidden"></canvas>
@@ -182,7 +182,6 @@
                 const textMurniTanpaSpasi = ret.data.text.replace(/\s+/g, '');
                 await worker.terminate();
 
-                // 1. VALIDASI ATRIBUT REKENING TUJUAN YAYASAN
                 const kataKunciValid = ["YAYASAN", "YAHYA", "WIYYAH", "PPMUY", "5309", "0038"];
                 const apakahStrukYayasan = kataKunciValid.some(key => rawTextClean.includes(key));
                 if (!apakahStrukYayasan) {
@@ -191,7 +190,6 @@
                     return;
                 }
 
-                // 2. RADAR UNIVERSAL NOMINAL RUPIAH UTAMA
                 const daftarAngkaStruk = textMurniTanpaSpasi.replace(/,00$/g, '').match(/\d[\d\.,]*/g) || [];
                 let nominalTotalDitemukan = 0;
                 let daftarKandidatAngka = [];
@@ -211,18 +209,10 @@
                     return;
                 }
 
-                // =================================================================
-                // 🛡️ REVISION V9.0: RADAR REGEX MULTI-CORE (SEABANK, BCA, BRI, ATM)
-                // =================================================================
                 let noRefFinal = "";
-                
-                // Core 1: SeaBank Core (Panjang Alfabetis Kombinasi Angka)
                 const radarSeaBank = textMurniTanpaSpasi.match(/No\.Transaksi[:\s]*([A-Z0-9]{15,25})/i) || textMurniTanpaSpasi.match(/RefNo[:\s]*([A-Z0-9]{15,25})/i);
-                // Core 2: m-BCA / BI-FAST Core
                 const radarBCA = textMurniTanpaSpasi.match(/Ref(?:id)?[:\s\.]*([0-9A-Z]{12,30})/i) || textMurniTanpaSpasi.match(/950[0-9A-Z]{15,25}/i);
-                // Core 3: BRImo Core
                 const radarBRI = textMurniTanpaSpasi.match(/(?:BRIMORef|No\.Ref|Ref\.:)([0-9]{12,20})/i) || textMurniTanpaSpasi.match(/No\.Referensi[:\s]*([0-9]{12,20})/i);
-                // Core 4: Struk ATM / E-Wallet Umum (Mencari deretan angka/kombinasi referensi transaksi panjang)
                 const radarUmumAngkaPanjang = textMurniTanpaSpasi.match(/[0-9A-Z]{12,28}/);
 
                 if (radarSeaBank) noRefFinal = "SEABANK-" + radarSeaBank[1].toUpperCase();
@@ -230,7 +220,6 @@
                 else if (radarBRI) noRefFinal = "BRI-" + (radarBRI[1] || radarBRI[0]).toUpperCase();
                 else if (radarUmumAngkaPanjang && !radarUmumAngkaPanjang[0].includes("003801003305309")) noRefFinal = "REF-" + radarUmumAngkaPanjang[0].toUpperCase();
 
-                // Jika semua gagal, buat Token Cadangan Berbasis Sidik Jari Waktu dan Nominal agar tidak blank kosong
                 if (!noRefFinal || noRefFinal.length < 8) {
                     noRefFinal = "ATM-" + nominalTotalDitemukan + "-" + Math.floor(Math.random() * 9000 + 1000);
                 }
@@ -254,12 +243,9 @@
                 if (hasil.status === "success") {
                     alert(`Alhamdulillah Berhasil!\nSistem membaca nominal struk sebesar Rp ${nominalTotalDitemukan.toLocaleString('id-ID')}.\n${hasil.message}`);
                     location.reload();
-                } else {
-                    alert(hasil.message);
-                }
+                } else { alert(hasil.message); }
 
                 btn.disabled = false; barContainer.classList.add('hidden'); btnText.innerText = "Kirim Bukti Transfer";
-
             } catch (e) {
                 console.error(e);
                 alert("Gagal memproses gambar bukti transfer.");
@@ -268,11 +254,11 @@
         }
 
         // =================================================================
-        // KODE LOGIK PANEL ADMIN VALIDASI MANUAL
+        // BACK-OFFICE VALIDASI MANUAL (DENGAN REVISI ADANYA TOMBOL TOLAK)
         // =================================================================
         function bukaPanelAdmin() {
             let pass = prompt("Masukkan Password Keamanan Admin PPMUY:");
-            if (pass === "adminppmuy2026") { // Ganti password di sini sesuai keinginan Mas Fuqohak
+            if (pass === "adminppmuy2026") {
                 document.getElementById('panel-walisantri').classList.add('hidden');
                 document.getElementById('panel-admin').classList.remove('hidden');
                 muatDataValidasiAdmin();
@@ -295,19 +281,22 @@
                 if (hasil.status === "success" && hasil.data.length > 0) {
                     hasil.data.forEach(item => {
                         const card = document.createElement('div');
-                        card.className = "bg-white text-slate-900 p-3 rounded-xl border-l-4 border-amber-500 shadow space-y-2 text-xs";
+                        card.className = "bg-white text-slate-900 p-4 rounded-xl border-l-4 border-amber-500 shadow space-y-3 text-xs";
                         card.innerHTML = `
                             <div class="flex justify-between font-black text-slate-700">
-                                <span class="text-emerald-900 font-extrabold">${item.nama}</span>
-                                <span class="text-rose-600 font-mono">Rp ${parseInt(item.nominal_total).toLocaleString('id-ID')}</span>
+                                <span class="text-emerald-900 font-extrabold text-sm">${item.nama}</span>
+                                <span class="text-rose-600 font-mono text-sm">Rp ${parseInt(item.nominal_total).toLocaleString('id-ID')}</span>
                             </div>
-                            <div class="text-[11px] text-slate-500 space-y-0.5">
+                            <div class="text-[11px] text-slate-500 space-y-0.5 bg-slate-50 p-2 rounded border border-slate-100">
                                 <div>📌 NO REF RADAR: <strong class="text-slate-800 font-mono">${item.no_ref}</strong></div>
                                 <div>📅 Tanggal Kirim: ${item.timestamp}</div>
                             </div>
-                            <div class="grid grid-cols-2 gap-2 pt-1">
-                                <a href="${item.link_struk}" target="_blank" class="bg-blue-600 text-white font-bold py-2 rounded text-center block shadow-sm">👁️ LIHAT STRUK</a>
-                                <button onclick="luluskanStrukAdmin('${item.id_trx}')" class="bg-emerald-600 text-white font-black py-2 rounded shadow-sm">✅ LULUSKAN</button>
+                            <div class="flex flex-col space-y-1.5 pt-1">
+                                <a href="${item.link_struk}" target="_blank" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded text-center block shadow-sm">👁️ LIHAT STRUK ASLI</a>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button onclick="tolakStrukAdmin('${item.id_trx}')" class="bg-rose-600 hover:bg-rose-700 text-white font-black py-2.5 rounded shadow-sm">❌ TOLAK</button>
+                                    <button onclick="luluskanStrukAdmin('${item.id_trx}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2.5 rounded shadow-sm">✅ LULUSKAN</button>
+                                </div>
                             </div>
                         `;
                         listDiv.appendChild(card);
@@ -319,19 +308,29 @@
         }
 
         async function luluskanStrukAdmin(idTrx) {
-            if (confirm("Apakah Anda yakin sudah mengecek gambar struk dan ingin meloloskan tabungan anak ini?")) {
-                try {
-                    const res = await fetch(API_URL, {
-                        method: "POST",
-                        body: JSON.stringify({ aksi: "luluskanTransaksiOlehAdmin", id_transaksi: idTrx })
-                    });
-                    const hasil = await res.json();
-                    if (hasil.status === "success") {
-                        alert("Sukses! Dana berhasil diloloskan masuk ke tabungan santri.");
-                        muatDataValidasiAdmin();
-                    } else { alert(hasil.message); }
-                } catch(e) { alert("Gagal mengeksekusi perintah."); }
+            if (confirm("Apakah Anda yakin sudah mengecek gambar struk dan ingin MELOLOSKAN tabungan anak ini?")) {
+                eksekusiKeputusanAdmin("luluskanTransaksiOlehAdmin", idTrx);
             }
+        }
+
+        async function tolakStrukAdmin(idTrx) {
+            if (confirm("Apakah Anda yakin data struk ini BERMASALAH/PALSU dan ingin MENOLAKNYA? Data log akan diarsipkan dan saldo tabungan anak tidak bertambah.")) {
+                eksekusiKeputusanAdmin("tolakTransaksiOlehAdmin", idTrx);
+            }
+        }
+
+        async function eksekusiKeputusanAdmin(aksiKeputusan, idTrx) {
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify({ aksi: aksiKeputusan, id_transaksi: idTrx })
+                });
+                const hasil = await res.json();
+                if (hasil.status === "success") {
+                    alert("Keputusan berhasil disimpan ke sistem server pusat.");
+                    muatDataValidasiAdmin();
+                } else { alert(hasil.message); }
+            } catch(e) { alert("Gagal mengeksekusi perintah ke server."); }
         }
     </script>
 </body>

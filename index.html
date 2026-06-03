@@ -35,7 +35,7 @@
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbz4WIiha9JSemWqoC4603207orwCm3eYd3XlMwXzNZBTLHvWsITLlyecHnjB4hvr-i03w/exec";
-        let intervalAdmin = null; // Menyimpan timer auto-refresh
+        let intervalAdmin = null;
     </script>
 
     <main id="panel-walisantri" class="w-full flex-1 flex flex-col justify-center my-4 space-y-4">
@@ -86,29 +86,21 @@
     </main>
 
     <footer class="w-full text-[10px] text-emerald-400/60 text-center pt-2 border-t border-white/5 font-bold">
-        &copy; 2026 PPMUY Anti-Fraud SmartRadar V9.9.
+        &copy; 2026 PPMUY Anti-Fraud SmartRadar V10.2.
     </footer>
 
     <canvas id="canvas-kompresor" class="hidden"></canvas>
 
     <script>
-        let dbSantri = [];
-        let santriTerpilih = null;
-
-        // FITUR OTOMATIS: LANGSUNG HITUNG ANTRIAN SAAT WEB DIKUNJUNGI
         window.onload = async function() {
             try {
                 const res = await fetch(API_URL);
                 const hasil = await res.json();
-                if(hasil.status === "success") { 
-                    dbSantri = hasil.santri; 
-                }
-                // Intip antrean diam-diam untuk memunculkan badge angka merah
+                if(hasil.status === "success") { dbSantri = hasil.santri; }
                 cekJumlahAntreanSaja();
             } catch(e) { console.log("Gagal memuat database."); }
         };
 
-        // Fungsi Intip Antrean untuk Mengisi Badge Angka Merah
         async function cekJumlahAntreanSaja() {
             try {
                 const res = await fetch(`${API_URL}?aksi=ambilAntreanAdmin`);
@@ -117,9 +109,7 @@
                 if (hasil.status === "success" && hasil.data.length > 0) {
                     badge.innerText = hasil.data.length;
                     badge.classList.remove('hidden');
-                } else {
-                    badge.classList.add('hidden');
-                }
+                } else { badge.classList.add('hidden'); }
             } catch(e) { console.log("Gagal cek badge."); }
         }
 
@@ -257,9 +247,7 @@
                             kandidatLogis.push(nominalKandidat);
                         }
                     }
-                    if (kandidatLogis.length > 0) {
-                        nominalTotalDitemukan = Math.max(...kandidatLogis);
-                    }
+                    if (kandidatLogis.length > 0) { nominalTotalDitemukan = Math.max(...kandidatLogis); }
                 }
 
                 if (nominalTotalDitemukan === 0) {
@@ -322,8 +310,6 @@
             if (pass === "adminppmuy2026") {
                 document.getElementById('panel-walisantri').classList.add('hidden');
                 document.getElementById('panel-admin').classList.remove('hidden');
-                
-                // Panggil data awal & aktifkan sinkronisasi otomatis tiap 30 detik
                 muatDataValidasiAdmin();
                 intervalAdmin = setInterval(muatDataValidasiAdmin, 30000);
             } else if(pass !== null) { alert("Password salah!"); }
@@ -332,8 +318,6 @@
         function keluarPanelAdmin() {
             document.getElementById('panel-admin').classList.add('hidden');
             document.getElementById('panel-walisantri').classList.remove('hidden');
-            
-            // Matikan interval agar tidak boros kuota server saat keluar dashboard admin
             if (intervalAdmin) { clearInterval(intervalAdmin); intervalAdmin = null; }
             cekJumlahAntreanSaja();
         }
@@ -342,20 +326,16 @@
             const listDiv = document.getElementById('list-validasi-admin');
             const badge = document.getElementById('badge-antrean');
             const indikator = document.getElementById('indicator-refresh');
-            
             if(indikator) indikator.innerText = "🔄 Menyinkronkan...";
 
             try {
                 const res = await fetch(`${API_URL}?aksi=ambilAntreanAdmin`);
                 const hasil = await res.json();
-                
                 if(indikator) indikator.innerText = "🔄 Auto-sync";
                 
-                // Update badge jumlah secara real-time
                 if(hasil.status === "success" && hasil.data.length > 0) {
                     badge.innerText = hasil.data.length;
                     badge.classList.remove('hidden');
-                    
                     listDiv.innerHTML = "";
                     hasil.data.forEach(item => {
                         const card = document.createElement('div');
@@ -372,7 +352,7 @@
                             <div class="flex flex-col space-y-1.5 pt-1">
                                 <a href="${item.link_struk}" target="_blank" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded text-center block shadow-sm">👁️ LIHAT STRUK ASLI</a>
                                 <div class="flex space-x-2">
-                                    <button onclick="tolakStrukAdmin('${item.id_trx}')" class="w-1/2 bg-rose-600 hover:bg-rose-700 text-white font-black py-2.5 rounded shadow-sm">❌amp; TOLAK</button>
+                                    <button onclick="tolakStrukAdmin('${item.id_trx}')" class="w-1/2 bg-rose-600 hover:bg-rose-700 text-white font-black py-2.5 rounded shadow-sm">❌ TOLAK</button>
                                     <button onclick="luluskanStrukAdmin('${item.id_trx}')" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2.5 rounded shadow-sm">✅ LULUSKAN</button>
                                 </div>
                             </div>
@@ -404,15 +384,9 @@
 
         async function eksekusiKeputusanAdmin(aksiKeputusan, idTrx) {
             try {
-                const res = await fetch(API_URL, {
-                    method: "POST",
-                    body: JSON.stringify({ aksi: aksiKeputusan, id_transaksi: idTrx })
-                });
+                const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ aksi: aksiKeputusan, id_transaksi: idTrx }) });
                 const hasil = await res.json();
-                if (hasil.status === "success") {
-                    alert("Keputusan berhasil disimpan.");
-                    muatDataValidasiAdmin();
-                } else { alert(hasil.message); }
+                if (hasil.status === "success") { alert("Keputusan berhasil disimpan."); muatDataValidasiAdmin(); } else { alert(hasil.message); }
             } catch(e) { alert("Gagal mengeksekusi perintah ke server."); }
         }
     </script>

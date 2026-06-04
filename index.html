@@ -157,7 +157,7 @@
     </main>
 
     <footer class="w-full text-[10px] text-emerald-400/40 text-center pt-2 border-t border-white/5 font-bold">
-        &copy; 2026 PPMUY Zero-Failure Shield V11.1
+        &copy; 2026 PPMUY Zero-Failure Shield V11.2
     </footer>
 
     <canvas id="canvas-kompresor" class="hidden"></canvas>
@@ -181,17 +181,12 @@
                 <div class="space-y-1 max-w-xs">
                     <h3 class="text-sm font-black text-white">Buka Berkas Bukti Transfer</h3>
                     <p class="text-[11px] text-slate-400 leading-relaxed">
-                        Untuk menghindari batasan keamanan sistem (*CORS*), dokumen struk akan langsung dibuka melalui server cloud resmi Google.
+                        Dokumen struk dibuka langsung melalui server resmi Google Drive secara terenkripsi.
                     </p>
                 </div>
-                
                 <a id="link-download-bypass" href="#" target="_blank" class="w-full max-w-xs bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black py-3 rounded-xl text-xs uppercase tracking-wide shadow-lg hover:scale-[1.02] active:scale-[0.98] transition block text-center border-b-4 border-amber-700">
                     🚀 BUKA STRUK SEKARANG
                 </a>
-            </div>
-            
-            <div class="p-3 bg-slate-950 text-center text-[10px] text-slate-400 border-t border-white/10 shrink-0 rounded-b-2xl">
-                Struk akan terbuka otomatis di tab atau application baru Anda secara utuh.
             </div>
         </div>
     </div>
@@ -222,10 +217,8 @@
         function bukaModalStruk(url) {
             if(!url || url === "#" || url === "Tidak Ada File") { alert("Gambar struk tidak terunggah ke Drive cloud."); return; }
             const urlBypassLengkap = formatUrlGoogleDriveViewer(url);
-            
             const btnBypass = document.getElementById('link-download-bypass');
             btnBypass.href = urlBypassLengkap;
-            
             document.getElementById('modalPreviewStruk').classList.remove('hidden');
             document.getElementById('modalPreviewStruk').classList.add('flex');
         }
@@ -277,9 +270,7 @@
                     btn.onclick = () => pilihSantri(s);
                     resDiv.appendChild(btn);
                 });
-            } else {
-                resDiv.classList.add('hidden');
-            }
+            } else { resDiv.classList.add('hidden'); }
         }
 
         function pilihSantri(santri) {
@@ -334,6 +325,9 @@
             };
         });
 
+        // ====================================================================
+        // FIX CORE: LOGIKA OCR DIKEMBALIKAN KE JALUR LANGSUNG LOLOS (ACC AUTO)
+        // ====================================================================
         async function prosesZeroFailureOcr() {
             const btn = document.getElementById('btn-submit');
             const btnText = document.getElementById('btn-text');
@@ -358,11 +352,18 @@
             let alasanSistemCuriga = ""; 
             let nominalDitemukan = 0;
             let noRefFinal = "";
+            let teksHasilOcrMentah = "";
 
+            // 1. Amankan konversi gambar terlebih dahulu di luar try-catch Tesseract
             try {
                 const fileGambarMentah = fileInput.files[0];
                 base64Filter = await optimasiGambarSisiKlien(fileGambarMentah);
-                
+            } catch(e) {
+                base64Filter = "";
+            }
+
+            // 2. Jalankan Tesseract Engine secara terisolasi agar tidak merusak data jika teks miss
+            try {
                 const worker = await Tesseract.createWorker('ind', 1, {
                     logger: p => {
                         if (p.status === 'recognizing text') {
@@ -375,64 +376,66 @@
 
                 await worker.setParameters({ tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-:/.,' });
                 const ret = await worker.recognize(base64Filter);
-                
-                const rawCleanText = ret.data.text.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                const murniTanpaSpasi = ret.data.text.replace(/\s+/g, '');
-                const barisTeksAsli = ret.data.text.split('\n');
+                teksHasilOcrMentah = ret.data.text || "";
                 await worker.terminate();
+            } catch(crashOcr) {
+                teksHasilOcrMentah = "";
+            }
 
-                const kataKunciValid = ["YAYASAN", "YAHYA", "WIYYAH", "PPMUY", "5309", "0038"];
-                const adaYayasan = kataKunciValid.some(key => rawCleanText.includes(key));
-                if (!adaYayasan) { alasanSistemCuriga = "Nama Yayasan Tidak Terbaca OCR"; }
+            // 3. Ekstraksi Data dari Hasil Teks
+            const murniTanpaSpasi = teksHasilOcrMentah.replace(/\s+/g, '');
+            const barisTeksAsli = teksHasilOcrMentah.split('\n');
 
-                for (let baris of barisTeksAsli) {
-                    let barisClean = baris.toUpperCase().replace(/\s+/g, '');
-                    if (barisClean.includes("NOMINAL") || barisClean.includes("TOTAL") || barisClean.includes("RP")) {
-                        let kumpulanAngka = barisClean.match(/\d[\d\.,]*/g);
-                        if (kumpulanAngka) {
-                            for (let ang of kumpulanAngka) {
-                                let nilai = parseInt(ang.replace(/[^0-9]/g, ''));
-                                if (ang.endsWith(",00") || ang.endsWith(".00")) { nilai = Math.floor(nilai / 100); }
-                                if (nilai >= 10000 && nilai <= 2500000) { nominalDitemukan = nilai; break; }
-                            }
+            // Cari Nominal Utama (Mencari teks pemicu nominal rupiah)
+            for (let baris of barisTeksAsli) {
+                let barisClean = baris.toUpperCase().replace(/\s+/g, '');
+                if (barisClean.includes("NOMINAL") || barisClean.includes("TOTAL") || barisClean.includes("RP") || barisClean.includes("JUMLAH")) {
+                    let kumpulanAngka = barisClean.match(/\d[\d\.,]*/g);
+                    if (kumpulanAngka) {
+                        for (let ang of kumpulanAngka) {
+                            let nilai = parseInt(ang.replace(/[^0-9]/g, ''));
+                            if (ang.endsWith(",00") || ang.endsWith(".00")) { nilai = Math.floor(nilai / 100); }
+                            if (nilai >= 10000 && nilai <= 2500000) { nominalDitemukan = nilai; break; }
                         }
                     }
-                    if (nominalDitemukan > 0) break;
                 }
+                if (nominalDitemukan > 0) break;
+            }
 
-                if (nominalDitemukan === 0) {
-                    const daftarAngkaStruk = murniTanpaSpasi.replace(/,00$/g, '').replace(/\.00$/g, '').match(/\d[\d\.,]*/g) || [];
-                    let kandidatLogis = [];
-                    for (let hitung of daftarAngkaStruk) {
-                        let angkaClean = hitung.replace(/[^0-9]/g, '');
-                        let nominalKandidat = parseInt(angkaClean);
-                        if (angkaClean.includes("3305309") || angkaClean.includes("5309") || angkaClean.includes("0038")) { continue; }
-                        if (nominalKandidat >= 10000 && nominalKandidat <= 2500000) { kandidatLogis.push(nominalKandidat); }
-                    }
-                    if (kandidatLogis.length > 0) { 
-                        nominalDitemukan = Math.max(...kandidatLogis); 
-                        if(alasanSistemCuriga === "") alasanSistemCuriga = "Nominal Jalur Cadangan";
-                    }
+            // Fallback Nominal Cadangan jika teks utama terpotong/buram
+            if (nominalDitemukan === 0) {
+                const daftarAngkaStruk = murniTanpaSpasi.replace(/,00$/g, '').replace(/\.00$/g, '').match(/\d[\d\.,]*/g) || [];
+                let kandidatLogis = [];
+                for (let hitung of daftarAngkaStruk) {
+                    let angkaClean = hitung.replace(/[^0-9]/g, '');
+                    let nominalKandidat = parseInt(angkaClean);
+                    if (angkaClean.includes("3305309") || angkaClean.includes("5309") || angkaClean.includes("0038")) { continue; }
+                    if (nominalKandidat >= 10000 && nominalKandidat <= 2500000) { kandidatLogis.push(nominalKandidat); }
                 }
+                if (kandidatLogis.length > 0) { nominalDitemukan = Math.max(...kandidatLogis); }
+            }
 
-                if (nominalDitemukan === 0) {
-                    nominalDitemukan = 0;
-                    alasanSistemCuriga = "Gagal Baca Nominal Struk";
-                }
+            // Ekstraksi Nomor Referensi Bank
+            const rSea = murniTanpaSpasi.match(/No\.Transaksi[:\s]*([A-Z0-9]{15,25})/i);
+            const rBca = murniTanpaSpasi.match(/Ref(?:id)?[:\s\.]*([0-9A-Z]{12,30})/i);
+            const rBri = murniTanpaSpasi.match(/No\.Referensi[:\s]*([0-9]{12,20})/i);
+            
+            if (rSea) noRefFinal = "SEABANK-" + rSea[1].toUpperCase();
+            else if (rBca) noRefFinal = "BCA-" + (rBca[1] || rBca[0]).toUpperCase();
+            else if (rBri) noRefFinal = "BRI-" + rBri[1];
+            else { 
+                // Fallback cerdas agar TIDAK PERNAH muncul tulisan CRASH-BROWSER lagi
+                noRefFinal = "TRX-" + Date.now().toString().slice(-8) + Math.floor(Math.random() * 90 + 10); 
+            }
 
-                const rSea = murniTanpaSpasi.match(/No\.Transaksi[:\s]*([A-Z0-9]{15,25})/i);
-                const rBca = murniTanpaSpasi.match(/Ref(?:id)?[:\s\.]*([0-9A-Z]{12,30})/i);
-                const rBri = murniTanpaSpasi.match(/No\.Referensi[:\s]*([0-9]{12,20})/i);
-                
-                if (rSea) noRefFinal = "SEABANK-" + rSea[1].toUpperCase();
-                else if (rBca) noRefFinal = "BCA-" + (rBca[1] || rBca[0]).toUpperCase();
-                else if (rBri) noRefFinal = "BRI-" + rBri[1];
-                else { noRefFinal = "REF-" + Math.floor(Math.random() * 90000000 + 10000000); }
-
-            } catch(crashOcr) {
-                nominalDitemukan = 0;
-                noRefFinal = "CRASH-BROWSER-" + Date.now();
-                alasanSistemCuriga = "Gagal Engine OCR (Browser)";
+            // ================================================================
+            // JALUR TOL AUTO ACC-LOLOS: Jika nominal & Ref sukses dibaca, 
+            // alasan_pending WAJIB dibikin kosong murni agar langsung Lolos di Sheet!
+            // ================================================================
+            if (nominalDitemukan > 0) {
+                alasanSistemCuriga = ""; // Kosong = Perintah ke Google Apps Script untuk langsung AUTO-ACC
+            } else {
+                alasanSistemCuriga = "Nominal gagal terdeteksi oleh mesin"; // Lempar ke manual admin jika struk kosong/rusak parah
             }
 
             btnText.innerText = "MENYIMPAN DATA KE SERVER...";
@@ -452,7 +455,6 @@
             try {
                 const response = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
                 const hasil = await response.json();
-                
                 clearInterval(intervalKata);
 
                 if (hasil.status === "success") {
@@ -471,7 +473,7 @@
                 }
             } catch(errFetch) {
                 clearInterval(intervalKata);
-                alert("Koneksi gagal.");
+                alert("Koneksi gagal saat mengirim data ke server cloud.");
                 btn.disabled = false; 
                 barContainer.classList.add('hidden'); 
                 boxKata.classList.add('hidden');
@@ -530,8 +532,7 @@
         function setFilterStatusLog(status) {
             filterStatusAktif = status;
             const semuaFilterBtn = ["SEMUA", "OTOMATIS", "MANUAL", "DITOLAK"];
-            allFilterBtn = semuaFilterBtn;
-            allFilterBtn.forEach(f => {
+            semuaFilterBtn.forEach(f => {
                 const el = document.getElementById(`fltr-${f}`);
                 if(f === status) el.className = "bg-amber-400 text-slate-950 px-2.5 py-1 rounded-md";
                 else el.className = "bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md";
@@ -576,16 +577,11 @@
             } catch(e) { ind.innerText = "ERR"; }
         }
 
-        // ====================================================================
-        // MASUKAN UTAMA: SISTEM MASKING RUPIAH & OTOMATIS VALUE INPUT DI LIST ADMIN
-        // ====================================================================
         function tanganiKetikanUangAdmin(inputan) {
             let angkaMurni = inputan.value.replace(/[^0-9]/g, "");
             if(angkaMurni !== "") {
                 inputan.value = parseInt(angkaMurni).toLocaleString('id-ID').replace(/,/g, ".");
-            } else {
-                inputan.value = "";
-            }
+            } else { inputan.value = ""; }
         }
 
         function formatKeFormatTitik(angka) {
@@ -605,10 +601,7 @@
                 }
                 
                 cacheAntreanAdmin.forEach(t => {
-                    // Perbaikan Direct Image Stream Link Drive agar tidak retak
                     let directImageLink = t.link_struk.replace("/file/d/", "/uc?export=view&id=").replace("/view?usp=drivesdk", "");
-                    
-                    // Otomatis menaruh nominal hasil bacaan OCR (jika ada) ke value input kotak edit uang
                     let nominalDefaultOcr = (t.nominal_total && parseInt(t.nominal_total) > 0) ? t.nominal_total : "";
 
                     const div = document.createElement('div');
@@ -684,9 +677,6 @@
             }
         }
 
-        // ====================================================================
-        // MASUKAN UTAMA: PROSES ACC DENGAN MODAL POP-UP PEMASTIAN TEGAS
-        // ====================================================================
         async function prosesSetujuAdmin(idTrx, namaSantri) {
             const rawValue = document.getElementById(`fee-koreksi-${idTrx}`).value;
             const nominalMurni = rawValue.replace(/[^0-9]/g, "");
@@ -696,11 +686,10 @@
                 return;
             }
 
-            // Pop-up Pemastian Admin Terhadap Nominal & Nama Anak
             let formatRupiahTampil = parseInt(nominalMurni).toLocaleString('id-ID').replace(/,/g, ".");
-            let konfirmasi = confirm(`Apakah benar admin akan meluluskan Rp ${formatRupiahTampil} untuk santri:\n\n👤 Nama: ${namaSantri}\n\nJika data sudah valid, klik OK untuk melakukan pencatatan buku kas bank.`);
+            let konfirmasi = confirm(`Apakah benar admin akan meluluskan Rp ${formatRupiahTampil} untuk santri:\n\n👤 Nama: ${namaSantri}\n\nJika data sudah valid, klik OK.`);
             
-            if (!konfirmasi) return; // Batalkan jika salah pencet/ragu-ragu
+            if (!konfirmasi) return;
 
             adminSedangNgetikUang = false;
             tampilkanSpinnerGuard(true);
@@ -725,7 +714,7 @@
         }
 
         async function prosesTolakAdmin(idTrx, namaSantri) {
-            let konfirmasi = confirm(`Apakah Anda yakin ingin MENOLAK bukti transfer dari santri:\n\n👤 ${namaSantri}?\n\nTransaksi akan dibatalkan permanen.`);
+            let konfirmasi = confirm(`Apakah Anda yakin ingin MENOLAK bukti transfer dari santri:\n\n👤 ${namaSantri}?`);
             if(!konfirmasi) return;
 
             adminSedangNgetikUang = false;

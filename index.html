@@ -264,6 +264,7 @@
         }
 
         function pilihSantri(santri) {
+            santriTerpilled = santri; // sync variabel global
             santriTerpilih = santri;
             document.getElementById('search-results').classList.add('hidden');
             document.getElementById('search-input').value = santri.nama;
@@ -511,7 +512,7 @@
         function setFilterStatusLog(status) {
             filterStatusAktif = status;
             const semuaFilterBtn = ["SEMUA", "OTOMATIS", "MANUAL", "DITOLAK"];
-            semuaFilterBtn.forEach(f => {
+            semuform = semuaFilterBtn.forEach(f => {
                 const el = document.getElementById(`fltr-${f}`);
                 if(f === status) el.className = "bg-amber-400 text-slate-950 px-2.5 py-1 rounded-md";
                 else el.className = "bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md";
@@ -521,7 +522,6 @@
 
         async function pullDataAdminDariServer() {
             if (adminSedangNgetikUang) return;
-
             const ind = document.getElementById('indicator-refresh');
             try {
                 const res = await fetch(`${API_URL}?aksi=ambilDataAdminLengkap`);
@@ -554,6 +554,7 @@
             document.getElementById('dash-manual-total').innerText = `Rp ${manualTotal.toLocaleString('id-ID')}`;
             document.getElementById('dash-manual-count').innerText = `${manualCount} Transaksi`;
 
+            // Update Badge jumlah antrean pending di tombol tab dalam
             const bDalam = document.getElementById('badge-antrean-dalam');
             if(cacheAntreanAdmin.length > 0) {
                 bDalam.innerText = cacheAntreanAdmin.length;
@@ -562,129 +563,104 @@
         }
 
         function renderVisualListAdmin() {
-            const listDiv = document.getElementById('list-container-admin');
-            listDiv.innerHTML = "";
-
+            const container = document.getElementById('list-container-admin');
+            container.innerHTML = "";
+            
+            let dataTampil = [];
             if (tabAktifAdmin === "ANTREAN") {
-                if (cacheAntreanAdmin.length === 0) {
-                    listDiv.innerHTML = '<div class="text-center text-xs text-emerald-400 bg-emerald-950/40 py-8 border border-emerald-900/20 rounded-xl font-bold">🎉 Bersih! Tidak ada antrean pending.</div>';
-                    return;
-                }
-
-                cacheAntreanAdmin.forEach(item => {
-                    const card = document.createElement('div');
-                    card.className = "bg-white text-slate-900 p-3.5 rounded-xl border-l-4 border-amber-500 shadow-md space-y-2.5 text-xs";
-                    card.innerHTML = `
-                        <div class="flex justify-between items-start gap-1">
-                            <div>
-                                <span class="text-slate-900 font-black text-sm block leading-tight">${item.nama}</span>
-                                <span class="text-[9px] font-bold text-rose-600 uppercase block mt-0.5">${item.status}</span>
-                            </div>
-                            <div class="flex items-center bg-slate-100 px-2 py-1 rounded-lg border border-slate-300 shrink-0">
-                                <span class="text-slate-400 font-bold mr-1">Rp</span>
-                                <input type="number" id="input-nom-${item.id_trx}" value="${item.nominal_total}" 
-                                    onfocus="adminSedangNgetikUang = true;" 
-                                    onblur="setTimeout(() => { adminSedangNgetikUang = false; }, 4000);" 
-                                    class="w-20 text-right bg-transparent text-slate-900 font-mono font-black text-sm focus:outline-none focus:bg-amber-100 rounded">
-                            </div>
-                        </div>
-                        <div class="text-[10px] text-slate-500 bg-slate-50 p-2 rounded border border-slate-100 font-mono">
-                            <div>REF: ${item.no_ref} | JAM: ${item.timestamp}</div>
-                        </div>
-                        <div class="grid grid-cols-3 gap-1.5 pt-0.5">
-                            <button onclick="bukaModalStruk('${item.link_struk}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded text-[10px]">👁️ STRUK</button>
-                            <button onclick="eksekusiKeputusanAdmin('tolakTransaksiOlehAdmin', '${item.id_trx}', 0)" class="bg-rose-600 hover:bg-rose-700 text-white font-black py-2 rounded text-[10px]">❌ REJECT</button>
-                            <button onclick="luluskanStrukPending('${item.id_trx}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2 rounded text-[10px]">✅ LULUS</button>
-                        </div>
-                    `;
-                    listDiv.appendChild(card);
-                });
-            } 
-            else {
-                let dataTampil = cacheRiwayatAdmin;
-                if (filterStatusAktif === "OTOMATIS") dataTampil = cacheRiwayatAdmin.filter(i => i.status.toUpperCase().includes("OTOMATIS"));
-                if (filterStatusAktif === "MANUAL") dataTampil = cacheRiwayatAdmin.filter(i => i.status.toUpperCase().includes("MANUAL"));
-                if (filterStatusAktif === "DITOLAK") dataTampil = cacheRiwayatAdmin.filter(i => i.status.toUpperCase().includes("DITOLAK"));
-
-                if (dataTampil.length === 0) {
-                    listDiv.innerHTML = '<div class="text-center text-xs text-slate-400 py-8">Tidak ada data riwayat.</div>';
-                    return;
-                }
-
-                dataTampil.forEach(item => {
-                    const card = document.createElement('div');
-                    let borderWarna = "border-emerald-600", labelStatus = "🤖 AUTO-PASS", bgLabel = "bg-emerald-100 text-emerald-800";
-                    
-                    if (item.status.toUpperCase().includes("MANUAL")) { borderWarna = "border-blue-600"; labelStatus = "👤 MANUAL-PASS"; bgLabel = "bg-blue-100 text-blue-800"; } 
-                    else if (item.status.toUpperCase().includes("DITOLAK")) { borderWarna = "border-rose-600"; labelStatus = "❌ REJECTED"; bgLabel = "bg-rose-100 text-rose-800"; }
-
-                    card.className = `bg-white text-slate-900 p-3.5 rounded-xl border-l-4 ${borderWarna} shadow-sm space-y-2 text-xs`;
-                    card.innerHTML = `
-                        <div class="flex justify-between items-start gap-1">
-                            <div>
-                                <span class="text-slate-900 font-black text-sm block leading-tight">${item.nama}</span>
-                                <span class="inline-block text-[8px] font-black px-1.5 py-0.2 rounded mt-1 uppercase ${bgLabel}">${labelStatus}</span>
-                            </div>
-                            <div class="text-right shrink-0">
-                                <span class="block text-sm font-mono font-black text-slate-900">Rp ${(parseInt(item.nominal_total)||0).toLocaleString('id-ID')}</span>
-                            </div>
-                        </div>
-                        <div class="text-[10px] text-slate-500 bg-slate-50 p-2 rounded border border-slate-100 font-mono flex justify-between items-center">
-                            <div>REF: ${item.no_ref} | JAM: ${item.timestamp}</div>
-                            <button onclick="bukaModalStruk('${item.link_struk}')" class="bg-slate-200 text-slate-700 font-bold px-2 py-1 rounded text-[10px]">👁️ Struk</button>
-                        </div>
-                        <div class="border-t border-slate-100 pt-2 flex justify-end gap-1.5">
-                            <button onclick="koreksiRetroaktifLog('${item.id_trx}', '${item.nama}', ${item.nominal_total})" class="text-[10px] bg-slate-100 text-slate-700 font-black px-3 py-1.5 rounded border border-slate-300">
-                                ✏️ Koreksi / Batalkan Data
-                            </button>
-                        </div>
-                    `;
-                    listDiv.appendChild(card);
-                });
-            }
-        }
-
-        function luluskanStrukPending(idTrx) {
-            const inputNom = document.getElementById(`input-nom-${idTrx}`);
-            const nominalAkhir = inputNom ? parseInt(inputNom.value) : 0;
-            if(!nominalAkhir || nominalAkhir < 10000) { alert("Nominal tidak valid!"); return; }
-            if (confirm(`Luluskan antrean ini dengan NOMINAL FIX: Rp ${nominalAkhir.toLocaleString('id-ID')}?`)) {
-                adminSedangNgetikUang = false;
-                eksekusiKeputusanAdmin("luluskanTransaksiOlehAdmin", idTrx, nominalAkhir);
-            }
-        }
-
-        function koreksiRetroaktifLog(idTrx, nama, nominalLama) {
-            let aksiPilihan = prompt(`⚙️ KOREKSI KONTROL:\nSantri: [ ${nama} ]\n\nKetik "REJECT" untuk membatalkan saldo.\nKetik nominal baru jika ingin membetulkan nominal salah baca OCR:`, nominalLama);
-            if (aksiPilihan === null) return;
-
-            let cleanAksi = aksiPilihan.trim().toUpperCase();
-            if (cleanAksi === "REJECT") {
-                if (confirm(`Apakah Anda yakin ingin membatalkan transaksi ini?`)) {
-                    eksekusiKeputusanAdmin("tolakTransaksiOlehAdmin", idTrx, 0);
-                }
+                dataTampil = cacheAntreanAdmin;
             } else {
-                let nominalBaru = parseInt(cleanAksi.replace(/[^0-9]/g, ''));
-                if (!nominalBaru || nominalBaru < 10000) { alert("Nominal perbaikan tidak valid!"); return; }
-                if (confirm(`Lakukan Koreksi Saldo Mundur menjadi Rp ${nominalBaru.toLocaleString('id-ID')}?`)) {
-                    eksekusiKeputusanAdmin("koreksiRetroaktifAdmin", idTrx, nominalBaru);
-                }
+                if (filterStatusAktif === "SEMUA") dataTampil = cacheRiwayatAdmin;
+                else if (filterStatusAktif === "OTOMATIS") dataTampil = cacheRiwayatAdmin.filter(x => x.status.toUpperCase().includes("OTOMATIS"));
+                else if (filterStatusAktif === "MANUAL") dataTampil = cacheRiwayatAdmin.filter(x => x.status.toUpperCase().includes("MANUAL"));
+                else if (filterStatusAktif === "DITOLAK") dataTampil = cacheRiwayatAdmin.filter(x => x.status.toUpperCase().includes("DITOLAK"));
             }
+
+            if (dataTampil.length === 0) {
+                container.innerHTML = `<div class="text-center text-xs text-slate-400 py-12 bg-slate-900/20 rounded-xl border border-dashed border-white/5">Tidak ada data transaksi ditemukan pada filter ini.</div>`;
+                return;
+            }
+
+            dataTampil.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = "bg-slate-900/90 border border-white/10 p-3 rounded-xl space-y-2 text-slate-100 shadow-md";
+                
+                let badgeStatusStyle = "bg-slate-800 text-slate-300";
+                if(item.status.toUpperCase().includes("PENDING")) badgeStatusStyle = "bg-amber-500/20 text-amber-400 border border-amber-500/30";
+                else if(item.status.toUpperCase().includes("OTOMATIS")) badgeStatusStyle = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+                else if(item.status.toUpperCase().includes("MANUAL")) badgeStatusStyle = "bg-blue-500/20 text-blue-400 border border-blue-500/30";
+                else if(item.status.toUpperCase().includes("DITOLAK")) badgeStatusStyle = "bg-rose-500/20 text-rose-400 border border-rose-500/30";
+
+                let areaTombolAksiAdmin = "";
+                if (tabAktifAdmin === "ANTREAN") {
+                    areaTombolAksiAdmin = `
+                        <div class="grid grid-cols-3 gap-1.5 pt-1 border-t border-white/5">
+                            <input type="number" id="input-koreksi-${item.id_trx}" value="${item.nominal_total}" 
+                                onfocus="adminSedangNgetikUang=true" onblur="adminSedangNgetikUang=false"
+                                class="bg-slate-950 text-white font-black text-center text-xs rounded border border-white/10 px-1 focus:outline-none focus:border-amber-400">
+                            <button onclick="eksekusiAksiAdmin('${item.id_trx}', 'luluskanTransaksiOlehAdmin')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] py-1.5 rounded transition">✓ ACC</button>
+                            <button onclick="eksekusiAksiAdmin('${item.id_trx}', 'tolakTransaksiOlehAdmin')" class="bg-rose-700 hover:bg-rose-600 text-white font-black text-[10px] py-1.5 rounded transition">✕ TOLAK</button>
+                        </div>
+                    `;
+                } else if(!item.status.toUpperCase().includes("DITOLAK")) {
+                    areaTombolAksiAdmin = `
+                        <div class="grid grid-cols-3 gap-1.5 pt-1 border-t border-white/5">
+                            <input type="number" id="input-koreksi-${item.id_trx}" value="${item.nominal_total}" 
+                                onfocus="adminSedangNgetikUang=true" onblur="adminSedangNgetikUang=false"
+                                class="bg-slate-950 text-white font-black text-center text-xs rounded border border-white/10 px-1 focus:outline-none focus:border-blue-400">
+                            <button onclick="eksekusiAksiAdmin('${item.id_trx}', 'koreksiRetroaktifAdmin')" class="col-span-2 bg-blue-700 hover:bg-blue-600 text-white font-black text-[10px] py-1.5 rounded transition">⚙️ RETRO KOREKSI</button>
+                        </div>
+                    `;
+                }
+
+                itemDiv.innerHTML = `
+                    <div class="flex justify-between items-start gap-1">
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-medium block">${item.timestamp} | ${item.id_trx}</span>
+                            <span class="text-sm font-black text-white block mt-0.5">${item.nama}</span>
+                            <span class="text-[10px] font-bold text-amber-400 bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-800/30 inline-block mt-1">Struk: Rp ${(parseInt(item.nominal_total)||0).toLocaleString('id-ID')}</span>
+                        </div>
+                        <div class="text-right flex flex-col items-end gap-1.5">
+                            <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded ${badgeStatusStyle}">${item.status}</span>
+                            <button onclick="bukaModalStruk('${item.link_struk}')" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-amber-300 font-extrabold px-2 py-1 rounded border border-white/5 flex items-center gap-1">👁️LIHAT STRUK</button>
+                        </div>
+                    </div>
+                    ${areaTombolAksiAdmin}
+                `;
+                container.appendChild(itemDiv);
+            });
         }
 
-        async function eksekusiKeputusanAdmin(namaAksi, idTrx, nominalKoreksi) {
+        async function eksekusiAksiAdmin(idTrx, namaAksi) {
+            const inputNominal = document.getElementById(`input-koreksi-${idTrx}`);
+            const nominalKoreksi = inputNominal ? parseInt(inputNominal.value) || 0 : 0;
+
+            if (namaAksi === "tolakTransaksiOlehAdmin" && !confirm("Yakin ingin MENOLAK struk bulanan ini?")) return;
+            if (namaAksi === "koreksiRetroaktifAdmin" && !confirm("⚠️ KOREKSI RETROAKTIF:\nTindakan ini akan mendebet ulang saldo lama santri di Jurnal Bank lalu memasukkan nilai baru secara real-time. Lanjutkan?")) return;
+
             tampilkanSpinnerGuard(true);
+            
+            const payload = {
+                aksi: namaAksi,
+                pin_admin: PIN_ADMIN_SYSTEM,
+                id_transaksi: idTrx,
+                nominal_koreksi: nominalKoreksi
+            };
+
             try {
-                const payload = { aksi: namaAksi, id_transaksi: idTrx, nominal_koreksi: nominalKoreksi, pin_admin: PIN_ADMIN_SYSTEM };
-                const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
-                const hasil = await res.json();
-                
+                const response = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
+                const hasil = await response.json();
                 tampilkanSpinnerGuard(false);
-                if (hasil.status === "success") pullDataAdminDariServer(); 
-                else alert(hasil.message);
-            } catch(e) { 
+
+                if (hasil.status === "success") {
+                    alert("Aksi Admin Berhasil Dieksekusi!");
+                    pullDataAdminDariServer();
+                } else {
+                    alert("Gagal eksekusi: " + hasil.message);
+                }
+            } catch(e) {
                 tampilkanSpinnerGuard(false);
-                alert("Koneksi gagal ke server."); 
+                alert("Gagal terhubung ke Google Server.");
             }
         }
     </script>

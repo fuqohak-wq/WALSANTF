@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sistem Konfirmasi Struk Terintegrasi - YAYASAN YAHYAWIYYAH</title>
+    <title>Sistem Konfirmasi Struk Otomatis - YAYASAN YAHYAWIYYAH</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
@@ -29,9 +29,8 @@
     <header class="w-full text-center py-2 flex justify-between items-center border-b border-white/10">
         <div class="text-left">
             <h1 class="text-[10px] font-black text-amber-400 tracking-widest uppercase">YAYASAN YAHYAWIYYAH</h1>
-            <h2 class="text-base font-extrabold text-white tracking-tight leading-tight">KONFIRMASI DEPOSIT TABUNGAN</h2>
+            <h2 class="text-base font-extrabold text-white tracking-tight leading-tight">SISTEM KONFIRMASI STRUK</h2>
         </div>
-        <!-- Tombol admin disembunyikan agar fokus ke akun santri, bisa diaktifkan jika perlu -->
         <button onclick="bukaPanelAdmin()" id="btn-nav-admin" class="bg-white/10 hover:bg-white/20 text-xs font-black px-3 py-2 rounded-xl border border-white/10 transition flex items-center gap-1.5 relative">
             🔐 Admin 
             <span id="badge-antrean-luar" class="hidden bg-rose-600 text-white font-black px-1.5 py-0.5 rounded-full text-[9px] shadow animate-pulse">0</span>
@@ -45,7 +44,7 @@
         let loopAdmin = null;
         let loopBadgeLuar = null;
         let dbSantri = [];
-        let santriTerpilih = null; // Menyimpan data santri yang aktif login
+        let santriTerpilih = null;
         
         let cacheAntreanAdmin = [];
         let cacheRiwayatAdmin = [];
@@ -53,18 +52,21 @@
         let adminSedangNgetikUang = false;
     </script>
 
-    <!-- MAIN PANEL WALISANTRI: VERSI INJEKSI AKUN INTEGRASI (TANPA CARI NAMA) -->
     <main id="panel-walisantri" class="w-full flex-1 flex flex-col justify-center my-4 space-y-4">
-        
-        <div id="step-upload" class="w-full bg-white text-slate-900 p-4 rounded-2xl shadow-xl space-y-3">
+        <div id="wrapper-cari-nama" class="w-full bg-white text-slate-900 p-4 rounded-2xl shadow-xl space-y-2">
+            <label class="block text-xs font-black uppercase tracking-wider text-emerald-950">1. Cari Nama Santri / Ustadz :</label>
+            <input type="text" id="search-input" oninput="cariData()" placeholder="Ketik nama anak di sini..." class="w-full bg-slate-100 border-2 border-emerald-200 focus:border-emerald-600 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none transition">
+            <div id="search-results" class="space-y-1.5 max-h-44 overflow-y-auto hidden pt-1"></div>
+        </div>
+
+        <div id="step-upload" class="w-full bg-white text-slate-900 p-4 rounded-2xl shadow-xl space-y-3 hidden">
             <div class="bg-emerald-800 text-white p-4 rounded-xl shadow space-y-2.5 border border-emerald-700">
                 <div>
-                    <span class="text-[10px] uppercase font-bold text-emerald-300 block">Akun Santri Aktif:</span>
-                    <!-- Diisi otomatis oleh sistem login -->
-                    <span id="target-nama" class="text-base font-black block leading-tight">Memuat data akun...</span>
+                    <span class="text-[10px] uppercase font-bold text-emerald-300 block">Anak yang Dipilih:</span>
+                    <span id="target-nama" class="text-base font-black block leading-tight"></span>
                 </div>
                 <div class="border-t border-emerald-700/60 pt-2 text-center bg-emerald-950/40 p-2 rounded-lg border border-amber-500/30">
-                    <span class="text-[11px] font-black text-amber-400 uppercase tracking-wide block">⚠️ WAJIB PAKAI KODE UNIK TRANSFER:</span>
+                    <span class="text-[11px] font-black text-amber-400 uppercase tracking-wide block">⚠️ WAJIB PAKAI KODE UNIK:</span>
                     <div class="mt-2 inline-block bg-amber-400 text-emerald-950 text-base font-black px-4 py-1.5 rounded-full shadow-md">
                         +Rp <span id="target-kode-unik">000</span>
                     </div>
@@ -72,23 +74,22 @@
             </div>
 
             <div class="space-y-1.5 pt-1">
-                <span class="block text-xs font-black uppercase tracking-wider text-slate-700">Upload / Foto Struk Transfer :</span>
+                <span class="block text-xs font-black uppercase tracking-wider text-slate-700">2. Upload / Foto Struk Transfer :</span>
                 <label for="file-struk" class="flex flex-col items-center justify-center border-2 border-dashed border-emerald-600 bg-emerald-50 hover:bg-emerald-100/50 rounded-2xl p-5 cursor-pointer transition text-center group">
                     <span id="icon-upload" class="text-3xl mb-1">📸</span>
-                    <span id="text-upload-label" class="text-sm font-black text-emerald-950">Klik untuk Pilih/Foto Struk</span>
+                    <span id="text-upload-label" class="text-sm font-black text-emerald-950">Klik untuk Pilih Struk</span>
                 </label>
                 <input type="file" id="file-struk" accept="image/*" onchange="fileKenaInput(this)" class="hidden">
             </div>
         </div>
 
-        <div id="area-tombol-submit" class="space-y-2">
+        <div id="area-tombol-submit" class="hidden space-y-2">
             <button onclick="prosesZeroFailureOcr()" id="btn-submit" class="w-full tombol-utama font-black py-4 rounded-2xl text-sm shadow-lg uppercase flex flex-col justify-center items-center border-b-4 border-amber-700 active:border-b-0 transition" disabled>
                 <span id="btn-text" class="text-sm font-black tracking-wide">Kirim Bukti Transfer</span>
             </button>
         </div>
     </main>
 
-    <!-- MAIN PANEL ADMIN WORKSPACE -->
     <main id="panel-admin" class="w-full flex-1 flex flex-col my-3 space-y-3 hidden">
         <div class="flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-white/5">
             <div class="flex items-center gap-1.5">
@@ -114,19 +115,17 @@
     </main>
 
     <footer class="w-full text-[10px] text-emerald-400/40 text-center pt-2 border-t border-white/5 font-bold">
-        &copy; 2026 PPMUY Zero-Failure Shield V12.2
+        &copy; 2026 PPMUY Zero-Failure Shield V12.1
     </footer>
 
     <canvas id="canvas-kompresor" class="hidden"></canvas>
 
-    <!-- ANTI DUPLICATE DOUBLE CLICK SPAM GUARD OVERLAY -->
     <div id="loadingSpamGuard" class="fixed inset-0 bg-slate-950/90 z-[9999] hidden flex-col justify-center items-center text-center p-6">
         <div class="w-14 h-14 border-4 border-slate-700 border-t-amber-400 rounded-full animate-spin"></div>
         <div class="mt-4 text-white font-black text-sm tracking-wide">MENGUNCI DATA & MEMPROSES KE SERVER...</div>
         <div class="text-xs text-slate-400 mt-1">Mohon tunggu sejenak, data sedang disinkronisasikan agar tidak duplikat.</div>
     </div>
 
-    <!-- MODAL VIEW BERKAS STRUK ASLI -->
     <div id="modalPreviewStruk" class="fixed inset-0 bg-slate-950/95 z-[9998] hidden flex-col justify-between p-2">
         <div class="bg-slate-900 text-slate-100 rounded-2xl w-full max-w-md mx-auto flex flex-col h-[90vh] shadow-2xl border border-white/10">
             <div class="px-4 py-3 border-b border-white/10 bg-slate-950 flex justify-between items-center shrink-0 rounded-t-2xl">
@@ -176,28 +175,7 @@
             document.getElementById('modalPreviewStruk').classList.remove('flex');
         }
 
-        // ====================================================================
-        // INTERFACES LISTENER: SINKRONISASI DATA DENGAN PORTAL UTAMA SNTRI
-        // ====================================================================
         window.onload = async function() {
-            // SISTEM OTOMATIS MEMBACA VARIABEL SESI LOGIN WEB UTAMA ANDA
-            // Jika web santri.ppmuy.com menyimpan data ke localStorage pas login, dia akan langsung terbaca di sini.
-            // Anda tinggal menyesuaikan nama 'key' lokal Anda di bawah ini:
-            const dataAkunLoginAktif = {
-                nik: localStorage.getItem("santri_login_nik") || "12345678", 
-                nama: localStorage.getItem("santri_login_nama") || "SANTRI PPMUY ACTIVE", 
-                status: localStorage.getItem("santri_login_status") || "SANTRI",
-                kode: localStorage.getItem("santri_login_kode") || "015"
-            };
-
-            // Kunci data form ke santri tersebut secara absolut (Anti Salah Pilih)
-            santriTerpilih = dataAkunLoginAktif;
-            
-            // Render UI nama dan kode unik ke layar
-            document.getElementById('target-nama').innerText = santriTerpilih.nama;
-            document.getElementById('target-kode-unik').innerText = santriTerpilih.kode.toString().padStart(3, '0');
-
-            // Cek status panel admin (Background sync)
             if (localStorage.getItem("admin_logged_in_permanen") === "true") { bukaPanelAdminTanPop(); }
             try {
                 const res = await fetch(API_URL);
@@ -221,10 +199,40 @@
             } catch(e) {}
         }
 
+        function cariData() {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            const resDiv = document.getElementById('search-results');
+            resDiv.innerHTML = "";
+            if(query.length < 2) { resDiv.classList.add('hidden'); return; }
+
+            const filtered = dbSantri.filter(s => s.nama.toLowerCase().includes(query) || s.nik.includes(query));
+            if(filtered.length > 0) {
+                resDiv.classList.remove('hidden');
+                filtered.forEach(s => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full text-left bg-slate-50 p-3 rounded-xl flex justify-between items-center mt-1 border border-slate-200 text-slate-900";
+                    btn.innerHTML = `<div><span class="block text-sm font-black">${s.nama}</span></div> <span class="bg-emerald-800 text-white font-black text-[10px] px-2 py-0.5 rounded">KODE: ${s.kode ? s.kode.toString().padStart(3,'0') : '000'}</span>`;
+                    btn.onclick = () => pilihSantri(s);
+                    resDiv.appendChild(btn);
+                });
+            } else { resDiv.classList.add('hidden'); }
+        }
+
+        function pilihSantri(santri) {
+            santriTerpilih = santri;
+            document.getElementById('search-results').classList.add('hidden');
+            document.getElementById('search-input').value = santri.nama;
+            document.getElementById('step-upload').classList.remove('hidden');
+            document.getElementById('area-tombol-submit').classList.remove('hidden');
+            document.getElementById('target-nama').innerText = santri.nama;
+            document.getElementById('target-kode-unik').innerText = santri.kode ? santri.kode.toString().padStart(3, '0') : "000";
+            document.getElementById('btn-submit').disabled = true;
+        }
+
         function fileKenaInput(input) {
             if(input.files.length > 0) {
                 document.getElementById('icon-upload').innerText = "📄";
-                document.getElementById('text-upload-label').innerText = "Struk Berhasil Dimuat!";
+                document.getElementById('text-upload-label').innerText = "Struk Terpilih!";
                 document.getElementById('btn-submit').disabled = false;
             }
         }
@@ -306,9 +314,6 @@
             }
         }
 
-        // ====================================================================
-        // BACKOFFICE PANEL ADMIN CONTROL FUNCTIONS
-        // ====================================================================
         function bukaPanelAdmin() {
             let pass = prompt("Masukkan PIN Akses Admin Pondok:");
             if (pass === PIN_ADMIN_SYSTEM) {

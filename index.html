@@ -19,7 +19,7 @@
             background: linear-gradient(to right, #fbbf24, #f59e0b);
             color: #020617;
         }
-        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
     </style>
@@ -38,7 +38,6 @@
     </header>
 
     <script>
-        // MASUKKAN URL WEB APP ANDA DI SINI
         const API_URL = "https://script.google.com/macros/s/AKfycbz4WIiha9JSemWqoC4603207orwCm3eYd3XlMwXzNZBTLHvWsITLlyecHnjB4hvr-i03w/exec";
         const PIN_ADMIN_SYSTEM = "adminppmuy2026";
         let loopAdmin = null;
@@ -165,17 +164,22 @@
 
     <div id="loadingSpamGuard" class="fixed inset-0 bg-slate-950/80 z-[9999] hidden flex-col justify-center items-center text-center p-6">
         <div class="w-12 h-12 border-4 border-slate-700 border-t-amber-400 rounded-full animate-spin"></div>
-        <div class="mt-4 text-white font-extrabold text-sm tracking-wide">Tunggu Proses Sampai Selesai, Jangan Diklik Dulu Mas Admin Ganteng... Semangat Khidmahnya semoga berkah selalu!</div>
+        <div class="mt-4 text-white font-extrabold text-sm tracking-wide">Sedang mengamankan data, mohon tunggu... 😊</div>
     </div>
 
-    <div id="modalPreviewStruk" class="fixed inset-0 bg-slate-950/90 z-[9998] hidden flex-col justify-center items-center p-4">
-        <div class="bg-white text-slate-900 rounded-2xl w-full max-w-sm overflow-hidden flex flex-col shadow-2xl">
-            <div class="bg-slate-100 px-4 py-2.5 border-b border-slate-200 flex justify-between items-center">
-                <span class="text-xs font-black text-slate-700 uppercase tracking-wide">🔍 Visual Bukti Struk</span>
-                <button onclick="tutupModalStruk()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-black px-2.5 py-1 rounded-lg">Tutup ✖️</button>
+    <div id="modalPreviewStruk" class="fixed inset-0 bg-slate-950/95 z-[9998] hidden flex-col justify-between p-2 md:p-4">
+        <div class="bg-slate-900 text-slate-100 rounded-2xl w-full max-w-md mx-auto flex flex-col h-[92vh] shadow-2xl border border-white/10">
+            <div class="px-4 py-3 border-b border-white/10 bg-slate-950 flex justify-between items-center shrink-0 rounded-t-2xl">
+                <span class="text-xs font-black text-amber-400 uppercase tracking-wide">🔍 Dokumen Bukti Transaksi (Geser Kebawah)</span>
+                <button onclick="tutupModalStruk()" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-black px-3 py-1.5 rounded-xl transition">Tutup ✖️</button>
             </div>
-            <div class="p-2 bg-slate-950 flex justify-center items-center max-h-[60vh] overflow-y-auto">
-                <img id="img-modal-target" src="" alt="Struk" class="w-full h-auto object-contain rounded">
+            
+            <div class="flex-1 bg-black p-2 overflow-y-auto overflow-x-hidden flex justify-center items-start custom-scroll">
+                <img id="img-modal-target" src="" alt="Struk" class="w-full h-auto object-contain rounded-lg shadow-lg block max-w-full" style="image-rendering: -webkit-optimize-contrast;">
+            </div>
+            
+            <div class="p-3 bg-slate-950 text-center text-[10px] text-slate-400 border-t border-white/10 shrink-0 rounded-b-2xl">
+                Gunakan dua jari jika ingin melakukan pembesaran (zoom) layar.
             </div>
         </div>
     </div>
@@ -264,7 +268,6 @@
         }
 
         function pilihSantri(santri) {
-            santriTerpilled = santri; // sync variabel global
             santriTerpilih = santri;
             document.getElementById('search-results').classList.add('hidden');
             document.getElementById('search-input').value = santri.nama;
@@ -512,7 +515,7 @@
         function setFilterStatusLog(status) {
             filterStatusAktif = status;
             const semuaFilterBtn = ["SEMUA", "OTOMATIS", "MANUAL", "DITOLAK"];
-            semuform = semuaFilterBtn.forEach(f => {
+            semuaFilterBtn.forEach(f => {
                 const el = document.getElementById(`fltr-${f}`);
                 if(f === status) el.className = "bg-amber-400 text-slate-950 px-2.5 py-1 rounded-md";
                 else el.className = "bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md";
@@ -521,7 +524,7 @@
         }
 
         async function pullDataAdminDariServer() {
-            if (adminSedangNgetikUang) return;
+            if (adminSedangNgetikUang) return; // MENGUNCI AUTOSYNC KETIKA LAGI EDIT NILAI
             const ind = document.getElementById('indicator-refresh');
             try {
                 const res = await fetch(`${API_URL}?aksi=ambilDataAdminLengkap`);
@@ -554,7 +557,6 @@
             document.getElementById('dash-manual-total').innerText = `Rp ${manualTotal.toLocaleString('id-ID')}`;
             document.getElementById('dash-manual-count').innerText = `${manualCount} Transaksi`;
 
-            // Update Badge jumlah antrean pending di tombol tab dalam
             const bDalam = document.getElementById('badge-antrean-dalam');
             if(cacheAntreanAdmin.length > 0) {
                 bDalam.innerText = cacheAntreanAdmin.length;
@@ -592,12 +594,13 @@
                 else if(item.status.toUpperCase().includes("DITOLAK")) badgeStatusStyle = "bg-rose-500/20 text-rose-400 border border-rose-500/30";
 
                 let areaTombolAksiAdmin = "";
+                // KOLOM ANGKA OTOMATIS BERISI BACAAN OCR (item.nominal_total) & SANGAT AMAN DI-EDIT
                 if (tabAktifAdmin === "ANTREAN") {
                     areaTombolAksiAdmin = `
                         <div class="grid grid-cols-3 gap-1.5 pt-1 border-t border-white/5">
                             <input type="number" id="input-koreksi-${item.id_trx}" value="${item.nominal_total}" 
                                 onfocus="adminSedangNgetikUang=true" onblur="adminSedangNgetikUang=false"
-                                class="bg-slate-950 text-white font-black text-center text-xs rounded border border-white/10 px-1 focus:outline-none focus:border-amber-400">
+                                class="bg-slate-950 text-white font-black text-center text-xs rounded border border-white/20 px-1 focus:outline-none focus:border-amber-400 py-1.5" title="Silakan ubah angka di sini jika OCR kurang pas">
                             <button onclick="eksekusiAksiAdmin('${item.id_trx}', 'luluskanTransaksiOlehAdmin')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] py-1.5 rounded transition">✓ ACC</button>
                             <button onclick="eksekusiAksiAdmin('${item.id_trx}', 'tolakTransaksiOlehAdmin')" class="bg-rose-700 hover:bg-rose-600 text-white font-black text-[10px] py-1.5 rounded transition">✕ TOLAK</button>
                         </div>
@@ -607,7 +610,7 @@
                         <div class="grid grid-cols-3 gap-1.5 pt-1 border-t border-white/5">
                             <input type="number" id="input-koreksi-${item.id_trx}" value="${item.nominal_total}" 
                                 onfocus="adminSedangNgetikUang=true" onblur="adminSedangNgetikUang=false"
-                                class="bg-slate-950 text-white font-black text-center text-xs rounded border border-white/10 px-1 focus:outline-none focus:border-blue-400">
+                                class="bg-slate-950 text-white font-black text-center text-xs rounded border border-white/20 px-1 focus:outline-none focus:border-blue-400 py-1.5">
                             <button onclick="eksekusiAksiAdmin('${item.id_trx}', 'koreksiRetroaktifAdmin')" class="col-span-2 bg-blue-700 hover:bg-blue-600 text-white font-black text-[10px] py-1.5 rounded transition">⚙️ RETRO KOREKSI</button>
                         </div>
                     `;
@@ -618,11 +621,11 @@
                         <div>
                             <span class="text-[10px] text-slate-400 font-medium block">${item.timestamp} | ${item.id_trx}</span>
                             <span class="text-sm font-black text-white block mt-0.5">${item.nama}</span>
-                            <span class="text-[10px] font-bold text-amber-400 bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-800/30 inline-block mt-1">Struk: Rp ${(parseInt(item.nominal_total)||0).toLocaleString('id-ID')}</span>
+                            <span class="text-[10px] font-bold text-amber-400 bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-800/30 inline-block mt-1">Hasil OCR: Rp ${(parseInt(item.nominal_total)||0).toLocaleString('id-ID')}</span>
                         </div>
                         <div class="text-right flex flex-col items-end gap-1.5">
                             <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded ${badgeStatusStyle}">${item.status}</span>
-                            <button onclick="bukaModalStruk('${item.link_struk}')" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-amber-300 font-extrabold px-2 py-1 rounded border border-white/5 flex items-center gap-1">👁️LIHAT STRUK</button>
+                            <button onclick="bukaModalStruk('${item.link_struk}')" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-amber-300 font-extrabold px-2.5 py-1 rounded border border-white/10 flex items-center gap-1 shadow">👁️ LIHAT STRUK</button>
                         </div>
                     </div>
                     ${areaTombolAksiAdmin}
@@ -636,7 +639,7 @@
             const nominalKoreksi = inputNominal ? parseInt(inputNominal.value) || 0 : 0;
 
             if (namaAksi === "tolakTransaksiOlehAdmin" && !confirm("Yakin ingin MENOLAK struk bulanan ini?")) return;
-            if (namaAksi === "koreksiRetroaktifAdmin" && !confirm("⚠️ KOREKSI RETROAKTIF:\nTindakan ini akan mendebet ulang saldo lama santri di Jurnal Bank lalu memasukkan nilai baru secara real-time. Lanjutkan?")) return;
+            if (namaAksi === "koreksiRetroaktifAdmin" && !confirm("⚠️ KOREKSI RETROAKTIF:\nTindakan ini akan merubah catatan Jurnal lama secara real-time. Lanjutkan?")) return;
 
             tampilkanSpinnerGuard(true);
             
@@ -654,6 +657,7 @@
 
                 if (hasil.status === "success") {
                     alert("Aksi Admin Berhasil Dieksekusi!");
+                    adminSedangNgetikUang = false; // reset status kunci setelah sukses kirim data
                     pullDataAdminDariServer();
                 } else {
                     alert("Gagal eksekusi: " + hasil.message);

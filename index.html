@@ -38,7 +38,7 @@
     </header>
 
     <script>
-        // MASUKKAN URL BARU HASIL DEPLOY GS ANDA DI SINI
+        // MASUKKAN URL WEB APP ANDA DI SINI
         const API_URL = "https://script.google.com/macros/s/AKfycbz4WIiha9JSemWqoC4603207orwCm3eYd3XlMwXzNZBTLHvWsITLlyecHnjB4hvr-i03w/exec";
         const PIN_ADMIN_SYSTEM = "adminppmuy2026";
         let loopAdmin = null;
@@ -50,13 +50,22 @@
         let cacheRiwayatAdmin = [];
         let filterStatusAktif = "SEMUA";
         let tabAktifAdmin = "ANTREAN";
+
+        // Kumpulan kata bijak islami penyejuk hati saat menunggu ocr
+        const kataKataBijak = [
+            "“Barangsiapa yang mempermudah urusan orang lain, niscaya Allah memudahkan urusannya di dunia dan akhirat.” (HR. Muslim)",
+            "Menuntut ilmu adalah takwa. Menyampaikan ilmu adalah ibadah. Menginfakkan harta untuk santri adalah jihad fisabilillah.",
+            "Sabar sejenak saat mesin membaca kebenaran struk Anda. Setiap detik menunggumu bernilai pahala nafkah anak sholeh.",
+            "Harta tidak akan berkurang karena sedekah dan membayar biaya pendidikan anak. Allah Maha Mengganti dengan berlipat ganda.",
+            "“Niat suci Bapak/Ibu sekalian adalah pondasi berkahnya ilmu yang mengalir pada nafas anak-anak kita di pondok pesantren.”"
+        ];
     </script>
 
     <!-- ====================================================================
          PANEL 1: WALISANTRI 
          ==================================================================== -->
     <main id="panel-walisantri" class="w-full flex-1 flex flex-col justify-center my-4 space-y-4">
-        <div class="w-full bg-white text-slate-900 p-4 rounded-2xl shadow-xl space-y-2">
+        <div id="wrapper-cari-nama" class="w-full bg-white text-slate-900 p-4 rounded-2xl shadow-xl space-y-2">
             <label class="block text-xs font-black uppercase tracking-wider text-emerald-950">1. Cari Nama Santri / Ustadz :</label>
             <input type="text" id="search-input" oninput="cariData()" placeholder="Ketik nama anak di sini..." class="w-full bg-slate-100 border-2 border-emerald-200 focus:border-emerald-600 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none transition">
             <div id="search-results" class="space-y-1.5 max-h-44 overflow-y-auto hidden pt-1"></div>
@@ -90,13 +99,18 @@
             </div>
         </div>
 
-        <div id="area-tombol-submit" class="hidden">
+        <div id="area-tombol-submit" class="hidden space-y-2">
             <button onclick="prosesZeroFailureOcr()" id="btn-submit" class="w-full tombol-utama font-black py-4 rounded-2xl text-sm shadow-lg uppercase flex flex-col justify-center items-center border-b-4 border-amber-700 active:border-b-0 transition" disabled>
                 <span id="btn-text" class="text-sm font-black tracking-wide">Kirim Bukti Transfer</span>
                 <div id="progress-bar-container" class="w-2/3 bg-slate-950/20 h-1.5 rounded-full mt-1.5 hidden overflow-hidden">
                     <div id="progress-bar-fill" class="bg-slate-950 h-full w-0 transition-all duration-150"></div>
                 </div>
             </button>
+            
+            <!-- Tempat menampilkan kata bijak saat loading ocr berlangsung -->
+            <div id="box-kata-bijak" class="hidden bg-black/30 border border-white/10 p-3 rounded-xl text-center">
+                <p id="text-kata-bijak" class="text-[11px] text-amber-200 italic leading-relaxed font-medium"></p>
+            </div>
         </div>
     </main>
 
@@ -178,15 +192,32 @@
 
     <!-- JAVASCRIPT LOGIC CORE -->
     <script>
+        // Variabel penanda apakah admin sedang fokus mengetik nominal uang manual
+        let adminSedangNgetikUang = false;
+
         function tampilkanSpinnerGuard(show) {
             const guard = document.getElementById('loadingSpamGuard');
             if (show) { guard.classList.remove('hidden'); guard.classList.add('flex'); } 
             else { guard.classList.add('hidden'); guard.classList.remove('flex'); }
         }
 
+        function formatUrlGoogleDriveViewer(urlAsli) {
+            if(!urlAsli || urlAsli === "#" || urlAsli === "Tidak Ada File") return "";
+            if(urlAsli.includes("id=")) {
+                const parts = urlAsli.split("id=");
+                return "https://docs.google.com/uc?export=view&id=" + parts[1];
+            }
+            return urlAsli;
+        }
+
+        function定位bukaModalStruk(url) {
+            bukaModalStruk(url);
+        }
+
         function bukaModalStruk(url) {
             if(!url || url === "#" || url === "Tidak Ada File") { alert("Gambar struk tidak terunggah ke Drive cloud."); return; }
-            document.getElementById('img-modal-target').src = url;
+            const urlBersih = formatUrlGoogleDriveViewer(url);
+            document.getElementById('img-modal-target').src = urlBersih;
             document.getElementById('modalPreviewStruk').classList.remove('hidden');
             document.getElementById('modalPreviewStruk').classList.add('flex');
         }
@@ -242,7 +273,6 @@
         }
 
         function pilihSantri(santri) {
-            santriTerpilled = santri;
             santriTerpilih = santri;
             document.getElementById('search-results').classList.add('hidden');
             document.getElementById('search-input').value = santri.nama;
@@ -251,6 +281,12 @@
             document.getElementById('target-nama').innerText = santri.nama;
             document.getElementById('target-kode-unik').innerText = santri.kode ? santri.kode.padStart(3, '0') : "000";
             document.getElementById('btn-submit').disabled = true;
+            
+            // Kembalikan tampilan tombol ke kondisi awal siap klik
+            document.getElementById('btn-submit').classList.remove('hidden');
+            document.getElementById('box-kata-bijak').classList.add('hidden');
+            document.getElementById('btn-text').innerText = "Kirim Bukti Transfer";
+            document.getElementById('progress-bar-container').classList.add('hidden');
         }
 
         function fileKenaInput(input) {
@@ -295,9 +331,20 @@
             const fileInput = document.getElementById('file-struk');
             const barContainer = document.getElementById('progress-bar-container');
             const barFill = document.getElementById('progress-bar-fill');
+            const boxKata = document.getElementById('box-kata-bijak');
+            const txtKata = document.getElementById('text-kata-bijak');
 
-            btn.disabled = true; barContainer.classList.remove('hidden'); barFill.style.width = "10%";
-            btnText.innerText = "MENGOMPRES GAMBAR...";
+            btn.disabled = true; 
+            barContainer.classList.remove('hidden'); 
+            barFill.style.width = "10%";
+            btnText.innerText = "MENGOMPRES GAMBAR (10%)";
+
+            // Munculkan kata bijak secara berkala agar tidak jenuh menunggu proses ocr
+            boxKata.classList.remove('hidden');
+            txtKata.innerText = kataKataBijak[Math.floor(Math.random() * kataKataBijak.length)];
+            let intervalKata = setInterval(() => {
+                txtKata.innerText = kataKataBijak[Math.floor(Math.random() * kataKataBijak.length)];
+            }, 7000);
 
             let base64Filter = "";
             let alasanSistemCuriga = ""; 
@@ -308,7 +355,6 @@
                 const fileGambarMentah = fileInput.files[0];
                 base64Filter = await optimasiGambarSisiKlien(fileGambarMentah);
                 
-                btnText.innerText = "SCANNING OCR...";
                 const worker = await Tesseract.createWorker('ind', 1, {
                     logger: p => {
                         if (p.status === 'recognizing text') {
@@ -398,14 +444,31 @@
             try {
                 const response = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
                 const hasil = await response.json();
+                
+                clearInterval(intervalKata);
 
                 if (hasil.status === "success") {
+                    // SEGERA SEMBUNYIKAN TOMBOL AGAR TIDAK BISA DI-KLIK LAGI OLEH ORANG TUA
+                    document.getElementById('area-tombol-submit').classList.add('hidden');
+                    document.getElementById('step-upload').classList.add('hidden');
+                    document.getElementById('wrapper-cari-nama').classList.add('hidden');
+                    
                     alert(`Data Berhasil Terkirim!\n\n${hasil.message}`);
                     location.reload();
-                } else { alert(hasil.message); btn.disabled = false; barContainer.classList.add('hidden'); btnText.innerText = "Kirim Bukti Transfer"; }
+                } else { 
+                    alert(hasil.message); 
+                    btn.disabled = false; 
+                    barContainer.classList.add('hidden'); 
+                    boxKata.classList.add('hidden');
+                    btnText.innerText = "Kirim Bukti Transfer"; 
+                }
             } catch(errFetch) {
+                clearInterval(intervalKata);
                 alert("Koneksi gagal.");
-                btn.disabled = false; barContainer.classList.add('hidden'); btnText.innerText = "Kirim Bukti Transfer";
+                btn.disabled = false; 
+                barContainer.classList.add('hidden'); 
+                boxKata.classList.add('hidden');
+                btnText.innerText = "Kirim Bukti Transfer";
             }
         }
 
@@ -469,6 +532,9 @@
         }
 
         async function pullDataAdminDariServer() {
+            // JIKA ADMIN SEDANG MENGETIK ANGKA, PULLED DATA DARI SERVER DIBEKUKAN AGAR TIDAK OVERWRITE KETIKAN
+            if (adminSedangNgetikUang) return;
+
             const ind = document.getElementById('indicator-refresh');
             try {
                 const res = await fetch(`${API_URL}?aksi=ambilDataAdminLengkap`);
@@ -529,7 +595,10 @@
                             </div>
                             <div class="flex items-center bg-slate-100 px-2 py-1 rounded-lg border border-slate-300 shrink-0">
                                 <span class="text-slate-400 font-bold mr-1">Rp</span>
-                                <input type="number" id="input-nom-${item.id_trx}" value="${item.nominal_total}" class="w-20 text-right bg-transparent text-slate-900 font-mono font-black text-sm focus:outline-none focus:bg-amber-100 rounded">
+                                <input type="number" id="input-nom-${item.id_trx}" value="${item.nominal_total}" 
+                                    onfocus="adminSedangNgetikUang = true;" 
+                                    onblur="setTimeout(() => { adminSedangNgetikUang = false; }, 2000);" 
+                                    class="w-20 text-right bg-transparent text-slate-900 font-mono font-black text-sm focus:outline-none focus:bg-amber-100 rounded">
                             </div>
                         </div>
                         <div class="text-[10px] text-slate-500 bg-slate-50 p-2 rounded border border-slate-100 font-mono">
@@ -593,6 +662,7 @@
             const nominalAkhir = inputNom ? parseInt(inputNom.value) : 0;
             if(!nominalAkhir || nominalAkhir < 10000) { alert("Nominal tidak valid!"); return; }
             if (confirm(`Luluskan antrean ini dengan NOMINAL FIX: Rp ${nominalAkhir.toLocaleString('id-ID')}?`)) {
+                adminSedangNgetikUang = false;
                 eksekusiKeputusanAdmin("luluskanTransaksiOlehAdmin", idTrx, nominalAkhir);
             }
         }

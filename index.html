@@ -167,19 +167,33 @@
         <div class="mt-4 text-white font-extrabold text-sm tracking-wide">Sedang mengamankan data, mohon tunggu... 😊</div>
     </div>
 
+    <!-- MODAL PREVIEW YANG SUDAH TERBEBAS DARI BUG BLANK CORS -->
     <div id="modalPreviewStruk" class="fixed inset-0 bg-slate-950/95 z-[9998] hidden flex-col justify-between p-2 md:p-4">
         <div class="bg-slate-900 text-slate-100 rounded-2xl w-full max-w-md mx-auto flex flex-col h-[92vh] shadow-2xl border border-white/10">
             <div class="px-4 py-3 border-b border-white/10 bg-slate-950 flex justify-between items-center shrink-0 rounded-t-2xl">
-                <span class="text-xs font-black text-amber-400 uppercase tracking-wide">🔍 Dokumen Bukti Transaksi (Geser Kebawah)</span>
+                <span class="text-xs font-black text-amber-400 uppercase tracking-wide">🔍 Pratinjau Dokumen Transaksi</span>
                 <button onclick="tutupModalStruk()" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-black px-3 py-1.5 rounded-xl transition">Tutup ✖️</button>
             </div>
             
-            <div class="flex-1 bg-black p-2 overflow-y-auto overflow-x-hidden flex justify-center items-start custom-scroll">
-                <img id="img-modal-target" src="" alt="Struk" class="w-full h-auto object-contain rounded-lg shadow-lg block max-w-full" style="image-rendering: -webkit-optimize-contrast;">
+            <div class="flex-1 bg-slate-950 p-4 overflow-y-auto flex flex-col justify-center items-center text-center space-y-4">
+                <div class="w-16 h-16 bg-amber-500/10 text-amber-400 rounded-full flex items-center justify-center text-2xl border border-amber-500/20 animate-bounce">
+                    📂
+                </div>
+                <div class="space-y-1 max-w-xs">
+                    <h3 class="text-sm font-black text-white">Buka Berkas Bukti Transfer</h3>
+                    <p class="text-[11px] text-slate-400 leading-relaxed">
+                        Untuk menghindari batasan keamanan sistem (*CORS*), dokumen struk akan langsung dibuka melalui server cloud resmi Google.
+                    </p>
+                </div>
+                
+                <!-- Tombol Bypass Utama -->
+                <a id="link-download-bypass" href="#" target="_blank" class="w-full max-w-xs bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black py-3 rounded-xl text-xs uppercase tracking-wide shadow-lg hover:scale-[1.02] active:scale-[0.98] transition block text-center border-b-4 border-amber-700">
+                    🚀 BUKA STRUK SEKARANG
+                </a>
             </div>
             
             <div class="p-3 bg-slate-950 text-center text-[10px] text-slate-400 border-t border-white/10 shrink-0 rounded-b-2xl">
-                Gunakan dua jari jika ingin melakukan pembesaran (zoom) layar.
+                Struk akan terbuka otomatis di tab atau aplikasi baru Anda secara utuh.
             </div>
         </div>
     </div>
@@ -193,15 +207,16 @@
 
         function formatUrlGoogleDriveViewer(urlAsli) {
             if(!urlAsli || urlAsli === "#" || urlAsli === "Tidak Ada File") return "";
+            // Jika link adalah tipe ID eksport, konversi langsung ke mode preview web resmi yang aman
             if(urlAsli.includes("id=")) {
                 const parts = urlAsli.split("id=");
-                return "https://docs.google.com/uc?export=view&id=" + parts[1];
+                return "https://drive.google.com/file/d/" + parts[1] + "/view?usp=drivesdk";
             }
             if(urlAsli.includes("/d/")) {
                 const parts = urlAsli.split("/d/");
                 if(parts[1]) {
                     const idFile = parts[1].split("/")[0];
-                    return "https://docs.google.com/uc?export=view&id=" + idFile;
+                    return "https://drive.google.com/file/d/" + idFile + "/view?usp=drivesdk";
                 }
             }
             return urlAsli;
@@ -209,8 +224,13 @@
 
         function bukaModalStruk(url) {
             if(!url || url === "#" || url === "Tidak Ada File") { alert("Gambar struk tidak terunggah ke Drive cloud."); return; }
-            const urlBersih = formatUrlGoogleDriveViewer(url);
-            document.getElementById('img-modal-target').src = urlBersih;
+            const urlBypassLengkap = formatUrlGoogleDriveViewer(url);
+            
+            // Masukkan link bypass ke tombol jangkar akselerasi
+            const btnBypass = document.getElementById('link-download-bypass');
+            btnBypass.href = urlBypassLengkap;
+            
+            // Tampilkan kotak petunjuk modal
             document.getElementById('modalPreviewStruk').classList.remove('hidden');
             document.getElementById('modalPreviewStruk').classList.add('flex');
         }
@@ -222,7 +242,7 @@
 
         window.onload = async function() {
             if (localStorage.getItem("admin_logged_in_permanen") === "true") {
-                bukaPanelAdminTanpaPassword();
+                bukaPanelAdminTanPop();
             }
             try {
                 const res = await fetch(API_URL);
@@ -468,11 +488,11 @@
             let pass = prompt("Masukkan PIN Akses Admin Pondok:");
             if (pass === PIN_ADMIN_SYSTEM) {
                 localStorage.setItem("admin_logged_in_permanen", "true");
-                bukaPanelAdminTanpaPassword();
+                bukaPanelAdminTanPop();
             } else if(pass !== null) { alert("PIN Akses Salah!"); }
         }
 
-        function bukaPanelAdminTanpaPassword() {
+        function bukaPanelAdminTanPop() {
             if(loopBadgeLuar) clearInterval(loopBadgeLuar);
             document.getElementById('panel-walisantri').classList.add('hidden');
             document.getElementById('panel-admin').classList.remove('hidden');
@@ -524,7 +544,7 @@
         }
 
         async function pullDataAdminDariServer() {
-            if (adminSedangNgetikUang) return; // MENGUNCI AUTOSYNC KETIKA LAGI EDIT NILAI
+            if (adminSedangNgetikUang) return; 
             const ind = document.getElementById('indicator-refresh');
             try {
                 const res = await fetch(`${API_URL}?aksi=ambilDataAdminLengkap`);
@@ -594,7 +614,6 @@
                 else if(item.status.toUpperCase().includes("DITOLAK")) badgeStatusStyle = "bg-rose-500/20 text-rose-400 border border-rose-500/30";
 
                 let areaTombolAksiAdmin = "";
-                // KOLOM ANGKA OTOMATIS BERISI BACAAN OCR (item.nominal_total) & SANGAT AMAN DI-EDIT
                 if (tabAktifAdmin === "ANTREAN") {
                     areaTombolAksiAdmin = `
                         <div class="grid grid-cols-3 gap-1.5 pt-1 border-t border-white/5">
@@ -657,7 +676,7 @@
 
                 if (hasil.status === "success") {
                     alert("Aksi Admin Berhasil Dieksekusi!");
-                    adminSedangNgetikUang = false; // reset status kunci setelah sukses kirim data
+                    adminSedangNgetikUang = false; 
                     pullDataAdminDariServer();
                 } else {
                     alert("Gagal eksekusi: " + hasil.message);

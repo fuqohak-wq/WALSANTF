@@ -38,6 +38,7 @@
     </header>
 
     <script>
+        // MASUKKAN URL BARU HASIL DEPLOY GS ANDA DI SINI
         const API_URL = "https://script.google.com/macros/s/AKfycbz4WIiha9JSemWqoC4603207orwCm3eYd3XlMwXzNZBTLHvWsITLlyecHnjB4hvr-i03w/exec";
         const PIN_ADMIN_SYSTEM = "adminppmuy2026";
         let loopAdmin = null;
@@ -45,12 +46,15 @@
         let dbSantri = [];
         let santriTerpilih = null;
         
-        // Cache data admin lokal untuk filter cepat tanpa narik server terus menerus
         let cacheAntreanAdmin = [];
         let cacheRiwayatAdmin = [];
         let filterStatusAktif = "SEMUA";
+        let tabAktifAdmin = "ANTREAN";
     </script>
 
+    <!-- ====================================================================
+         PANEL 1: WALISANTRI 
+         ==================================================================== -->
     <main id="panel-walisantri" class="w-full flex-1 flex flex-col justify-center my-4 space-y-4">
         <div class="w-full bg-white text-slate-900 p-4 rounded-2xl shadow-xl space-y-2">
             <label class="block text-xs font-black uppercase tracking-wider text-emerald-950">1. Cari Nama Santri / Ustadz :</label>
@@ -67,7 +71,7 @@
                 <div class="border-t border-emerald-700/60 pt-2 text-center bg-emerald-950/40 p-2 rounded-lg border border-amber-500/30">
                     <span class="text-[11px] font-black text-amber-400 uppercase tracking-wide block">⚠️ WAJIB PAKAI KODE UNIK:</span>
                     <p class="text-[11px] leading-relaxed text-slate-100 font-medium mt-1">
-                        Bapak/Ibu mohon saat transfer bulanan <strong class="text-amber-300 underline decoration-amber-400">JANGAN BULAT</strong>, wajib sertakan 3 digit ekor kode unik anak ini:
+                        Bapak/Ibu mohon saat transfer bulanan <strong class="text-amber-300 underline">JANGAN BULAT</strong>, wajib sertakan 3 digit ekor kode unik anak ini:
                     </p>
                     <div class="mt-2 inline-block bg-amber-400 text-emerald-950 text-base font-black px-4 py-1.5 rounded-full shadow-md animate-pulse">
                         +Rp <span id="target-kode-unik">000</span>
@@ -96,8 +100,10 @@
         </div>
     </main>
 
+    <!-- ====================================================================
+         PANEL 2: RICH BACKOFFICE ADMIN
+         ==================================================================== -->
     <main id="panel-admin" class="w-full flex-1 flex flex-col my-3 space-y-3 hidden">
-        
         <div class="flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-white/5">
             <div class="flex items-center gap-1.5">
                 <span class="text-xs font-black uppercase text-amber-400 tracking-wider">🎛️ PANEL KENDALI</span>
@@ -145,16 +151,16 @@
     </main>
 
     <footer class="w-full text-[10px] text-emerald-400/40 text-center pt-2 border-t border-white/5 font-bold">
-        &copy; 2026 PPMUY Zero-Failure Shield V11.0
+        &copy; 2026 PPMUY Zero-Failure Shield V11.1
     </footer>
 
     <canvas id="canvas-kompresor" class="hidden"></canvas>
 
-    <div id="loadingSpamGuard" class="fixed inset-0 bg-slate-950/80 z-[9999] hidden flex-col justify-center items-center text-center p-6 transition-all duration-300">
+    <!-- LOADING & MODAL OVERLAYS -->
+    <div id="loadingSpamGuard" class="fixed inset-0 bg-slate-950/80 z-[9999] hidden flex-col justify-center items-center text-center p-6">
         <div class="w-12 h-12 border-4 border-slate-700 border-t-amber-400 rounded-full animate-spin"></div>
-        <div class="mt-4 text-white font-extrabold text-sm tracking-wide leading-relaxed">
-            Sedang mengamankan data, jangan klik berulang ya... 😊
-            <span class="block text-[11px] font-bold text-amber-400 mt-1 animate-pulse">Sistem Pengunci Layar Aktif ✨</span>
+        <div class="mt-4 text-white font-extrabold text-sm tracking-wide">
+            Sedang mengamankan data, mohon tunggu... 😊
         </div>
     </div>
 
@@ -167,15 +173,11 @@
             <div class="p-2 bg-slate-950 flex justify-center items-center max-h-[60vh] overflow-y-auto">
                 <img id="img-modal-target" src="" alt="Struk" class="w-full h-auto object-contain rounded">
             </div>
-            <div class="bg-slate-50 p-3 border-t border-slate-200 text-center">
-                <p class="text-[10px] font-medium text-slate-500">Gunakan tombol aksi di bawah kartu jika ingin merubah status pembukuan.</p>
-            </div>
         </div>
     </div>
 
+    <!-- JAVASCRIPT LOGIC CORE -->
     <script>
-        let tabAktifAdmin = "ANTREAN"; // Default Tab
-
         function tampilkanSpinnerGuard(show) {
             const guard = document.getElementById('loadingSpamGuard');
             if (show) { guard.classList.remove('hidden'); guard.classList.add('flex'); } 
@@ -183,11 +185,12 @@
         }
 
         function bukaModalStruk(url) {
-            if(!url || url === "#") { alert("Gambar tidak tersedia atau tersimpan secara lokal."); return; }
+            if(!url || url === "#" || url === "Tidak Ada File") { alert("Gambar struk tidak terunggah ke Drive cloud."); return; }
             document.getElementById('img-modal-target').src = url;
             document.getElementById('modalPreviewStruk').classList.remove('hidden');
             document.getElementById('modalPreviewStruk').classList.add('flex');
         }
+        
         function tutupModalStruk() {
             document.getElementById('modalPreviewStruk').classList.add('hidden');
             document.getElementById('modalPreviewStruk').classList.remove('flex');
@@ -200,25 +203,10 @@
             try {
                 const res = await fetch(API_URL);
                 const hasil = await res.json();
-                if(hasil.status === "success") { 
-                    dbSantri = hasil.santri; 
-                    
-                    // Autofill pencarian jika dilempar parameter nama via url link
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const namaParam = urlParams.get('nama');
-                    if (namaParam && dbSantri.length > 0) {
-                        const sIn = document.getElementById('search-input');
-                        if (sIn) {
-                            sIn.value = namaParam;
-                            cariData();
-                            const match = dbSantri.filter(s => s.nama.toLowerCase() === namaParam.toLowerCase().trim());
-                            if (match.length === 1) { pilihSantri(match[0]); }
-                        }
-                    }
-                }
+                if(hasil.status === "success") { dbSantri = hasil.santri; }
                 syncBadgeLuarSaja();
                 loopBadgeLuar = setInterval(syncBadgeLuarSaja, 20000);
-            } catch(e) { console.log("Gagal koneksi database pusat."); }
+            } catch(e) {}
         };
 
         async function syncBadgeLuarSaja() {
@@ -254,6 +242,7 @@
         }
 
         function pilihSantri(santri) {
+            santriTerpilled = santri;
             santriTerpilih = santri;
             document.getElementById('search-results').classList.add('hidden');
             document.getElementById('search-input').value = santri.nama;
@@ -300,9 +289,6 @@
             };
         });
 
-        // ====================================================================
-        // FRONTEND ENGINE: ZERO-FAILURE HANDLING PROCESSOR
-        // ====================================================================
         async function prosesZeroFailureOcr() {
             const btn = document.getElementById('btn-submit');
             const btnText = document.getElementById('btn-text');
@@ -314,7 +300,7 @@
             btnText.innerText = "MENGOMPRES GAMBAR...";
 
             let base64Filter = "";
-            let alasanSistemCuriga = ""; // Bendera penampung kecurigaan sistem
+            let alasanSistemCuriga = ""; 
             let nominalDitemukan = 0;
             let noRefFinal = "";
 
@@ -322,7 +308,7 @@
                 const fileGambarMentah = fileInput.files[0];
                 base64Filter = await optimasiGambarSisiKlien(fileGambarMentah);
                 
-                btnText.innerText = "MENYIAPKAN DETEKTOR AIR SCAN...";
+                btnText.innerText = "SCANNING OCR...";
                 const worker = await Tesseract.createWorker('ind', 1, {
                     logger: p => {
                         if (p.status === 'recognizing text') {
@@ -341,14 +327,10 @@
                 const barisTeksAsli = ret.data.text.split('\n');
                 await worker.terminate();
 
-                // 🛡️ ZERO-FAILURE CHECK 1: Apakah teks identitas yayasan ada?
                 const kataKunciValid = ["YAYASAN", "YAHYA", "WIYYAH", "PPMUY", "5309", "0038"];
                 const adaYayasan = kataKunciValid.some(key => rawCleanText.includes(key));
-                if (!adaYayasan) {
-                    alasanSistemCuriga = "Nama Yayasan/No Rek Tidak Terbaca OCR";
-                }
+                if (!adaYayasan) { alasanSistemCuriga = "Nama Yayasan Tidak Terbaca OCR"; }
 
-                // Scan Nominal Utama
                 for (let baris of barisTeksAsli) {
                     let barisClean = baris.toUpperCase().replace(/\s+/g, '');
                     if (barisClean.includes("NOMINAL") || barisClean.includes("TOTAL") || barisClean.includes("RP")) {
@@ -357,17 +339,13 @@
                             for (let ang of kumpulanAngka) {
                                 let nilai = parseInt(ang.replace(/[^0-9]/g, ''));
                                 if (ang.endsWith(",00") || ang.endsWith(".00")) { nilai = Math.floor(nilai / 100); }
-                                if (nilai >= 10000 && nilai <= 2500000) {
-                                    nominalDitemukan = nilai;
-                                    break;
-                                }
+                                if (nilai >= 10000 && nilai <= 2500000) { nominalDitemukan = nilai; break; }
                             }
                         }
                     }
                     if (nominalDitemukan > 0) break;
                 }
 
-                // Scan Jalur Cadangan (Tebakan Angka Logis Terbesar)
                 if (nominalDitemukan === 0) {
                     const daftarAngkaStruk = murniTanpaSpasi.replace(/,00$/g, '').replace(/\.00$/g, '').match(/\d[\d\.,]*/g) || [];
                     let kandidatLogis = [];
@@ -379,51 +357,38 @@
                     }
                     if (kandidatLogis.length > 0) { 
                         nominalDitemukan = Math.max(...kandidatLogis); 
-                        if(alasanSistemCuriga === "") alasanSistemCuriga = "Nominal Hasil Scan Tebakan Jalur Cadangan";
+                        if(alasanSistemCuriga === "") alasanSistemCuriga = "Nominal Jalur Cadangan";
                     }
                 }
 
-                // 🛡️ ZERO-FAILURE CHECK 2: Benar-benar tidak ketemu angka? Berikan nominal 0, lempar ke pending!
                 if (nominalDitemukan === 0) {
                     nominalDitemukan = 0;
                     alasanSistemCuriga = "Gagal Baca Nominal Struk";
                 }
 
-                // Radar Ekstraksi No Referensi Bank
-                const rSea = murniTanpaSpasi.match(/No\.Transaksi[:\s]*([A-Z0-9]{15,25})/i) || murniTanpaSpasi.match(/RefNo[:\s]*([A-Z0-9]{15,25})/i);
-                const rBca = murniTanpaSpasi.match(/Ref(?:id)?[:\s\.]*([0-9A-Z]{12,30})/i) || murniTanpaSpasi.match(/950[0-9A-Z]{15,25}/i);
-                const rBri = murniTanpaSpasi.match(/(?:BRIMORef|No\.Ref|Ref\.:)([0-9]{12,20})/i) || murniTanpaSpasi.match(/No\.Referensi[:\s]*([0-9]{12,20})/i);
+                const rSea = murniTanpaSpasi.match(/No\.Transaksi[:\s]*([A-Z0-9]{15,25})/i);
+                const rBca = murniTanpaSpasi.match(/Ref(?:id)?[:\s\.]*([0-9A-Z]{12,30})/i);
+                const rBri = murniTanpaSpasi.match(/No\.Referensi[:\s]*([0-9]{12,20})/i);
                 
                 if (rSea) noRefFinal = "SEABANK-" + rSea[1].toUpperCase();
                 else if (rBca) noRefFinal = "BCA-" + (rBca[1] || rBca[0]).toUpperCase();
-                else if (rBri) noRefFinal = "BRI-" + (rBri[1] || rBri[0]).toUpperCase();
-                else {
-                    const rPanjang = murniTanpaSpasi.match(/[0-9]{11,25}/g);
-                    if (rPanjang) {
-                        let refOk = rPanjang.find(num => !num.includes("5309") && !num.includes("0038"));
-                        if (refOk) noRefFinal = "REF-" + refOk;
-                    }
-                }
-
-                if (!noRefFinal || noRefFinal.length < 8) {
-                    noRefFinal = "TRX-" + (nominalDitemukan || "MALFORMED") + "-" + Math.floor(Math.random() * 9000 + 1000);
-                }
+                else if (rBri) noRefFinal = "BRI-" + rBri[1];
+                else { noRefFinal = "REF-" + Math.floor(Math.random() * 90000000 + 10000000); }
 
             } catch(crashOcr) {
-                // 🛡️ ZERO-FAILURE SHIELD JARING TERAKHIR: Jika script Tesseract crash/unsupported browser, paksa lolos ke pending!
                 nominalDitemukan = 0;
                 noRefFinal = "CRASH-BROWSER-" + Date.now();
-                alasanSistemCuriga = "Gagal Eksekusi Engine OCR (Browser Walisantri)";
+                alasanSistemCuriga = "Gagal Engine OCR (Browser)";
             }
 
-            btnText.innerText = "MENYIMPAN DATA KE SERVER PONDOK...";
+            btnText.innerText = "MENYIMPAN DATA KE SERVER...";
 
             const payload = {
                 aksi: "simpanTransaksiOtomatisPenuh",
                 nik: santriTerpilih.nik,
                 nama: santriTerpilih.nama,
                 nominal_total: nominalDitemukan,
-                alasan_pending: alasanSistemCuriga, // Kirim alasan kecurigaan ke server
+                alasan_pending: alasanSistemCuriga, 
                 image_base64: base64Filter, 
                 file_name: `STRUK_${santriTerpilih.nik}_${Date.now()}.jpg`,
                 device: navigator.userAgent,
@@ -435,24 +400,15 @@
                 const hasil = await response.json();
 
                 if (hasil.status === "success") {
-                    let teksAlert = `Alhamdulillah, data berhasil terkirim!\n\n`;
-                    if (alasanSistemCuriga !== "") {
-                        teksAlert += `Bukti struk Bapak/Ibu sudah masuk antrean verifikasi manual. Tim Admin pondok akan segera melakukan pencocokan visual secepatnya. Terima kasih.`;
-                    } else {
-                        teksAlert += `Sistem otomatis berhasil membaca nominal sebesar Rp ${nominalDitemukan.toLocaleString('id-ID')}.\n${hasil.message}`;
-                    }
-                    alert(teksAlert);
+                    alert(`Data Berhasil Terkirim!\n\n${hasil.message}`);
                     location.reload();
                 } else { alert(hasil.message); btn.disabled = false; barContainer.classList.add('hidden'); btnText.innerText = "Kirim Bukti Transfer"; }
             } catch(errFetch) {
-                alert("Koneksi internet bermasalah. Silakan coba kirim ulang beberapa saat lagi.");
+                alert("Koneksi gagal.");
                 btn.disabled = false; barContainer.classList.add('hidden'); btnText.innerText = "Kirim Bukti Transfer";
             }
         }
 
-        // ====================================================================
-        // FRONTEND ENGINE: RICH CONTROL BACKOFFICE ADMIN PANEL
-        // ====================================================================
         function bukaPanelAdmin() {
             let pass = prompt("Masukkan PIN Akses Admin Pondok:");
             if (pass === PIN_ADMIN_SYSTEM) {
@@ -468,7 +424,7 @@
             document.getElementById('btn-nav-admin').classList.add('hidden');
             
             pullDataAdminDariServer();
-            loopAdmin = setInterval(pullDataAdminDariServer, 15000);
+            loopAdmin = setInterval(pullDataAdminDariServer, 10000);
         }
 
         function keluarPanelAdminSadar() {
@@ -506,19 +462,14 @@
             const semuaFilterBtn = ["SEMUA", "OTOMATIS", "MANUAL", "DITOLAK"];
             semuaFilterBtn.forEach(f => {
                 const el = document.getElementById(`fltr-${f}`);
-                if(f === status) {
-                    el.className = "bg-amber-400 text-slate-950 px-2.5 py-1 rounded-md";
-                } else {
-                    el.className = "bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md";
-                }
+                if(f === status) el.className = "bg-amber-400 text-slate-950 px-2.5 py-1 rounded-md";
+                else el.className = "bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md";
             });
             renderVisualListAdmin();
         }
 
         async function pullDataAdminDariServer() {
             const ind = document.getElementById('indicator-refresh');
-            if(ind) ind.innerText = "Sync...";
-
             try {
                 const res = await fetch(`${API_URL}?aksi=ambilDataAdminLengkap`);
                 const hasil = await res.json();
@@ -527,10 +478,7 @@
                 if (hasil.status === "success") {
                     cacheAntreanAdmin = hasil.antrean;
                     cacheRiwayatAdmin = hasil.riwayat;
-                    
-                    // Hitung Kalkulasi Dashboard Mini
                     kalkulasiDashboardMiniMetrics();
-                    // Render Tampilan
                     renderVisualListAdmin();
                 }
             } catch(e) { if(ind) ind.innerText = "Lost Conn"; }
@@ -544,13 +492,8 @@
                 let status = item.status.toUpperCase();
                 let nominal = parseInt(item.nominal_pokok) || 0;
                 
-                if (status.includes("OTOMATIS")) {
-                    autoTotal += nominal;
-                    autoCount++;
-                } else if (status.includes("MANUAL")) {
-                    manualTotal += nominal;
-                    manualCount++;
-                }
+                if (status.includes("OTOMATIS")) { autoTotal += nominal; autoCount++; } 
+                else if (status.includes("MANUAL")) { manualTotal += nominal; manualCount++; }
             });
 
             document.getElementById('dash-auto-total').innerText = `Rp ${autoTotal.toLocaleString('id-ID')}`;
@@ -569,10 +512,9 @@
             const listDiv = document.getElementById('list-container-admin');
             listDiv.innerHTML = "";
 
-            // TAB 1: RENDER ANTREAN PENDING
             if (tabAktifAdmin === "ANTREAN") {
                 if (cacheAntreanAdmin.length === 0) {
-                    listDiv.innerHTML = '<div class="text-center text-xs text-emerald-400 bg-emerald-950/40 py-8 border border-emerald-900/20 rounded-xl font-bold">🎉 Bersih! Tidak ada antrean pending saat ini.</div>';
+                    listDiv.innerHTML = '<div class="text-center text-xs text-emerald-400 bg-emerald-950/40 py-8 border border-emerald-900/20 rounded-xl font-bold">🎉 Bersih! Tidak ada antrean pending.</div>';
                     return;
                 }
 
@@ -583,27 +525,25 @@
                         <div class="flex justify-between items-start gap-1">
                             <div>
                                 <span class="text-slate-900 font-black text-sm block leading-tight">${item.nama}</span>
-                                <span class="text-[9px] font-bold text-rose-600 uppercase tracking-tight block mt-0.5">${item.status}</span>
+                                <span class="text-[9px] font-bold text-rose-600 uppercase block mt-0.5">${item.status}</span>
                             </div>
                             <div class="flex items-center bg-slate-100 px-2 py-1 rounded-lg border border-slate-300 shrink-0">
                                 <span class="text-slate-400 font-bold mr-1">Rp</span>
                                 <input type="number" id="input-nom-${item.id_trx}" value="${item.nominal_total}" class="w-20 text-right bg-transparent text-slate-900 font-mono font-black text-sm focus:outline-none focus:bg-amber-100 rounded">
                             </div>
                         </div>
-                        <div class="text-[10px] text-slate-500 bg-slate-50 p-2 rounded border border-slate-100 font-mono space-y-0.5">
-                            <div>REF: ${item.no_ref}</div>
-                            <div>JAM: ${item.timestamp}</div>
+                        <div class="text-[10px] text-slate-500 bg-slate-50 p-2 rounded border border-slate-100 font-mono">
+                            <div>REF: ${item.no_ref} | JAM: ${item.timestamp}</div>
                         </div>
                         <div class="grid grid-cols-3 gap-1.5 pt-0.5">
-                            <button onclick="bukaModalStruk('${item.link_struk}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded text-[10px] shadow-sm">👁️ STRUK</button>
-                            <button onclick="eksekusiKeputusanAdmin('tolakTransaksiOlehAdmin', '${item.id_trx}', 0)" class="bg-rose-600 hover:bg-rose-700 text-white font-black py-2 rounded text-[10px] shadow-sm">❌ REJECT</button>
-                            <button onclick="luluskanStrukPending('${item.id_trx}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2 rounded text-[10px] shadow-sm">✅ LULUS</button>
+                            <button onclick="bukaModalStruk('${item.link_struk}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded text-[10px]">👁️ STRUK</button>
+                            <button onclick="eksekusiKeputusanAdmin('tolakTransaksiOlehAdmin', '${item.id_trx}', 0)" class="bg-rose-600 hover:bg-rose-700 text-white font-black py-2 rounded text-[10px]">❌ REJECT</button>
+                            <button onclick="luluskanStrukPending('${item.id_trx}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2 rounded text-[10px]">✅ LULUS</button>
                         </div>
                     `;
                     listDiv.appendChild(card);
                 });
             } 
-            // TAB 2: RENDER RIWAYAT LOG SEMUA DATA
             else {
                 let dataTampil = cacheRiwayatAdmin;
                 if (filterStatusAktif === "OTOMATIS") dataTampil = cacheRiwayatAdmin.filter(i => i.status.toUpperCase().includes("OTOMATIS"));
@@ -611,25 +551,16 @@
                 if (filterStatusAktif === "DITOLAK") dataTampil = cacheRiwayatAdmin.filter(i => i.status.toUpperCase().includes("DITOLAK"));
 
                 if (dataTampil.length === 0) {
-                    listDiv.innerHTML = '<div class="text-center text-xs text-slate-400 py-8">Tidak ada data riwayat dengan status ini.</div>';
+                    listDiv.innerHTML = '<div class="text-center text-xs text-slate-400 py-8">Tidak ada data riwayat.</div>';
                     return;
                 }
 
                 dataTampil.forEach(item => {
                     const card = document.createElement('div');
-                    let borderWarna = "border-emerald-600";
-                    let labelStatus = "🤖 AUTO-PASS";
-                    let bgLabel = "bg-emerald-100 text-emerald-800";
+                    let borderWarna = "border-emerald-600", labelStatus = "🤖 AUTO-PASS", bgLabel = "bg-emerald-100 text-emerald-800";
                     
-                    if (item.status.toUpperCase().includes("MANUAL")) {
-                        borderWarna = "border-blue-600";
-                        labelStatus = "👤 MANUAL-PASS";
-                        bgLabel = "bg-blue-100 text-blue-800";
-                    } else if (item.status.toUpperCase().includes("DITOLAK")) {
-                        borderWarna = "border-rose-600";
-                        labelStatus = "❌ REJECTED";
-                        bgLabel = "bg-rose-100 text-rose-800";
-                    }
+                    if (item.status.toUpperCase().includes("MANUAL")) { borderWarna = "border-blue-600"; labelStatus = "👤 MANUAL-PASS"; bgLabel = "bg-blue-100 text-blue-800"; } 
+                    else if (item.status.toUpperCase().includes("DITOLAK")) { borderWarna = "border-rose-600"; labelStatus = "❌ REJECTED"; bgLabel = "bg-rose-100 text-rose-800"; }
 
                     card.className = `bg-white text-slate-900 p-3.5 rounded-xl border-l-4 ${borderWarna} shadow-sm space-y-2 text-xs`;
                     card.innerHTML = `
@@ -639,19 +570,15 @@
                                 <span class="inline-block text-[8px] font-black px-1.5 py-0.2 rounded mt-1 uppercase ${bgLabel}">${labelStatus}</span>
                             </div>
                             <div class="text-right shrink-0">
-                                <span class="text-slate-400 font-bold text-[10px]">Total Struk:</span>
                                 <span class="block text-sm font-mono font-black text-slate-900">Rp ${(parseInt(item.nominal_total)||0).toLocaleString('id-ID')}</span>
                             </div>
                         </div>
                         <div class="text-[10px] text-slate-500 bg-slate-50 p-2 rounded border border-slate-100 font-mono flex justify-between items-center">
-                            <div>
-                                <div>REF: ${item.no_ref}</div>
-                                <div>JAM: ${item.timestamp}</div>
-                            </div>
-                            <button onclick="bukaModalStruk('${item.link_struk}')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-2 py-1 rounded text-[10px]">👁️ Struk</button>
+                            <div>REF: ${item.no_ref} | JAM: ${item.timestamp}</div>
+                            <button onclick="bukaModalStruk('${item.link_struk}')" class="bg-slate-200 text-slate-700 font-bold px-2 py-1 rounded text-[10px]">👁️ Struk</button>
                         </div>
                         <div class="border-t border-slate-100 pt-2 flex justify-end gap-1.5">
-                            <button onclick="koreksiRetroaktifLog('${item.id_trx}', '${item.nama}', ${item.nominal_total})" class="text-[10px] bg-slate-100 hover:bg-amber-100 text-slate-700 font-black px-3 py-1.5 rounded border border-slate-300 flex items-center gap-1">
+                            <button onclick="koreksiRetroaktifLog('${item.id_trx}', '${item.nama}', ${item.nominal_total})" class="text-[10px] bg-slate-100 text-slate-700 font-black px-3 py-1.5 rounded border border-slate-300">
                                 ✏️ Koreksi / Batalkan Data
                             </button>
                         </div>
@@ -671,18 +598,18 @@
         }
 
         function koreksiRetroaktifLog(idTrx, nama, nominalLama) {
-            let aksiPilihan = prompt(`⚙️ RETROACTIVE KOREKSI KONTROL:\nSantri: [ ${nama} ]\n\nKetik "REJECT" untuk membatalkan dan menarik saldo.\nKetik angka nominal baru jika ingin membetulkan nominal salah baca OCR:`, nominalLama);
+            let aksiPilihan = prompt(`⚙️ KOREKSI KONTROL:\nSantri: [ ${nama} ]\n\nKetik "REJECT" untuk membatalkan saldo.\nKetik nominal baru jika ingin membetulkan nominal salah baca OCR:`, nominalLama);
             if (aksiPilihan === null) return;
 
             let cleanAksi = aksiPilihan.trim().toUpperCase();
             if (cleanAksi === "REJECT") {
-                if (confirm(`Apakah Anda yakin ingin membatalkan transaksi ini dan melakukan Jurnal Pembalik Saldo Minus di Jurnal Bank pondok?`)) {
+                if (confirm(`Apakah Anda yakin ingin membatalkan transaksi ini?`)) {
                     eksekusiKeputusanAdmin("tolakTransaksiOlehAdmin", idTrx, 0);
                 }
             } else {
                 let nominalBaru = parseInt(cleanAksi.replace(/[^0-9]/g, ''));
                 if (!nominalBaru || nominalBaru < 10000) { alert("Nominal perbaikan tidak valid!"); return; }
-                if (confirm(`Lakukan Koreksi Saldo Mundur untuk [ ${nama} ] dari Rp ${nominalLama.toLocaleString('id-ID')} menjadi Rp ${nominalBaru.toLocaleString('id-ID')}?`)) {
+                if (confirm(`Lakukan Koreksi Saldo Mundur menjadi Rp ${nominalBaru.toLocaleString('id-ID')}?`)) {
                     eksekusiKeputusanAdmin("koreksiRetroaktifAdmin", idTrx, nominalBaru);
                 }
             }
@@ -691,23 +618,16 @@
         async function eksekusiKeputusanAdmin(namaAksi, idTrx, nominalKoreksi) {
             tampilkanSpinnerGuard(true);
             try {
-                const payload = { 
-                    aksi: namaAksi, 
-                    id_transaksi: idTrx,
-                    nominal_koreksi: nominalKoreksi,
-                    pin_admin: PIN_ADMIN_SYSTEM
-                };
-                
+                const payload = { aksi: namaAksi, id_transaksi: idTrx, nominal_koreksi: nominalKoreksi, pin_admin: PIN_ADMIN_SYSTEM };
                 const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
                 const hasil = await res.json();
                 
                 tampilkanSpinnerGuard(false);
-                if (hasil.status === "success") { 
-                    pullDataAdminDariServer(); 
-                } else { alert(hasil.message); }
+                if (hasil.status === "success") pullDataAdminDariServer(); 
+                else alert(hasil.message);
             } catch(e) { 
                 tampilkanSpinnerGuard(false);
-                alert("Koneksi gagal ke server backend."); 
+                alert("Koneksi gagal ke server."); 
             }
         }
     </script>

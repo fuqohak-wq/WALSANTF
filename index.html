@@ -53,16 +53,19 @@
     </script>
 
     <main id="panel-walisantri" class="w-full flex-1 flex flex-col justify-center my-4 space-y-4">
+        
+        <!-- KOLOM PENCARIAN (Otomatis tersembunyi jika login lewat santri.ppmuy.com) -->
         <div id="wrapper-cari-nama" class="w-full bg-white text-slate-900 p-4 rounded-2xl shadow-xl space-y-2">
             <label class="block text-xs font-black uppercase tracking-wider text-emerald-950">1. Cari Nama Santri / Ustadz :</label>
             <input type="text" id="search-input" oninput="cariData()" placeholder="Ketik nama anak di sini..." class="w-full bg-slate-100 border-2 border-emerald-200 focus:border-emerald-600 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none transition">
             <div id="search-results" class="space-y-1.5 max-h-44 overflow-y-auto hidden pt-1"></div>
         </div>
 
+        <!-- AREA UPLOAD (Otomatis langsung terbuka jika login lewat santri.ppmuy.com) -->
         <div id="step-upload" class="w-full bg-white text-slate-900 p-4 rounded-2xl shadow-xl space-y-3 hidden">
             <div class="bg-emerald-800 text-white p-4 rounded-xl shadow space-y-2.5 border border-emerald-700">
                 <div>
-                    <span class="text-[10px] uppercase font-bold text-emerald-300 block">Anak yang Dipilih:</span>
+                    <span id="label-tipe-akun" class="text-[10px] uppercase font-bold text-emerald-300 block">Anak yang Dipilih:</span>
                     <span id="target-nama" class="text-base font-black block leading-tight"></span>
                 </div>
                 <div class="border-t border-emerald-700/60 pt-2 text-center bg-emerald-950/40 p-2 rounded-lg border border-amber-500/30">
@@ -90,6 +93,7 @@
         </div>
     </main>
 
+    <!-- PANEL WORKSPACE ADMIN -->
     <main id="panel-admin" class="w-full flex-1 flex flex-col my-3 space-y-3 hidden">
         <div class="flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-white/5">
             <div class="flex items-center gap-1.5">
@@ -115,7 +119,7 @@
     </main>
 
     <footer class="w-full text-[10px] text-emerald-400/40 text-center pt-2 border-t border-white/5 font-bold">
-        &copy; 2026 PPMUY Zero-Failure Shield V12.1
+        &copy; 2026 PPMUY Zero-Failure Shield V13.0
     </footer>
 
     <canvas id="canvas-kompresor" class="hidden"></canvas>
@@ -154,12 +158,8 @@
 
         function formatUrlGoogleDriveViewer(urlAsli) {
             if(!urlAsli || urlAsli === "#" || urlAsli === "Tidak Ada File") return "#";
-            if(urlAsli.includes("id=")) {
-                return "https://drive.google.com/file/d/" + urlAsli.split("id=")[1] + "/view?usp=drivesdk";
-            }
-            if(urlAsli.includes("/d/")) {
-                return "https://drive.google.com/file/d/" + urlAsli.split("/d/")[1].split("/")[0] + "/view?usp=drivesdk";
-            }
+            if(urlAsli.includes("id=")) { return "https://drive.google.com/file/d/" + urlAsli.split("id=")[1] + "/view?usp=drivesdk"; }
+            if(urlAsli.includes("/d/")) { return "https://drive.google.com/file/d/" + urlAsli.split("/d/")[1].split("/")[0] + "/view?usp=drivesdk"; }
             return urlAsli;
         }
 
@@ -175,7 +175,36 @@
             document.getElementById('modalPreviewStruk').classList.remove('flex');
         }
 
+        // ====================================================================
+        // INTERFACE DETEKTOR JALUR MASUK (SMART HYBRID LOGIC)
+        // ====================================================================
         window.onload = async function() {
+            // Cek apakah ada data lemparan login dari santri.ppmuy.com di localStorage
+            const tokenNik = localStorage.getItem("santri_login_nik");
+            const tokenNama = localStorage.getItem("santri_login_nama");
+            const tokenKode = localStorage.getItem("santri_login_kode");
+            const tokenStatus = localStorage.getItem("santri_login_status") || "SANTRI";
+
+            if (tokenNik && tokenNama && tokenKode) {
+                // KONDISI A: MASUK LEWAT PORTAL UTAMA (AUTOMATIC LOCK)
+                santriTerpilih = { nik: tokenNik, nama: tokenNama, kode: tokenKode, status: tokenStatus };
+                
+                // Sembunyikan kolom pencarian nama
+                document.getElementById('wrapper-cari-nama').classList.add('hidden');
+                
+                // Langsung buka form upload berkas khusus anak tersebut
+                document.getElementById('step-upload').classList.remove('hidden');
+                document.getElementById('area-tombol-submit').classList.remove('hidden');
+                document.getElementById('label-tipe-akun').innerText = "Akun Terintegrasi Aktif:";
+                document.getElementById('target-nama').innerText = santriTerpilih.nama;
+                document.getElementById('target-kode-unik').innerText = santriTerpilih.kode.toString().padStart(3, '0');
+            } else {
+                // KONDISI B: MASUK LANGSUNG LEWAT tf.ppmuy.com (MODE PUBLIK)
+                // Kolom pencarian dibiarkan muncul, menunggu orang tua mengetik nama manual
+                document.getElementById('wrapper-cari-nama').classList.remove('hidden');
+            }
+
+            // Inisialisasi latar belakang & panel admin tetap berjalan normal
             if (localStorage.getItem("admin_logged_in_permanen") === "true") { bukaPanelAdminTanPop(); }
             try {
                 const res = await fetch(API_URL);
@@ -224,6 +253,7 @@
             document.getElementById('search-input').value = santri.nama;
             document.getElementById('step-upload').classList.remove('hidden');
             document.getElementById('area-tombol-submit').classList.remove('hidden');
+            document.getElementById('label-tipe-akun').innerText = "Anak yang Dipilih:";
             document.getElementById('target-nama').innerText = santri.nama;
             document.getElementById('target-kode-unik').innerText = santri.kode ? santri.kode.toString().padStart(3, '0') : "000";
             document.getElementById('btn-submit').disabled = true;

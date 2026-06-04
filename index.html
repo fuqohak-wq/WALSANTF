@@ -54,9 +54,9 @@
         const kataKataBijak = [
             "“Barangsiapa yang mempermudah urusan orang lain, niscaya Allah memudahkan urusannya di dunia dan akhirat.” (HR. Muslim)",
             "Menuntut ilmu adalah takwa. Menyampaikan ilmu adalah ibadah. Menginfakkan harta untuk santri adalah jihad fisabilillah.",
-            "Sabar sejenak saat mesin membaca kebenaran struk Anda. Setiap detik menunggumu bernilai pahala nafkah anak sholeh.",
-            "Harta tidak akan berkurang karena sedekah dan membayar biaya pendidikan anak. Allah Maha Mengganti dengan berlipat ganda.",
-            "“Niat suci Bapak/Ibu sekalian adalah pondasi berkahnya ilmu yang mengalir pada nafas anak-anak kita di pondok pesantren.”"
+            "Sabar sejenak saat mesin membaca kebenaran struk Anda. Setiap detik menunggumu bernilai pahala...",
+            "Harta tidak akan berkurang karena sedekah dan membayar biaya pendidikan anak.",
+            "“Niat suci Bapak/Ibu sekalian adalah pondasi berkahnya ilmu yang mengalir pada nafas anak-anak kita.”"
         ];
     </script>
 
@@ -75,10 +75,7 @@
                 </div>
                 <div class="border-t border-emerald-700/60 pt-2 text-center bg-emerald-950/40 p-2 rounded-lg border border-amber-500/30">
                     <span class="text-[11px] font-black text-amber-400 uppercase tracking-wide block">⚠️ WAJIB PAKAI KODE UNIK:</span>
-                    <p class="text-[11px] leading-relaxed text-slate-100 font-medium mt-1">
-                        Bapak/Ibu mohon saat transfer bulanan <strong class="text-amber-300 underline">JANGAN BULAT</strong>, wajib sertakan 3 digit ekor kode unik anak ini:
-                    </p>
-                    <div class="mt-2 inline-block bg-amber-400 text-emerald-950 text-base font-black px-4 py-1.5 rounded-full shadow-md animate-pulse">
+                    <div class="mt-2 inline-block bg-amber-400 text-emerald-950 text-base font-black px-4 py-1.5 rounded-full shadow-md">
                         +Rp <span id="target-kode-unik">000</span>
                     </div>
                 </div>
@@ -89,7 +86,6 @@
                 <label for="file-struk" class="flex flex-col items-center justify-center border-2 border-dashed border-emerald-600 bg-emerald-50 hover:bg-emerald-100/50 rounded-2xl p-5 cursor-pointer transition text-center group">
                     <span id="icon-upload" class="text-3xl mb-1">📸</span>
                     <span id="text-upload-label" class="text-sm font-black text-emerald-950">Klik untuk Pilih Struk</span>
-                    <span id="text-upload-sub" class="text-[10px] text-slate-500 font-medium mt-0.5">Sistem otomatis menerima segala jenis struk M-Banking / ATM.</span>
                 </label>
                 <input type="file" id="file-struk" accept="image/*" onchange="fileKenaInput(this)" class="hidden">
             </div>
@@ -141,51 +137,37 @@
             </button>
         </div>
 
-        <div id="wrapper-filter-log" class="hidden flex items-center justify-between gap-1.5 bg-slate-900/30 p-2 rounded-xl border border-white/5">
-            <span class="text-[10px] font-bold text-slate-400 uppercase shrink-0">Filter:</span>
-            <div class="flex gap-1 overflow-x-auto w-full text-[9px] font-black">
-                <button onclick="setFilterStatusLog('SEMUA')" id="fltr-SEMUA" class="bg-amber-400 text-slate-950 px-2.5 py-1 rounded-md">SEMUA</button>
-                <button onclick="setFilterStatusLog('OTOMATIS')" id="fltr-OTOMATIS" class="bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md">🤖 AUTO</button>
-                <button onclick="setFilterStatusLog('MANUAL')" id="fltr-MANUAL" class="bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md">👤 MANUAL</button>
-                <button onclick="setFilterStatusLog('DITOLAK')" id="fltr-DITOLAK" class="bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md">❌ REJECT</button>
-            </div>
-        </div>
-
         <div id="list-container-admin" class="space-y-2.5 max-h-[55vh] overflow-y-auto pr-1">
             <div class="text-center text-xs text-slate-400 py-8">Memuat sinkronisasi server...</div>
         </div>
     </main>
 
     <footer class="w-full text-[10px] text-emerald-400/40 text-center pt-2 border-t border-white/5 font-bold">
-        &copy; 2026 PPMUY Zero-Failure Shield V11.2
+        &copy; 2026 PPMUY Zero-Failure Shield V12.0
     </footer>
 
     <canvas id="canvas-kompresor" class="hidden"></canvas>
 
-    <div id="loadingSpamGuard" class="fixed inset-0 bg-slate-950/80 z-[9999] hidden flex-col justify-center items-center text-center p-6">
-        <div class="w-12 h-12 border-4 border-slate-700 border-t-amber-400 rounded-full animate-spin"></div>
-        <div class="mt-4 text-white font-extrabold text-sm tracking-wide">Sedang mengamankan data, mohon tunggu... 😊</div>
+    <div id="loadingSpamGuard" class="fixed inset-0 bg-slate-950/90 z-[9999] hidden flex-col justify-center items-center text-center p-6">
+        <div class="w-14 h-14 border-4 border-slate-700 border-t-amber-400 rounded-full animate-spin"></div>
+        <div class="mt-4 text-white font-black text-sm tracking-wide">MENGUNCI SISTEM DATA ANTI-DUPLIKAT...</div>
+        <div class="text-xs text-slate-400 mt-1">Struk sedang diproses aman ke sistem Cloud Yayasan. Mohon tunggu sejenak.</div>
     </div>
 
-    <div id="modalPreviewStruk" class="fixed inset-0 bg-slate-950/95 z-[9998] hidden flex-col justify-between p-2 md:p-4">
-        <div class="bg-slate-900 text-slate-100 rounded-2xl w-full max-w-md mx-auto flex flex-col h-[92vh] shadow-2xl border border-white/10">
+    <div id="modalPreviewStruk" class="fixed inset-0 bg-slate-950/95 z-[9998] hidden flex-col justify-between p-2">
+        <div class="bg-slate-900 text-slate-100 rounded-2xl w-full max-w-md mx-auto flex flex-col h-[90vh] shadow-2xl border border-white/10">
             <div class="px-4 py-3 border-b border-white/10 bg-slate-950 flex justify-between items-center shrink-0 rounded-t-2xl">
-                <span class="text-xs font-black text-amber-400 uppercase tracking-wide">🔍 Pratinjau Dokumen Transaksi</span>
-                <button onclick="tutupModalStruk()" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-black px-3 py-1.5 rounded-xl transition">Tutup ✖️</button>
+                <span class="text-xs font-black text-amber-400 uppercase tracking-wide">🔍 Dokumen Bukti Transaksi</span>
+                <button onclick="tutupModalStruk()" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-black px-3 py-1.5 rounded-xl transition">Tutup ✕</button>
             </div>
-            
-            <div class="flex-1 bg-slate-950 p-4 overflow-y-auto flex flex-col justify-center items-center text-center space-y-4">
-                <div class="w-16 h-16 bg-amber-500/10 text-amber-400 rounded-full flex items-center justify-center text-2xl border border-amber-500/20 animate-bounce">
-                    📂
+            <div class="flex-1 bg-slate-950 p-4 flex flex-col justify-center items-center text-center space-y-4">
+                <div class="w-16 h-16 bg-amber-500/10 text-amber-400 rounded-full flex items-center justify-center text-2xl border border-amber-500/20">📂</div>
+                <div>
+                    <h3 class="text-sm font-black text-white">Lihat Bukti Berkas Asli</h3>
+                    <p class="text-[11px] text-slate-400 max-w-xs mt-1">Sistem membuka enkripsi dokumen langsung via Cloud Google Storage.</p>
                 </div>
-                <div class="space-y-1 max-w-xs">
-                    <h3 class="text-sm font-black text-white">Buka Berkas Bukti Transfer</h3>
-                    <p class="text-[11px] text-slate-400 leading-relaxed">
-                        Dokumen struk dibuka langsung melalui server resmi Google Drive secara terenkripsi.
-                    </p>
-                </div>
-                <a id="link-download-bypass" href="#" target="_blank" class="w-full max-w-xs bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black py-3 rounded-xl text-xs uppercase tracking-wide shadow-lg hover:scale-[1.02] active:scale-[0.98] transition block text-center border-b-4 border-amber-700">
-                    🚀 BUKA STRUK SEKARANG
+                <a id="link-download-bypass" href="#" target="_blank" class="w-full max-w-xs bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs uppercase tracking-wide shadow-lg text-center border-b-4 border-amber-700 block">
+                    🚀 BUKA GAMBAR STRUK
                 </a>
             </div>
         </div>
@@ -199,26 +181,19 @@
         }
 
         function formatUrlGoogleDriveViewer(urlAsli) {
-            if(!urlAsli || urlAsli === "#" || urlAsli === "Tidak Ada File") return "";
+            if(!urlAsli || urlAsli === "#" || urlAsli === "Tidak Ada File") return "#";
             if(urlAsli.includes("id=")) {
-                const parts = urlAsli.split("id=");
-                return "https://drive.google.com/file/d/" + parts[1] + "/view?usp=drivesdk";
+                return "https://drive.google.com/file/d/" + urlAsli.split("id=")[1] + "/view?usp=drivesdk";
             }
             if(urlAsli.includes("/d/")) {
-                const parts = urlAsli.split("/d/");
-                if(parts[1]) {
-                    const idFile = parts[1].split("/")[0];
-                    return "https://drive.google.com/file/d/" + idFile + "/view?usp=drivesdk";
-                }
+                return "https://drive.google.com/file/d/" + urlAsli.split("/d/")[1].split("/")[0] + "/view?usp=drivesdk";
             }
             return urlAsli;
         }
 
-        function bukaModalStruk(url) {
-            if(!url || url === "#" || url === "Tidak Ada File") { alert("Gambar struk tidak terunggah ke Drive cloud."); return; }
-            const urlBypassLengkap = formatUrlGoogleDriveViewer(url);
-            const btnBypass = document.getElementById('link-download-bypass');
-            btnBypass.href = urlBypassLengkap;
+        function打开ModalStruk(url) {
+            if(!url || url === "#" || url === "Tidak Ada File") { alert("Berkas cloud kosong."); return; }
+            document.getElementById('link-download-bypass').href = formatUrlGoogleDriveViewer(url);
             document.getElementById('modalPreviewStruk').classList.remove('hidden');
             document.getElementById('modalPreviewStruk').classList.add('flex');
         }
@@ -229,9 +204,7 @@
         }
 
         window.onload = async function() {
-            if (localStorage.getItem("admin_logged_in_permanen") === "true") {
-                bukaPanelAdminTanPop();
-            }
+            if (localStorage.getItem("admin_logged_in_permanen") === "true") { bukaPanelAdminTanPop(); }
             try {
                 const res = await fetch(API_URL);
                 const hasil = await res.json();
@@ -265,7 +238,7 @@
                 resDiv.classList.remove('hidden');
                 filtered.forEach(s => {
                     const btn = document.createElement('button');
-                    btn.className = "w-full text-left bg-slate-50 p-3 rounded-xl flex justify-between items-center mt-1 border border-slate-200 text-slate-900 shadow-sm";
+                    btn.className = "w-full text-left bg-slate-50 p-3 rounded-xl flex justify-between items-center mt-1 border border-slate-200 text-slate-900";
                     btn.innerHTML = `<div><span class="block text-sm font-black">${s.nama}</span></div> <span class="bg-emerald-800 text-white font-black text-[10px] px-2 py-0.5 rounded">KODE: ${s.kode ? s.kode.toString().padStart(3,'0') : '000'}</span>`;
                     btn.onclick = () => pilihSantri(s);
                     resDiv.appendChild(btn);
@@ -282,17 +255,12 @@
             document.getElementById('target-nama').innerText = santri.nama;
             document.getElementById('target-kode-unik').innerText = santri.kode ? santri.kode.toString().padStart(3, '0') : "000";
             document.getElementById('btn-submit').disabled = true;
-            
-            document.getElementById('btn-submit').classList.remove('hidden');
-            document.getElementById('box-kata-bijak').classList.add('hidden');
-            document.getElementById('btn-text').innerText = "Kirim Bukti Transfer";
-            document.getElementById('progress-bar-container').classList.add('hidden');
         }
 
         function fileKenaInput(input) {
             if(input.files.length > 0) {
                 document.getElementById('icon-upload').innerText = "📄";
-                document.getElementById('text-upload-label').innerText = "Struk Dimasukkan!";
+                document.getElementById('text-upload-label').innerText = "Struk Terpilih!";
                 document.getElementById('btn-submit').disabled = false;
             }
         }
@@ -312,133 +280,52 @@
                     height *= TARGET_WIDTH / width; width = TARGET_WIDTH;
                     canvas.width = width; canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
-                    
-                    const imgData = ctx.getImageData(0, 0, width, height);
-                    const data = imgData.data;
-                    for (let i = 0; i < data.length; i += 4) {
-                        let grayscale = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
-                        data[i] = data[i+1] = data[i+2] = grayscale;
-                    }
-                    ctx.putImageData(imgData, 0, 0);
                     resolve(canvas.toDataURL('image/jpeg', 0.8));
                 };
             };
         });
 
-        // ====================================================================
-        // FIX CORE: LOGIKA OCR DIKEMBALIKAN KE JALUR LANGSUNG LOLOS (ACC AUTO)
-        // ====================================================================
+        // =========================================================
+        // FIX DOUBLE CLICK ANTI SPAM GUARD FOR WALISANTRI
+        // =========================================================
         async function prosesZeroFailureOcr() {
             const btn = document.getElementById('btn-submit');
-            const btnText = document.getElementById('btn-text');
             const fileInput = document.getElementById('file-struk');
-            const barContainer = document.getElementById('progress-bar-container');
-            const barFill = document.getElementById('progress-bar-fill');
-            const boxKata = document.getElementById('box-kata-bijak');
-            const txtKata = document.getElementById('text-kata-bijak');
-
+            
+            // Kunci tombol secepat kilat agar walisantri tidak bisa klik berkali-kali!
             btn.disabled = true; 
-            barContainer.classList.remove('hidden'); 
-            barFill.style.width = "10%";
-            btnText.innerText = "MENGOMPRES GAMBAR (10%)";
-
-            boxKata.classList.remove('hidden');
-            txtKata.innerText = kataKataBijak[Math.floor(Math.random() * kataKataBijak.length)];
-            let intervalKata = setInterval(() => {
-                txtKata.innerText = kataKataBijak[Math.floor(Math.random() * kataKataBijak.length)];
-            }, 7000);
+            tampilkanSpinnerGuard(true); 
 
             let base64Filter = "";
             let alasanSistemCuriga = ""; 
             let nominalDitemukan = 0;
-            let noRefFinal = "";
-            let teksHasilOcrMentah = "";
+            let noRefFinal = "TRX-" + Date.now().toString().slice(-8);
 
-            // 1. Amankan konversi gambar terlebih dahulu di luar try-catch Tesseract
             try {
-                const fileGambarMentah = fileInput.files[0];
-                base64Filter = await optimasiGambarSisiKlien(fileGambarMentah);
-            } catch(e) {
-                base64Filter = "";
-            }
-
-            // 2. Jalankan Tesseract Engine secara terisolasi agar tidak merusak data jika teks miss
-            try {
-                const worker = await Tesseract.createWorker('ind', 1, {
-                    logger: p => {
-                        if (p.status === 'recognizing text') {
-                            const persen = Math.floor(p.progress * 100);
-                            barFill.style.width = `${persen}%`;
-                            btnText.innerText = `MEMINDAI TEKS STRUK (${persen}%)`;
-                        }
-                    }
-                });
-
-                await worker.setParameters({ tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-:/.,' });
+                base64Filter = await optimasiGambarSisiKlien(fileInput.files[0]);
+                
+                // Isolasi pemicu OCR
+                const worker = await Tesseract.createWorker('ind', 1);
+                await worker.setParameters({ tessedit_char_whitelist: '0123456789Rp.,TOTALNominal' });
                 const ret = await worker.recognize(base64Filter);
-                teksHasilOcrMentah = ret.data.text || "";
+                let teks = ret.data.text || "";
                 await worker.terminate();
-            } catch(crashOcr) {
-                teksHasilOcrMentah = "";
-            }
 
-            // 3. Ekstraksi Data dari Hasil Teks
-            const murniTanpaSpasi = teksHasilOcrMentah.replace(/\s+/g, '');
-            const barisTeksAsli = teksHasilOcrMentah.split('\n');
-
-            // Cari Nominal Utama (Mencari teks pemicu nominal rupiah)
-            for (let baris of barisTeksAsli) {
-                let barisClean = baris.toUpperCase().replace(/\s+/g, '');
-                if (barisClean.includes("NOMINAL") || barisClean.includes("TOTAL") || barisClean.includes("RP") || barisClean.includes("JUMLAH")) {
-                    let kumpulanAngka = barisClean.match(/\d[\d\.,]*/g);
-                    if (kumpulanAngka) {
-                        for (let ang of kumpulanAngka) {
-                            let nilai = parseInt(ang.replace(/[^0-9]/g, ''));
-                            if (ang.endsWith(",00") || ang.endsWith(".00")) { nilai = Math.floor(nilai / 100); }
-                            if (nilai >= 10000 && nilai <= 2500000) { nominalDitemukan = nilai; break; }
-                        }
-                    }
+                let baris = teks.toUpperCase().replace(/\s+/g, '');
+                let matches = baris.match(/\d[\d\.,]*/g) || [];
+                for(let m of matches) {
+                    let v = parseInt(m.replace(/[^0-9]/g, ''));
+                    if (v >= 10000 && v <= 2500000) { nominalDitemukan = v; break; }
                 }
-                if (nominalDitemukan > 0) break;
+            } catch(ocrErr) {
+                nominalDitemukan = 0;
             }
 
-            // Fallback Nominal Cadangan jika teks utama terpotong/buram
-            if (nominalDitemukan === 0) {
-                const daftarAngkaStruk = murniTanpaSpasi.replace(/,00$/g, '').replace(/\.00$/g, '').match(/\d[\d\.,]*/g) || [];
-                let kandidatLogis = [];
-                for (let hitung of daftarAngkaStruk) {
-                    let angkaClean = hitung.replace(/[^0-9]/g, '');
-                    let nominalKandidat = parseInt(angkaClean);
-                    if (angkaClean.includes("3305309") || angkaClean.includes("5309") || angkaClean.includes("0038")) { continue; }
-                    if (nominalKandidat >= 10000 && nominalKandidat <= 2500000) { kandidatLogis.push(nominalKandidat); }
-                }
-                if (kandidatLogis.length > 0) { nominalDitemukan = Math.max(...kandidatLogis); }
-            }
-
-            // Ekstraksi Nomor Referensi Bank
-            const rSea = murniTanpaSpasi.match(/No\.Transaksi[:\s]*([A-Z0-9]{15,25})/i);
-            const rBca = murniTanpaSpasi.match(/Ref(?:id)?[:\s\.]*([0-9A-Z]{12,30})/i);
-            const rBri = murniTanpaSpasi.match(/No\.Referensi[:\s]*([0-9]{12,20})/i);
-            
-            if (rSea) noRefFinal = "SEABANK-" + rSea[1].toUpperCase();
-            else if (rBca) noRefFinal = "BCA-" + (rBca[1] || rBca[0]).toUpperCase();
-            else if (rBri) noRefFinal = "BRI-" + rBri[1];
-            else { 
-                // Fallback cerdas agar TIDAK PERNAH muncul tulisan CRASH-BROWSER lagi
-                noRefFinal = "TRX-" + Date.now().toString().slice(-8) + Math.floor(Math.random() * 90 + 10); 
-            }
-
-            // ================================================================
-            // JALUR TOL AUTO ACC-LOLOS: Jika nominal & Ref sukses dibaca, 
-            // alasan_pending WAJIB dibikin kosong murni agar langsung Lolos di Sheet!
-            // ================================================================
             if (nominalDitemukan > 0) {
-                alasanSistemCuriga = ""; // Kosong = Perintah ke Google Apps Script untuk langsung AUTO-ACC
+                alasanSistemCuriga = ""; 
             } else {
-                alasanSistemCuriga = "Nominal gagal terdeteksi oleh mesin"; // Lempar ke manual admin jika struk kosong/rusak parah
+                alasanSistemCuriga = "Gagal Engine OCR (Browser)";
             }
-
-            btnText.innerText = "MENYIMPAN DATA KE SERVER...";
 
             const payload = {
                 aksi: "simpanTransaksiOtomatisPenuh",
@@ -455,29 +342,14 @@
             try {
                 const response = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
                 const hasil = await response.json();
-                clearInterval(intervalKata);
-
                 if (hasil.status === "success") {
-                    document.getElementById('area-tombol-submit').classList.add('hidden');
-                    document.getElementById('step-upload').classList.add('hidden');
-                    document.getElementById('wrapper-cari-nama').classList.add('hidden');
-                    
-                    alert(`Data Berhasil Terkirim!\n\n${hasil.message}`);
+                    alert("Data Berhasil Terkirim!");
                     location.reload();
-                } else { 
-                    alert(hasil.message); 
-                    btn.disabled = false; 
-                    barContainer.classList.add('hidden'); 
-                    boxKata.classList.add('hidden');
-                    btnText.innerText = "Kirim Bukti Transfer"; 
-                }
-            } catch(errFetch) {
-                clearInterval(intervalKata);
-                alert("Koneksi gagal saat mengirim data ke server cloud.");
-                btn.disabled = false; 
-                barContainer.classList.add('hidden'); 
-                boxKata.classList.add('hidden');
-                btnText.innerText = "Kirim Bukti Transfer";
+                } else { alert(hasil.message); btn.disabled = false; tampilkanSpinnerGuard(false); }
+            } catch(e) {
+                alert("Gangguan internet server.");
+                btn.disabled = false;
+                tampilkanSpinnerGuard(false);
             }
         }
 
@@ -486,7 +358,7 @@
             if (pass === PIN_ADMIN_SYSTEM) {
                 localStorage.setItem("admin_logged_in_permanen", "true");
                 bukaPanelAdminTanPop();
-            } else if(pass !== null) { alert("PIN Akses Salah!"); }
+            } else if(pass !== null) { alert("PIN Salah!"); }
         }
 
         function bukaPanelAdminTanPop() {
@@ -494,7 +366,6 @@
             document.getElementById('panel-walisantri').classList.add('hidden');
             document.getElementById('panel-admin').classList.remove('hidden');
             document.getElementById('btn-nav-admin').classList.add('hidden');
-            
             pullDataAdminDariServer();
             loopAdmin = setInterval(pullDataAdminDariServer, 10000);
         }
@@ -502,47 +373,17 @@
         function keluarPanelAdminSadar() {
             if (confirm("Keluar dari Workspace Admin?")) {
                 localStorage.removeItem("admin_logged_in_permanen");
-                document.getElementById('panel-admin').classList.add('hidden');
-                document.getElementById('panel-walisantri').classList.remove('hidden');
-                document.getElementById('btn-nav-admin').classList.remove('hidden');
-                if (loopAdmin) { clearInterval(loopAdmin); loopAdmin = null; }
-                syncBadgeLuarSaja();
-                loopBadgeLuar = setInterval(syncBadgeLuarSaja, 20000);
+                location.reload();
             }
         }
 
         function gantiTabAdmin(namaTab) {
             tabAktifAdmin = namaTab;
-            const btnAntrean = document.getElementById('tab-btn-antrean');
-            const btnLog = document.getElementById('tab-btn-log');
-            const areaFilter = document.getElementById('wrapper-filter-log');
-
-            if(namaTab === "ANTREAN") {
-                btnAntrean.className = "w-1/2 text-center py-2 text-xs font-black rounded-lg transition-all bg-emerald-700 text-white flex justify-center items-center gap-1";
-                btnLog.className = "w-1/2 text-center py-2 text-xs font-black text-slate-400 rounded-lg transition-all hover:text-white";
-                areaFilter.classList.add('hidden');
-            } else {
-                btnLog.className = "w-1/2 text-center py-2 text-xs font-black rounded-lg transition-all bg-emerald-700 text-white flex justify-center items-center gap-1";
-                btnAntrean.className = "w-1/2 text-center py-2 text-xs font-black text-slate-400 rounded-lg transition-all hover:text-white";
-                areaFilter.classList.remove('hidden');
-            }
-            renderVisualListAdmin();
-        }
-
-        function setFilterStatusLog(status) {
-            filterStatusAktif = status;
-            const semuaFilterBtn = ["SEMUA", "OTOMATIS", "MANUAL", "DITOLAK"];
-            semuaFilterBtn.forEach(f => {
-                const el = document.getElementById(`fltr-${f}`);
-                if(f === status) el.className = "bg-amber-400 text-slate-950 px-2.5 py-1 rounded-md";
-                else el.className = "bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md";
-            });
             renderVisualListAdmin();
         }
 
         async function pullDataAdminDariServer() {
             if (adminSedangNgetikUang) return; 
-            const ind = document.getElementById('indicator-refresh');
             try {
                 const res = await fetch(`${API_URL}?aksi=ambilDataAdminLengkap`);
                 const hasil = await res.json();
@@ -552,17 +393,15 @@
                     
                     let bDalam = document.getElementById('badge-antrean-dalam');
                     if(hasil.antrean.length > 0) {
-                        bDalam.innerText = hasil.antrean.length;
-                        bDalam.classList.remove('hidden');
+                        bDalam.innerText = hasil.antrean.length; bDalam.classList.remove('hidden');
                     } else { bDalam.classList.add('hidden'); }
                     
                     let sumAuto = 0; let countAuto = 0;
                     let sumManual = 0; let countManual = 0;
-                    
                     hasil.riwayat.forEach(r => {
                         let nom = parseInt(r.nominal_total) || 0;
                         if(r.status.includes("Otomatis")) { sumAuto += nom; countAuto++; }
-                        else if(r.status.includes("Admin")) { sumManual += nom; countManual++; }
+                        else { sumManual += nom; countManual++; }
                     });
                     
                     document.getElementById('dash-auto-total').innerText = "Rp " + sumAuto.toLocaleString('id-ID');
@@ -572,21 +411,12 @@
                     
                     renderVisualListAdmin();
                 }
-                ind.innerText = "OK";
-                setTimeout(() => { ind.innerText = "Sync"; }, 1500);
-            } catch(e) { ind.innerText = "ERR"; }
+            } catch(e) {}
         }
 
         function tanganiKetikanUangAdmin(inputan) {
             let angkaMurni = inputan.value.replace(/[^0-9]/g, "");
-            if(angkaMurni !== "") {
-                inputan.value = parseInt(angkaMurni).toLocaleString('id-ID').replace(/,/g, ".");
-            } else { inputan.value = ""; }
-        }
-
-        function formatKeFormatTitik(angka) {
-            if(!angka || angka === 0) return "";
-            return angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            inputan.value = angkaMurni !== "" ? parseInt(angkaMurni).toLocaleString('id-ID').replace(/,/g, ".") : "";
         }
 
         function renderVisualListAdmin() {
@@ -596,82 +426,48 @@
             
             if(tabAktifAdmin === "ANTREAN") {
                 if(cacheAntreanAdmin.length === 0) {
-                    listContainer.innerHTML = `<div class="text-center text-xs text-slate-400 py-12">🎉 Alhamdulillah antrean kosong! Semua struk beres dibaca.</div>`;
+                    listContainer.innerHTML = `<div class="text-center text-xs text-slate-400 py-12">🎉 Antrean cleared! Semua beres.</div>`;
                     return;
                 }
                 
                 cacheAntreanAdmin.forEach(t => {
-                    let directImageLink = t.link_struk.replace("/file/d/", "/uc?export=view&id=").replace("/view?usp=drivesdk", "");
-                    let nominalDefaultOcr = (t.nominal_total && parseInt(t.nominal_total) > 0) ? t.nominal_total : "";
-
                     const div = document.createElement('div');
                     div.className = "bg-slate-900/90 border border-white/10 p-3 rounded-xl space-y-2.5 shadow-md";
                     div.innerHTML = `
                         <div class="flex justify-between items-start">
                             <div>
                                 <h4 class="text-xs font-black text-white leading-tight">${t.nama}</h4>
-                                <span class="text-[9px] text-slate-400 block mt-0.5">${t.timestamp} | ${t.id_trx}</span>
+                                <span class="text-[9px] text-slate-400 block mt-0.5">${t.timestamp}</span>
                             </div>
-                            <span class="bg-amber-500/10 text-amber-400 text-[8px] font-black px-1.5 py-0.5 rounded border border-amber-500/20 uppercase">${t.status}</span>
                         </div>
                         
-                        <div class="w-full h-24 bg-slate-950 rounded-lg overflow-hidden border border-white/5 flex items-center justify-center relative cursor-pointer group" onclick="bukaModalStruk('${t.link_struk}')">
-                            <img src="${directImageLink}" class="w-full h-full object-contain" onerror="this.onerror=null; this.parentNode.innerHTML='<span class="text-[10px] text-slate-500 font-bold">📄 Klik Lihat Berkas Struk</span>';">
-                            <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-[10px] text-white font-black">KLIK PERBESAR 🔍</div>
-                        </div>
-
-                        <div class="text-[9px] text-slate-400 font-medium bg-black/20 p-1.5 rounded border border-white/5">
-                            📌 Ref: <span class="text-slate-200 font-bold">${t.no_ref}</span>
-                        </div>
+                        <button onclick="打开ModalStruk('${t.link_struk}')" class="w-full bg-slate-950 p-3 rounded-lg border border-white/10 text-xs font-bold text-amber-400 hover:bg-black transition flex items-center justify-center gap-2">
+                            🔎 KLIK UNTUK LIHAT BUKTI STRUK
+                        </button>
 
                         <div class="space-y-1">
-                            <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Nominal Uang Sah (Rp):</label>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase">Input Nominal Uang Hasil Cek Struk (Rp):</label>
                             <input type="text" 
                                    id="fee-koreksi-${t.id_trx}" 
-                                   value="${formatKeFormatTitik(nominalDefaultOcr)}" 
                                    oninput="tanganiKetikanUangAdmin(this)" 
                                    onfocus="adminSedangNgetikUang=true" 
                                    onblur="adminSedangNgetikUang=false" 
-                                   placeholder="Ketik nominal transfer..." 
-                                   class="w-full bg-slate-950 border border-white/10 rounded-lg px-3 py-2 text-xs font-black text-amber-400 focus:outline-none focus:border-amber-400 text-center text-sm">
+                                   placeholder="Contoh: 250.000" 
+                                   class="w-full bg-slate-950 border border-white/20 rounded-lg px-3 py-2.5 font-black text-amber-400 focus:outline-none focus:border-amber-400 text-center text-base">
                         </div>
 
                         <div class="flex gap-2 pt-1">
-                            <button onclick="prosesSetujuAdmin('${t.id_trx}', '${t.nama}')" class="w-2/3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs py-2 rounded-lg transition shadow-md">✓ SETUJUI (ACC)</button>
-                            <button onclick="prosesTolakAdmin('${t.id_trx}', '${t.nama}')" class="w-1/3 bg-rose-600/20 hover:bg-rose-600 border border-rose-600/30 hover:text-white text-rose-400 font-black text-xs py-2 rounded-lg transition">✕ REJECT</button>
+                            <button onclick="prosesSetujuAdmin('${t.id_trx}', '${t.nama}')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs py-2.5 rounded-lg transition">✓ SETUJUI (ACC)</button>
+                            <button onclick="prosesTolakAdmin('${t.id_trx}', '${t.nama}')" class="w-1/3 bg-rose-950 text-rose-400 font-bold text-xs py-2.5 rounded-lg transition">✕ TOLAK</button>
                         </div>
                     `;
                     listContainer.appendChild(div);
                 });
             } else {
-                let filtered = cacheRiwayatAdmin;
-                if(filterStatusAktif === "OTOMATIS") filtered = cacheRiwayatAdmin.filter(r => r.status.includes("Otomatis"));
-                if(filterStatusAktif === "MANUAL") filtered = cacheRiwayatAdmin.filter(r => r.status.includes("Admin"));
-                if(filterStatusAktif === "DITOLAK") filtered = cacheRiwayatAdmin.filter(r => r.status.includes("DITOLAK"));
-                
-                if(filtered.length === 0) {
-                    listContainer.innerHTML = `<div class="text-center text-xs text-slate-400 py-12">Tidak ditemukan data riwayat untuk filter ini.</div>`;
-                    return;
-                }
-                
-                filtered.slice().reverse().forEach(t => {
-                    let badgeColor = "bg-slate-800 text-slate-400";
-                    if(t.status.includes("Otomatis")) badgeColor = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-                    if(t.status.includes("Admin")) badgeColor = "bg-blue-500/10 text-blue-400 border border-blue-500/20";
-                    if(t.status.includes("DITOLAK")) badgeColor = "bg-rose-500/10 text-rose-400 border border-rose-500/20";
-
+                cacheRiwayatAdmin.slice().reverse().forEach(t => {
                     const div = document.createElement('div');
-                    div.className = "bg-slate-900/40 border border-white/5 p-2.5 rounded-lg space-y-1 text-xs";
-                    div.innerHTML = `
-                        <div class="flex justify-between items-center">
-                            <span class="font-black text-slate-200">${t.nama}</span>
-                            <span class="text-[8px] text-slate-500">${t.timestamp}</span>
-                        </div>
-                        <div class="flex justify-between items-center pt-0.5">
-                            <span class="font-bold text-slate-400 text-[11px]">Total Struk: <b class="text-white">Rp ${parseInt(t.nominal_total).toLocaleString('id-ID')}</b></span>
-                            <span class="text-[8px] font-black px-1 rounded uppercase ${badgeColor}">${t.status}</span>
-                        </div>
-                    `;
+                    div.className = "bg-slate-900/40 border border-white/5 p-2.5 rounded-lg text-xs flex justify-between";
+                    div.innerHTML = `<span>${t.nama}</span> <b class="text-emerald-400">Rp ${parseInt(t.nominal_total).toLocaleString('id-ID')}</b>`;
                     listContainer.appendChild(div);
                 });
             }
@@ -682,14 +478,9 @@
             const nominalMurni = rawValue.replace(/[^0-9]/g, "");
 
             if(!nominalMurni || parseInt(nominalMurni) <= 0) {
-                alert("⚠️ Harap isi nominal uang rupiah yang valid terlebih dahulu!");
+                alert("⚠️ Harap ketik nominal uang rupiah yang valid terlebih dahulu pada kotak input!");
                 return;
             }
-
-            let formatRupiahTampil = parseInt(nominalMurni).toLocaleString('id-ID').replace(/,/g, ".");
-            let konfirmasi = confirm(`Apakah benar admin akan meluluskan Rp ${formatRupiahTampil} untuk santri:\n\n👤 Nama: ${namaSantri}\n\nJika data sudah valid, klik OK.`);
-            
-            if (!konfirmasi) return;
 
             adminSedangNgetikUang = false;
             tampilkanSpinnerGuard(true);
@@ -706,35 +497,24 @@
                 });
                 const hasil = await response.json();
                 if(hasil.status === "success") {
-                    alert(`✅ Sukses membukukan dana transfer ${namaSantri} senilai Rp ${formatRupiahTampil}.`);
+                    alert("Sukses menyetujui transaksi!");
                     await pullDataAdminDariServer();
                 } else { alert("Gagal: " + hasil.message); }
-            } catch(err) { alert("Masalah jaringan gagal mengirim data."); }
+            } catch(err) { alert("Koneksi gagal."); }
             finally { tampilkanSpinnerGuard(false); }
         }
 
         async function prosesTolakAdmin(idTrx, namaSantri) {
-            let konfirmasi = confirm(`Apakah Anda yakin ingin MENOLAK bukti transfer dari santri:\n\n👤 ${namaSantri}?`);
-            if(!konfirmasi) return;
-
+            if(!confirm("Tolak bukti ini?")) return;
             adminSedangNgetikUang = false;
             tampilkanSpinnerGuard(true);
-
             try {
-                const response = await fetch(API_URL, {
+                await fetch(API_URL, {
                     method: "POST",
-                    body: JSON.stringify({
-                        aksi: "tolakTransaksiOlehAdmin",
-                        id_transaksi: idTrx,
-                        pin_admin: PIN_ADMIN_SYSTEM
-                    })
+                    body: JSON.stringify({ aksi: "tolakTransaksiOlehAdmin", id_transaksi: idTrx, pin_admin: PIN_ADMIN_SYSTEM })
                 });
-                const hasil = await response.json();
-                if(hasil.status === "success") {
-                    alert(`🔴 Bukti transfer milik ${namaSantri} telah ditolak.`);
-                    await pullDataAdminDariServer();
-                } else { alert("Gagal: " + hasil.message); }
-            } catch(err) { alert("Masalah jaringan."); }
+                await pullDataAdminDariServer();
+            } catch(e) {}
             finally { tampilkanSpinnerGuard(false); }
         }
     </script>

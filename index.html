@@ -50,8 +50,8 @@
         let cacheRiwayatAdmin = [];
         let filterStatusAktif = "SEMUA";
         let tabAktifAdmin = "ANTREAN";
+        let adminSedangNgetikUang = false;
 
-        // Kumpulan kata bijak islami penyejuk hati saat menunggu ocr
         const kataKataBijak = [
             "“Barangsiapa yang mempermudah urusan orang lain, niscaya Allah memudahkan urusannya di dunia dan akhirat.” (HR. Muslim)",
             "Menuntut ilmu adalah takwa. Menyampaikan ilmu adalah ibadah. Menginfakkan harta untuk santri adalah jihad fisabilillah.",
@@ -61,9 +61,6 @@
         ];
     </script>
 
-    <!-- ====================================================================
-         PANEL 1: WALISANTRI 
-         ==================================================================== -->
     <main id="panel-walisantri" class="w-full flex-1 flex flex-col justify-center my-4 space-y-4">
         <div id="wrapper-cari-nama" class="w-full bg-white text-slate-900 p-4 rounded-2xl shadow-xl space-y-2">
             <label class="block text-xs font-black uppercase tracking-wider text-emerald-950">1. Cari Nama Santri / Ustadz :</label>
@@ -107,16 +104,12 @@
                 </div>
             </button>
             
-            <!-- Tempat menampilkan kata bijak saat loading ocr berlangsung -->
             <div id="box-kata-bijak" class="hidden bg-black/30 border border-white/10 p-3 rounded-xl text-center">
                 <p id="text-kata-bijak" class="text-[11px] text-amber-200 italic leading-relaxed font-medium"></p>
             </div>
         </div>
     </main>
 
-    <!-- ====================================================================
-         PANEL 2: RICH BACKOFFICE ADMIN
-         ==================================================================== -->
     <main id="panel-admin" class="w-full flex-1 flex flex-col my-3 space-y-3 hidden">
         <div class="flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-white/5">
             <div class="flex items-center gap-1.5">
@@ -170,12 +163,9 @@
 
     <canvas id="canvas-kompresor" class="hidden"></canvas>
 
-    <!-- LOADING & MODAL OVERLAYS -->
     <div id="loadingSpamGuard" class="fixed inset-0 bg-slate-950/80 z-[9999] hidden flex-col justify-center items-center text-center p-6">
         <div class="w-12 h-12 border-4 border-slate-700 border-t-amber-400 rounded-full animate-spin"></div>
-        <div class="mt-4 text-white font-extrabold text-sm tracking-wide">
-            Sedang mengamankan data, mohon tunggu... 😊
-        </div>
+        <div class="mt-4 text-white font-extrabold text-sm tracking-wide">Sedang mengamankan data, mohon tunggu... 😊</div>
     </div>
 
     <div id="modalPreviewStruk" class="fixed inset-0 bg-slate-950/90 z-[9998] hidden flex-col justify-center items-center p-4">
@@ -190,11 +180,7 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC CORE -->
     <script>
-        // Variabel penanda apakah admin sedang fokus mengetik nominal uang manual
-        let adminSedangNgetikUang = false;
-
         function tampilkanSpinnerGuard(show) {
             const guard = document.getElementById('loadingSpamGuard');
             if (show) { guard.classList.remove('hidden'); guard.classList.add('flex'); } 
@@ -207,11 +193,14 @@
                 const parts = urlAsli.split("id=");
                 return "https://docs.google.com/uc?export=view&id=" + parts[1];
             }
+            if(urlAsli.includes("/d/")) {
+                const parts = urlAsli.split("/d/");
+                if(parts[1]) {
+                    const idFile = parts[1].split("/")[0];
+                    return "https://docs.google.com/uc?export=view&id=" + idFile;
+                }
+            }
             return urlAsli;
-        }
-
-        function定位bukaModalStruk(url) {
-            bukaModalStruk(url);
         }
 
         function bukaModalStruk(url) {
@@ -265,10 +254,12 @@
                 filtered.forEach(s => {
                     const btn = document.createElement('button');
                     btn.className = "w-full text-left bg-slate-50 p-3 rounded-xl flex justify-between items-center mt-1 border border-slate-200 text-slate-900 shadow-sm";
-                    btn.innerHTML = `<div><span class="block text-sm font-black">${s.nama}</span></div> <span class="bg-emerald-800 text-white font-black text-[10px] px-2 py-0.5 rounded">KODE: ${s.kode ? s.kode.padStart(3,'0') : '000'}</span>`;
+                    btn.innerHTML = `<div><span class="block text-sm font-black">${s.nama}</span></div> <span class="bg-emerald-800 text-white font-black text-[10px] px-2 py-0.5 rounded">KODE: ${s.kode ? s.kode.toString().padStart(3,'0') : '000'}</span>`;
                     btn.onclick = () => pilihSantri(s);
                     resDiv.appendChild(btn);
                 });
+            } else {
+                resDiv.classList.add('hidden');
             }
         }
 
@@ -279,10 +270,9 @@
             document.getElementById('step-upload').classList.remove('hidden');
             document.getElementById('area-tombol-submit').classList.remove('hidden');
             document.getElementById('target-nama').innerText = santri.nama;
-            document.getElementById('target-kode-unik').innerText = santri.kode ? santri.kode.padStart(3, '0') : "000";
+            document.getElementById('target-kode-unik').innerText = santri.kode ? santri.kode.toString().padStart(3, '0') : "000";
             document.getElementById('btn-submit').disabled = true;
             
-            // Kembalikan tampilan tombol ke kondisi awal siap klik
             document.getElementById('btn-submit').classList.remove('hidden');
             document.getElementById('box-kata-bijak').classList.add('hidden');
             document.getElementById('btn-text').innerText = "Kirim Bukti Transfer";
@@ -339,7 +329,6 @@
             barFill.style.width = "10%";
             btnText.innerText = "MENGOMPRES GAMBAR (10%)";
 
-            // Munculkan kata bijak secara berkala agar tidak jenuh menunggu proses ocr
             boxKata.classList.remove('hidden');
             txtKata.innerText = kataKataBijak[Math.floor(Math.random() * kataKataBijak.length)];
             let intervalKata = setInterval(() => {
@@ -448,7 +437,6 @@
                 clearInterval(intervalKata);
 
                 if (hasil.status === "success") {
-                    // SEGERA SEMBUNYIKAN TOMBOL AGAR TIDAK BISA DI-KLIK LAGI OLEH ORANG TUA
                     document.getElementById('area-tombol-submit').classList.add('hidden');
                     document.getElementById('step-upload').classList.add('hidden');
                     document.getElementById('wrapper-cari-nama').classList.add('hidden');
@@ -532,7 +520,6 @@
         }
 
         async function pullDataAdminDariServer() {
-            // JIKA ADMIN SEDANG MENGETIK ANGKA, PULLED DATA DARI SERVER DIBEKUKAN AGAR TIDAK OVERWRITE KETIKAN
             if (adminSedangNgetikUang) return;
 
             const ind = document.getElementById('indicator-refresh');
@@ -597,7 +584,7 @@
                                 <span class="text-slate-400 font-bold mr-1">Rp</span>
                                 <input type="number" id="input-nom-${item.id_trx}" value="${item.nominal_total}" 
                                     onfocus="adminSedangNgetikUang = true;" 
-                                    onblur="setTimeout(() => { adminSedangNgetikUang = false; }, 2000);" 
+                                    onblur="setTimeout(() => { adminSedangNgetikUang = false; }, 4000);" 
                                     class="w-20 text-right bg-transparent text-slate-900 font-mono font-black text-sm focus:outline-none focus:bg-amber-100 rounded">
                             </div>
                         </div>

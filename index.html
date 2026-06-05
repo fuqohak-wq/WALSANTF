@@ -38,9 +38,12 @@
     </header>
 
     <script>
-        // PASTIKAN LINK URL DI BAWAH INI ADALAH URL WEB APP TERBARU HASIL DEPLOY GOOGLE SCRIPT ANDA!
-        const API_URL = "https://script.google.com/macros/s/AKfycbz4WIiha9JSemWqoC4603207orwCm3eYd3XlMwXzNZBTLHvWsITLlyecHnjB4hvr-i03w/exec";
+        // ====================================================================
+        // TEMPELKAN URL WEB APP HASIL DEPLOY BARU ANDA DI SINI
+        // ====================================================================
+        const API_URL = "MASUKKAN_URL_WEB_APP_BARU_DI_SINI";
         const PIN_ADMIN_SYSTEM = "adminppmuy2026";
+        
         let loopAdmin = null;
         let loopBadgeLuar = null;
         let dbSantri = [];
@@ -53,13 +56,14 @@
     </script>
 
     <main id="panel-walisantri" class="w-full flex-1 flex flex-col justify-center my-4 space-y-4">
-        
+        <!-- KOLOM PENCARIAN -->
         <div id="wrapper-cari-nama" class="w-full bg-white text-slate-900 p-4 rounded-2xl shadow-xl space-y-2">
             <label class="block text-xs font-black uppercase tracking-wider text-emerald-950">1. Cari Nama Santri / Ustadz :</label>
             <input type="text" id="search-input" oninput="cariData()" placeholder="Ketik nama anak di sini..." class="w-full bg-slate-100 border-2 border-emerald-200 focus:border-emerald-600 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none transition">
             <div id="search-results" class="space-y-1.5 max-h-44 overflow-y-auto hidden pt-1"></div>
         </div>
 
+        <!-- AREA UPLOAD -->
         <div id="step-upload" class="w-full bg-white text-slate-900 p-4 rounded-2xl shadow-xl space-y-3 hidden">
             <div class="bg-emerald-800 text-white p-4 rounded-xl shadow space-y-2.5 border border-emerald-700">
                 <div>
@@ -91,6 +95,7 @@
         </div>
     </main>
 
+    <!-- PANEL WORKSPACE ADMIN -->
     <main id="panel-admin" class="w-full flex-1 flex flex-col my-3 space-y-3 hidden">
         <div class="flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-white/5">
             <div class="flex items-center gap-1.5">
@@ -116,15 +121,17 @@
     </main>
 
     <footer class="w-full text-[10px] text-emerald-400/40 text-center pt-2 border-t border-white/5 font-bold">
-        &copy; 2026 PPMUY Zero-Failure Shield V15.0
+        &copy; 2026 PPMUY Zero-Failure Shield V15.2
     </footer>
 
+    <!-- SCREEN BLOCKER -->
     <div id="loadingSpamGuard" class="fixed inset-0 bg-slate-950/90 z-[9999] hidden flex-col justify-center items-center text-center p-6">
         <div class="w-14 h-14 border-4 border-slate-700 border-t-amber-400 rounded-full animate-spin"></div>
-        <div class="mt-4 text-white font-black text-sm tracking-wide" id="spamGuardText">MENGUNCI SESSIN & PROCESSING IMAGE...</div>
-        <div class="text-xs text-slate-400 mt-1" id="spamGuardSubtext">Mohon tunggu sejenak, sistem sedang membangun algoritma stempel biner gambar.</div>
+        <div class="mt-4 text-white font-black text-sm tracking-wide" id="spamGuardText">SINKRONISASI DATABASE...</div>
+        <div class="text-xs text-slate-400 mt-1" id="spamGuardSubtext">Mohon tunggu sejenak.</div>
     </div>
 
+    <!-- MODAL VIEW STRUK -->
     <div id="modalPreviewStruk" class="fixed inset-0 bg-slate-950/95 z-[9998] hidden flex-col justify-between p-2">
         <div class="bg-slate-900 text-slate-100 rounded-2xl w-full max-w-md mx-auto flex flex-col h-[90vh] shadow-2xl border border-white/10">
             <div class="px-4 py-3 border-b border-white/10 bg-slate-950 flex justify-between items-center shrink-0 rounded-t-2xl">
@@ -135,7 +142,7 @@
                 <div class="w-16 h-16 bg-amber-500/10 text-amber-400 rounded-full flex items-center justify-center text-2xl border border-amber-500/20">📂</div>
                 <div>
                     <h3 class="text-sm font-black text-white">Buka Gambar Bukti Asli</h3>
-                    <p class="text-[11px] text-slate-400 max-w-xs mt-1">Gambar ditarik apa adanya sesuai warna resolusi kiriman awal walisantri.</p>
+                    <p class="text-[11px] text-slate-400 max-w-xs mt-1">Membuka lembar berkas asli berwarna tanpa re-kompresi.</p>
                 </div>
                 <a id="link-download-bypass" href="#" target="_blank" class="w-full max-w-xs bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs uppercase tracking-wide shadow-lg text-center border-b-4 border-amber-700 block">
                     🚀 BUKA GAMBAR STRUK ASLI
@@ -161,7 +168,7 @@
         }
 
         function bukaModalStruk(url) {
-            if(!url || url === "#" || url === "Tidak Ada File") { alert("Berkas cloud kosong atau tidak valid."); return; }
+            if(!url || url === "#" || url === "Tidak Ada File") { alert("Berkas kosong."); return; }
             document.getElementById('link-download-bypass').href = formatUrlGoogleDriveViewer(url);
             document.getElementById('modalPreviewStruk').classList.remove('hidden');
             document.getElementById('modalPreviewStruk').classList.add('flex');
@@ -172,40 +179,22 @@
             document.getElementById('modalPreviewStruk').classList.remove('flex');
         }
 
-        async function inisialisasiFormStrukOtomatis() {
-            const tokenNik = localStorage.getItem("santri_login_nik");
-            const tokenNama = localStorage.getItem("santri_login_nama");
-            const tokenKode = localStorage.getItem("santri_login_kode");
-            const tokenStatus = localStorage.getItem("santri_login_status") || "SANTRI";
-
-            if (tokenNik && tokenNama && tokenKode) {
-                santriTerpilih = { nik: tokenNik, nama: tokenNama, kode: tokenKode, status: tokenStatus };
-                document.getElementById('wrapper-cari-nama').classList.add('hidden');
-                document.getElementById('step-upload').classList.remove('hidden');
-                document.getElementById('area-tombol-submit').classList.remove('hidden');
-                
-                document.getElementById('label-tipe-akun').innerText = "Akun Terintegrasi Aktif:";
-                document.getElementById('target-nama').innerText = santriTerpilih.nama;
-                document.getElementById('target-kode-unik').innerText = santriTerpilih.kode.toString().padStart(3, '0');
-            } else {
-                document.getElementById('wrapper-cari-nama').classList.remove('hidden');
-                if(!santriTerpilih) {
-                    document.getElementById('step-upload').classList.add('hidden');
-                    document.getElementById('area-tombol-submit').classList.add('hidden');
-                }
-            }
-        }
-
         window.onload = async function() {
-            await inisialisasiFormStrukOtomatis();
             if (localStorage.getItem("admin_logged_in_permanen") === "true") { bukaPanelAdminTanPop(); }
+            
+            tampilkanSpinnerGuard(true, "MEMUAT DATA...", "Mengunduh daftar nama dari server...");
             try {
                 const res = await fetch(API_URL);
                 const hasil = await res.json();
-                if(hasil.status === "success") { dbSantri = hasil.santri; }
+                if(hasil && hasil.santri) { dbSantri = hasil.santri; }
+                
+                tampilkanSpinnerGuard(false);
                 syncBadgeLuarSaja();
                 loopBadgeLuar = setInterval(syncBadgeLuarSaja, 20000);
-            } catch(e) {}
+            } catch(e) { 
+                tampilkanSpinnerGuard(false);
+                alert("Gagal terhubung ke Google App Script. Periksa kembali URL API Anda.");
+            }
         };
 
         async function syncBadgeLuarSaja() {
@@ -214,7 +203,7 @@
                 const res = await fetch(`${API_URL}?aksi=ambilDataAdminLengkap`);
                 const hasil = await res.json();
                 const bLuar = document.getElementById('badge-antrean-luar');
-                if (hasil.status === "success" && hasil.antrean.length > 0) {
+                if (hasil && hasil.status === "success" && hasil.antrean && hasil.antrean.length > 0) {
                     bLuar.innerText = hasil.antrean.length;
                     bLuar.classList.remove('hidden');
                 } else { bLuar.classList.add('hidden'); }
@@ -241,12 +230,11 @@
         }
 
         function pilihSantri(santri) {
-            santriTerpilih = { nik: santri.nik, nama: santri.nama, kode: santri.kode, status: "SANTRI" };
+            santriTerpilih = { nik: santri.nik, nama: santri.nama, kode: santri.kode };
             document.getElementById('search-results').classList.add('hidden');
             document.getElementById('search-input').value = santri.nama;
             document.getElementById('step-upload').classList.remove('hidden');
             document.getElementById('area-tombol-submit').classList.remove('hidden');
-            document.getElementById('label-tipe-akun').innerText = "Anak yang Dipilih:";
             document.getElementById('target-nama').innerText = santri.nama;
             document.getElementById('target-kode-unik').innerText = santri.kode ? santri.kode.toString().padStart(3, '0') : "000";
             document.getElementById('btn-submit').disabled = true;
@@ -260,14 +248,12 @@
             }
         }
 
-        // FUNGSI UTAMA BACA BINARY MURNI (ANTI-GAMBAR HITAM PEKAT)
         const bacaFileSebagaiBase64Asli = (file) => new Promise((resolve) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = (e) => resolve(e.target.result);
         });
 
-        // GENERATOR STEMPEL DIGITAL GAMBAR (MENGANALISIS KARAKTERISTIK UKURAN DAN DATA DATA UNTUK ALGORITMA ANTI-DUPLIKAT)
         function buatStempelDigitalGambar(file) {
             let infoMetadata = file.name + file.size + file.lastModified;
             let hash = 0;
@@ -283,9 +269,8 @@
             const btn = document.getElementById('btn-submit');
             const fileInput = document.getElementById('file-struk');
             
-            // Kunci Tombol Detik Itu Juga (Anti Input Dobel)
             btn.disabled = true; 
-            tampilkanSpinnerGuard(true, "MEMPROSES DATA...", "Mengekstrak stempel digital & membaca isi nominal struk..."); 
+            tampilkanSpinnerGuard(true, "MEMPROSES STRUK...", "Mengekstrak data gambar & memindai isi nominal..."); 
 
             let base64Asli = "";
             let statusTransaksiFinal = "PENDING"; 
@@ -305,45 +290,40 @@
 
                 let baris = teks.toUpperCase().replace(/\s+/g, '');
                 
-                // 1. Ekstraksi Nominal Uang Utama
                 let matchesNominal = baris.match(/\d[\d\.,]*/g) || [];
                 for(let m of matchesNominal) {
                     let v = parseInt(m.replace(/[^0-9]/g, ''));
                     if (v >= 10000 && v <= 5000000) { nominalDitemukan = v; break; }
                 }
 
-                // 2. Ekstraksi No Referensi Bank (Fuzzy Lapis Kedua)
                 let matchesRef = baris.match(/\d{8,20}/g) || [];
                 noRefDitemukan = matchesRef.length > 0 ? matchesRef[0] : "REF-FUZZY-" + Date.now().toString().slice(-6);
 
-                // ============================================================
-                // ATURAN BARU EVALUASI AUTO-PASS (FOKUS KODE UNIK GANJIL)
-                // ============================================================
                 let tigaAngkaBelakangUang = nominalDitemukan % 1000;
                 let targetKodeAnak = parseInt(santriTerpilih.kode);
 
                 if (nominalDitemukan > 0 && tigaAngkaBelakangUang === targetKodeAnak) {
-                    // JALUR AUTO-PASS TERBUKA KARENA KODE UNIK DI EKOR NOMINAL VALID COCOK 
                     statusTransaksiFinal = "BERHASIL";
                     alasanSistemCuriga = ""; 
                 } else if (nominalDitemukan > 0 && tigaAngkaBelakangUang !== targetKodeAnak) {
-                    alasanSistemCuriga = `Nominal terbaca Rp ${nominalDitemukan.toLocaleString('id-ID')}, tidak sinkron dengan kode unik (+${targetKodeAnak})`;
+                    alasanSistemCuriga = `Nominal Rp ${nominalDitemukan.toLocaleString('id-ID')}, tidak cocok kode unik (+${targetKodeAnak})`;
                 } else {
-                    alasanSistemCuriga = "Gagal memindai teks nominal (Piksel miring / Watermark Tebal)";
+                    alasanSistemCuriga = "Gagal memindai nominal otomatis (Gambar buram/miring)";
                 }
 
             } catch(ocrErr) {
                 nominalDitemukan = 0;
                 noRefDitemukan = "REF-ERR-" + Date.now().toString().slice(-6);
-                alasanSistemCuriga = "Mesin Browser OCR Gagal membaca berkas. Dialihkan ke Admin.";
+                alasanSistemCuriga = "Crash OCR: Masuk Antrean Manual Admin.";
             }
 
-            tampilkanSpinnerGuard(true, "MENGIRIM KE SERVER CLOUD...", "Menyinkronkan data & mengamankan saldo rekening...");
+            tampilkanSpinnerGuard(true, "MENYINKRONKAN DATA...", "Mengamankan antrean ke Google Sheets...");
 
             const payload = {
                 aksi: "simpanTransaksiOtomatisPenuh",
                 nik: santriTerpilih.nik,
                 nama: santriTerpilih.nama,
+                kode_unik_anak: santriTerpilih.kode ? parseInt(santriTerpilih.kode) : 0, // DITAMBAHKAN AGAR TIDAK CRASH REKAP DI SERVER
                 nominal_total: nominalDitemukan,
                 status_final: statusTransaksiFinal, 
                 alasan_pending: alasanSistemCuriga, 
@@ -357,11 +337,10 @@
             try {
                 const response = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
                 const hasil = await response.json();
-                
                 alert(hasil.message);
                 location.reload();
             } catch(e) {
-                alert("Koneksi gagal terputus saat proses sinkronisasi server.");
+                alert("Koneksi gagal saat menghubungi server Google App Script.");
                 btn.disabled = false;
                 tampilkanSpinnerGuard(false);
             }
@@ -404,18 +383,18 @@
             try {
                 const res = await fetch(`${API_URL}?aksi=ambilDataAdminLengkap`);
                 const hasil = await res.json();
-                if(hasil.status === "success") {
-                    cacheAntreanAdmin = hasil.antrean;
-                    cacheRiwayatAdmin = hasil.riwayat;
+                if(hasil && hasil.status === "success") {
+                    cacheAntreanAdmin = hasil.antrean || [];
+                    cacheRiwayatAdmin = hasil.riwayat || [];
                     
                     let bDalam = document.getElementById('badge-antrean-dalam');
-                    if(hasil.antrean.length > 0) {
-                        bDalam.innerText = hasil.antrean.length; bDalam.classList.remove('hidden');
+                    if(cacheAntreanAdmin.length > 0) {
+                        bDalam.innerText = cacheAntreanAdmin.length; bDalam.classList.remove('hidden');
                     } else { bDalam.classList.add('hidden'); }
                     
                     renderVisualListAdmin();
                 }
-            } catch(e) {}
+            } catch(e) { console.log("Gagal sync data admin."); }
         }
 
         function tanganiKetikanUangAdmin(inputan) {
@@ -430,7 +409,7 @@
             
             if(tabAktifAdmin === "ANTREAN") {
                 if(cacheAntreanAdmin.length === 0) {
-                    listContainer.innerHTML = `<div class="text-center text-xs text-slate-400 py-12">🎉 Antrean cleared! Semua beres.</div>`;
+                    listContainer.innerHTML = `<div class="text-center text-xs text-slate-400 py-12">🎉 Semua Antrean Beres! Tidak ada pending.</div>`;
                     return;
                 }
                 
@@ -470,10 +449,10 @@
                 });
             } else {
                 if(cacheRiwayatAdmin.length === 0) {
-                    listContainer.innerHTML = `<div class="text-center text-xs text-slate-400 py-12">Belum ada riwayat transaksi.</div>`;
+                    listContainer.innerHTML = `<div class="text-center text-xs text-slate-400 py-12">Belum ada riwayat transaksi terdata.</div>`;
                     return;
                 }
-                cacheRiwayatAdmin.slice().reverse().forEach(t => {
+                cacheRiwayatAdmin.forEach(t => {
                     const div = document.createElement('div');
                     div.className = "bg-slate-900/40 border border-white/5 p-2.5 rounded-lg text-xs flex justify-between items-center";
                     div.innerHTML = `<div><span>${t.nama}</span><span class="block text-[9px] text-slate-500">${t.timestamp}</span></div> <b class="text-emerald-400">Rp ${parseInt(t.nominal_total).toLocaleString('id-ID')}</b>`;
@@ -487,12 +466,12 @@
             const nominalMurni = rawValue.replace(/[^0-9]/g, "");
 
             if(!nominalMurni || parseInt(nominalMurni) <= 0) {
-                alert("⚠️ Masukkan nominal uang yang tertulis asli di dalam gambar struk!");
+                alert("⚠️ Masukkan angka nominal rupiah asli di struk dahulu!");
                 return;
             }
 
             adminSedangNgetikUang = false;
-            tampilkanSpinnerGuard(true, "MELULUSKAN DANA...", "Menyuntikkan saldo rekap ke database utama...");
+            tampilkanSpinnerGuard(true, "MELULUSKAN DANA...", "Menulis rekap saldo sukses ke Google Sheets...");
 
             try {
                 const response = await fetch(API_URL, {
@@ -509,14 +488,14 @@
                     alert(hasil.message || "Sukses menyetujui transaksi!");
                     await pullDataAdminDariServer();
                 } else { alert("Gagal: " + hasil.message); }
-            } catch(err) { alert("Koneksi internet terputus."); }
+            } catch(err) { alert("Koneksi gagal."); }
             finally { tampilkanSpinnerGuard(false); }
         }
 
         async function prosesTolakAdmin(idTrx, namaSantri) {
             if(!confirm("Tolak bukti transfer palsu ini?")) return;
             adminSedangNgetikUang = false;
-            tampilkanSpinnerGuard(true, "MENGHAPUS ANTREAN...", "Membersihkan berkas dari database...");
+            tampilkanSpinnerGuard(true, "MENGHAPUS ANTREAN...", "Membersihkan data sampah...");
             try {
                 const response = await fetch(API_URL, {
                     method: "POST",

@@ -38,7 +38,6 @@
     </header>
 
     <script>
-        // PASTIKAN LINK URL DI BAWAH INI ADALAH URL WEB APP TERBARU HASIL DEPLOY GOOGLE SCRIPT ANDA!
         const API_URL = "https://script.google.com/macros/s/AKfycbz4WIiha9JSemWqoC4603207orwCm3eYd3XlMwXzNZBTLHvWsITLlyecHnjB4hvr-i03w/exec";
         const PIN_ADMIN_SYSTEM = "adminppmuy2026";
         let loopAdmin = null;
@@ -54,14 +53,14 @@
 
     <main id="panel-walisantri" class="w-full flex-1 flex flex-col justify-center my-4 space-y-4">
         
-        <!-- KOLOM PENCARIAN (Otomatis tersembunyi jika mendeteksi data login aktif dari dashboard) -->
+        <!-- KOLOM PENCARIAN -->
         <div id="wrapper-cari-nama" class="w-full bg-white text-slate-900 p-4 rounded-2xl shadow-xl space-y-2">
             <label class="block text-xs font-black uppercase tracking-wider text-emerald-950">1. Cari Nama Santri / Ustadz :</label>
             <input type="text" id="search-input" oninput="cariData()" placeholder="Ketik nama anak di sini..." class="w-full bg-slate-100 border-2 border-emerald-200 focus:border-emerald-600 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none transition">
             <div id="search-results" class="space-y-1.5 max-h-44 overflow-y-auto hidden pt-1"></div>
         </div>
 
-        <!-- AREA UPLOAD (Otomatis langsung terbuka & mengunci data santri yang sedang aktif) -->
+        <!-- AREA UPLOAD (ORIGINAL COLOR VALUE) -->
         <div id="step-upload" class="w-full bg-white text-slate-900 p-4 rounded-2xl shadow-xl space-y-3 hidden">
             <div class="bg-emerald-800 text-white p-4 rounded-xl shadow space-y-2.5 border border-emerald-700">
                 <div>
@@ -119,15 +118,13 @@
     </main>
 
     <footer class="w-full text-[10px] text-emerald-400/40 text-center pt-2 border-t border-white/5 font-bold">
-        &copy; 2026 PPMUY Zero-Failure Shield V13.5
+        &copy; 2026 PPMUY Zero-Failure Shield V14.0
     </footer>
-
-    <canvas id="canvas-kompresor" class="hidden"></canvas>
 
     <div id="loadingSpamGuard" class="fixed inset-0 bg-slate-950/90 z-[9999] hidden flex-col justify-center items-center text-center p-6">
         <div class="w-14 h-14 border-4 border-slate-700 border-t-amber-400 rounded-full animate-spin"></div>
-        <div class="mt-4 text-white font-black text-sm tracking-wide">MENGUNCI DATA & MEMPROSES KE SERVER...</div>
-        <div class="text-xs text-slate-400 mt-1">Mohon tunggu sejenak, data sedang disinkronisasikan agar tidak duplikat.</div>
+        <div class="mt-4 text-white font-black text-sm tracking-wide" id="spamGuardText">MENGUNCI DATA & SCANNING OCR...</div>
+        <div class="text-xs text-slate-400 mt-1" id="spamGuardSubtext">Mohon tunggu sejenak, data sedang divalidasi ke cloud server.</div>
     </div>
 
     <div id="modalPreviewStruk" class="fixed inset-0 bg-slate-950/95 z-[9998] hidden flex-col justify-between p-2">
@@ -140,7 +137,7 @@
                 <div class="w-16 h-16 bg-amber-500/10 text-amber-400 rounded-full flex items-center justify-center text-2xl border border-amber-500/20">📂</div>
                 <div>
                     <h3 class="text-sm font-black text-white">Buka Gambar Bukti Asli</h3>
-                    <p class="text-[11px] text-slate-400 max-w-xs mt-1">Membuka enkripsi dokumen langsung via Google Storage Jaringan Luar.</p>
+                    <p class="text-[11px] text-slate-400 max-w-xs mt-1">Membuka gambar resolusi asli berwarna tanpa modifikasi.</p>
                 </div>
                 <a id="link-download-bypass" href="#" target="_blank" class="w-full max-w-xs bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs uppercase tracking-wide shadow-lg text-center border-b-4 border-amber-700 block">
                     🚀 BUKA GAMBAR STRUK
@@ -150,8 +147,10 @@
     </div>
 
     <script>
-        function tampilkanSpinnerGuard(show) {
+        function tampilkanSpinnerGuard(show, text = "", subtext = "") {
             const guard = document.getElementById('loadingSpamGuard');
+            if(text) document.getElementById('spamGuardText').innerText = text;
+            if(subtext) document.getElementById('spamGuardSubtext').innerText = subtext;
             if (show) { guard.classList.remove('hidden'); guard.classList.add('flex'); } 
             else { guard.classList.add('hidden'); guard.classList.remove('flex'); }
         }
@@ -175,9 +174,6 @@
             document.getElementById('modalPreviewStruk').classList.remove('flex');
         }
 
-        // ====================================================================
-        // INTERFACE DETEKTOR HYBRID (Bisa Dipanggil Manual Saat Pindah Tab Menu)
-        // ====================================================================
         async function inisialisasiFormStrukOtomatis() {
             const tokenNik = localStorage.getItem("santri_login_nik");
             const tokenNama = localStorage.getItem("santri_login_nama");
@@ -185,9 +181,7 @@
             const tokenStatus = localStorage.getItem("santri_login_status") || "SANTRI";
 
             if (tokenNik && tokenNama && tokenKode) {
-                // KONDISI A: TERINTEGRASI LOGIN PORTAL (LANGSUNG KUNCI NAMA)
                 santriTerpilih = { nik: tokenNik, nama: tokenNama, kode: tokenKode, status: tokenStatus };
-                
                 document.getElementById('wrapper-cari-nama').classList.add('hidden');
                 document.getElementById('step-upload').classList.remove('hidden');
                 document.getElementById('area-tombol-submit').classList.remove('hidden');
@@ -196,11 +190,7 @@
                 document.getElementById('target-nama').innerText = santriTerpilih.nama;
                 document.getElementById('target-kode-unik').innerText = santriTerpilih.kode.toString().padStart(3, '0');
             } else {
-                // KONDISI B: DIAKSES LEWAT LINK MANDIRI TF.PPMUY.COM (MODE PUBLIK)
-                document.getElementById('wrapper-cari-nama').classList.remove('from-neutral-100');
                 document.getElementById('wrapper-cari-nama').classList.remove('hidden');
-                
-                // Reset form jika beralih ke mode publik
                 if(!santriTerpilih) {
                     document.getElementById('step-upload').classList.add('hidden');
                     document.getElementById('area-tombol-submit').classList.add('hidden');
@@ -208,10 +198,8 @@
             }
         }
 
-        // Listener saat pertama kali halaman dimuat
         window.onload = async function() {
             await inisialisasiFormStrukOtomatis();
-
             if (localStorage.getItem("admin_logged_in_permanen") === "true") { bukaPanelAdminTanPop(); }
             try {
                 const res = await fetch(API_URL);
@@ -268,30 +256,17 @@
 
         function fileKenaInput(input) {
             if(input.files.length > 0) {
-                document.getElementById('icon-upload').innerText = "📄";
-                document.getElementById('text-upload-label').innerText = "Struk Terpilih!";
+                document.getElementById('icon-upload').innerText = "✅";
+                document.getElementById('text-upload-label').innerText = "Struk Asli Siap Dikirim!";
                 document.getElementById('btn-submit').disabled = false;
             }
         }
 
-        const optimasiGambarSisiKlien = (file) => new Promise((resolve) => {
+        // AMBIL DATA BASE64 TANPA MERUSAK LAPISAN ALPHA CHANNEL (ANTI-BLACKOUT)
+        const bacaFileSebagaiBase64Asli = (file) => new Promise((resolve) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
-            reader.onload = (event) => {
-                const img = new Image();
-                img.src = event.target.result;
-                img.onload = () => {
-                    const canvas = document.getElementById('canvas-kompresor');
-                    const ctx = canvas.getContext('2d');
-                    const TARGET_WIDTH = 1000; 
-                    let width = img.width; let height = img.height;
-                    if (width > height) { let temp = width; width = height; height = temp; }
-                    height *= TARGET_WIDTH / width; width = TARGET_WIDTH;
-                    canvas.width = width; canvas.height = height;
-                    ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.8));
-                };
-            };
+            reader.onload = (e) => resolve(e.target.result);
         });
 
         async function prosesZeroFailureOcr() {
@@ -299,42 +274,75 @@
             const fileInput = document.getElementById('file-struk');
             
             btn.disabled = true; 
-            tampilkanSpinnerGuard(true); 
+            tampilkanSpinnerGuard(true, "MEMBACA DATA STRUK...", "Mengekstrak nominal & nomor referensi bank secara presisi..."); 
 
-            let base64Filter = "";
-            let alasanSistemCuriga = ""; 
+            let base64Asli = "";
+            let alasanSistemCuriga = "Pending: Butuh Verifikasi Admin"; 
             let nominalDitemukan = 0;
-            let noRefFinal = "TRX-" + Date.now().toString().slice(-8);
+            let noRefDitemukan = "";
+            let statusTransaksiFinal = "PENDING"; // Default jika data tidak sinkron
 
             try {
-                base64Filter = await optimasiGambarSisiKlien(fileInput.files[0]);
+                base64Asli = await bacaFileSebagaiBase64Asli(fileInput.files[0]);
+                
+                // Ekstraksi Teks menggunakan whitelist angka demi efisiensi kecepatan
                 const worker = await Tesseract.createWorker('ind', 1);
                 await worker.setParameters({ tessedit_char_whitelist: '0123456789Rp.,TOTALNominal' });
-                const ret = await worker.recognize(base64Filter);
+                const ret = await worker.recognize(base64Asli);
                 let teks = ret.data.text || "";
                 await worker.terminate();
 
                 let baris = teks.toUpperCase().replace(/\s+/g, '');
-                let matches = baris.match(/\d[\d\.,]*/g) || [];
-                for(let m of matches) {
+                
+                // 1. Ekstraksi Nominal Uang
+                let matchesNominal = baris.match(/\d[\d\.,]*/g) || [];
+                for(let m of matchesNominal) {
                     let v = parseInt(m.replace(/[^0-9]/g, ''));
-                    if (v >= 10000 && v <= 2500000) { nominalDitemukan = v; break; }
+                    if (v >= 10000 && v <= 5000000) { nominalDitemukan = v; break; }
                 }
-            } catch(ocrErr) { nominalDitemukan = 0; }
 
-            if (nominalDitemukan > 0) { alasanSistemCuriga = ""; } 
-            else { alasanSistemCuriga = "Gagal Engine OCR (Browser)"; }
+                // 2. Ekstraksi Nomor Referensi Bank (Min 8 digit nomor unik)
+                let matchesRef = baris.match(/\d{8,20}/g) || [];
+                if(matchesRef.length > 0) {
+                    noRefDitemukan = matchesRef[0];
+                } else {
+                    noRefDitemukan = "REF-AUTO-" + Date.now().toString().slice(-8);
+                }
+
+                // ============================================================
+                // ENGINE VALIDASI AUTO-PASS (3 LAPIS KEAMANAN MUTLAK)
+                // ============================================================
+                let tigaAngkaBelakangUang = nominalDitemukan % 1000;
+                let targetKodeAnak = parseInt(santriTerpilih.kode);
+
+                if (nominalDitemukan > 0 && tigaAngkaBelakangUang === targetKodeAnak) {
+                    statusTransaksiFinal = "BERHASIL"; 
+                    alasanSistemCuriga = ""; // Lolos otomatis tanpa catatan pending
+                } else if (nominalDitemukan > 0 && tigaAngkaBelakangUang !== targetKodeAnak) {
+                    alasanSistemCuriga = `Nominal terbaca Rp ${nominalDitemukan.toLocaleString('id-ID')}, tidak cocok dengan kode unik anak (+${targetKodeAnak})`;
+                } else {
+                    alasanSistemCuriga = "Gagal membaca nominal otomatis (Watermark/Karakter Buram)";
+                }
+
+            } catch(ocrErr) {
+                nominalDitemukan = 0;
+                noRefDitemukan = "REF-ERR-" + Date.now().toString().slice(-8);
+                alasanSistemCuriga = "Metode Scan Bermasalah: Antrean dialihkan ke Admin.";
+            }
+
+            tampilkanSpinnerGuard(true, "MENYINKRONKAN KE CLOUD...", "Memeriksa duplikasi no. ref & memperbarui saldo tabungan...");
 
             const payload = {
                 aksi: "simpanTransaksiOtomatisPenuh",
                 nik: santriTerpilih.nik,
                 nama: santriTerpilih.nama,
                 nominal_total: nominalDitemukan,
+                status_final: statusTransaksiFinal, // Dikirim langsung ke sistem
                 alasan_pending: alasanSistemCuriga, 
-                image_base64: base64Filter, 
+                image_base64: base64Asli, 
                 file_name: `STRUK_${santriTerpilih.nik}_${Date.now()}.jpg`,
                 device: navigator.userAgent,
-                no_ref: noRefFinal
+                no_ref: noRefDitemukan
             };
 
             try {
@@ -343,16 +351,20 @@
                 if (hasil.status === "success") {
                     alert(hasil.message);
                     location.reload();
-                } else { alert(hasil.message); btn.disabled = false; tampilkanSpinnerGuard(false); }
+                } else { 
+                    alert(hasil.message); 
+                    btn.disabled = false; 
+                    tampilkanSpinnerGuard(false); 
+                }
             } catch(e) {
-                alert("Gangguan koneksi ke server cloud.");
+                alert("Gangguan transmisi jaringan ke server Google Cloud.");
                 btn.disabled = false;
                 tampilkanSpinnerGuard(false);
             }
         }
 
         // ====================================================================
-        // BACKOFFICE ADMIN CONTROL
+        // INTERFACE WORKSPACE BACKOFFICE ADMIN
         // ====================================================================
         function bukaPanelAdmin() {
             let pass = prompt("Masukkan PIN Akses Admin Pondok:");
@@ -425,22 +437,23 @@
                         <div class="flex justify-between items-start">
                             <div>
                                 <h4 class="text-xs font-black text-white leading-tight">${t.nama}</h4>
-                                <span class="text-[9px] text-slate-400 block mt-0.5">${t.timestamp} | Status: <b class="text-amber-400">${t.status}</b></span>
+                                <span class="text-[9px] text-rose-400 block mt-0.5 font-bold">⚠️ ${t.alasan_pending || 'Butuh validasi nominal manual'}</span>
+                                <span class="text-[9px] text-slate-400 block mt-0.5">Ref: ${t.no_ref || '-'} | ${t.timestamp}</span>
                             </div>
                         </div>
                         
                         <button onclick="bukaModalStruk('${t.link_struk}')" class="w-full bg-slate-950 p-3 rounded-lg border border-white/10 text-xs font-bold text-amber-400 hover:bg-black transition flex items-center justify-center gap-2">
-                            🔎 KLIK UNTUK LIHAT BUKTI STRUK
+                            🔎 KLIK UNTUK LIHAT BUKTI STRUK ASLI
                         </button>
 
                         <div class="space-y-1">
-                            <label class="block text-[10px] font-black text-slate-400 uppercase">Input Nominal Hasil Cek Struk (Rp):</label>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase">Input Nominal Sesuai Gambar Struk (Rp):</label>
                             <input type="text" 
                                    id="fee-koreksi-${t.id_trx}" 
                                    oninput="tanganiKetikanUangAdmin(this)" 
                                    onfocus="adminSedangNgetikUang=true" 
                                    onblur="adminSedangNgetikUang=false" 
-                                   placeholder="Contoh: 250.000" 
+                                   placeholder="Contoh: 200.388" 
                                    class="w-full bg-slate-950 border border-white/20 rounded-lg px-3 py-2.5 font-black text-amber-400 focus:outline-none focus:border-amber-400 text-center text-base">
                         </div>
 
@@ -470,12 +483,12 @@
             const nominalMurni = rawValue.replace(/[^0-9]/g, "");
 
             if(!nominalMurni || parseInt(nominalMurni) <= 0) {
-                alert("⚠️ Harap ketik nominal uang rupiah yang valid terlebih dahulu pada kotak input!");
+                alert("⚠️ Harap ketik nominal uang rupiah yang tertera pada struk terlebih dahulu!");
                 return;
             }
 
             adminSedangNgetikUang = false;
-            tampilkanSpinnerGuard(true);
+            tampilkanSpinnerGuard(true, "MELULUSKAN TRANSAKSI...", "Menyuntikkan dana masuk ke tabungan santri...");
 
             try {
                 const response = await fetch(API_URL, {
@@ -499,7 +512,7 @@
         async function prosesTolakAdmin(idTrx, namaSantri) {
             if(!confirm("Tolak bukti transfer ini?")) return;
             adminSedangNgetikUang = false;
-            tampilkanSpinnerGuard(true);
+            tampilkanSpinnerGuard(true, "MENOLAK TRANSAKSI...", "Menghapus berkas sampah antrean...");
             try {
                 const response = await fetch(API_URL, {
                     method: "POST",

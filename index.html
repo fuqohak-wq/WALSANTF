@@ -108,6 +108,10 @@
     </div>
 
     <script>
+        function displayName(name) {
+            return name ? name.toLowerCase() : "";
+        }
+
         function tampilkanSpinnerGuard(show, text = "", subtext = "") {
             const guard = document.getElementById('loadingSpamGuard');
             const kisahBox = document.getElementById('wrapper-kisah-hikmah');
@@ -116,7 +120,7 @@
             if(subtext) document.getElementById('spamGuardSubtext').innerText = subtext;
             
             if (show) { 
-                guard.classList.remove('hidden'); guard.classList.add('flex'); 
+                guard.setTimeout; guard.classList.remove('hidden'); guard.classList.add('flex'); 
                 
                 fetch(`${API_URL}?aksi=ambilKisahIslami`)
                 .then(r => r.json())
@@ -133,13 +137,68 @@
             }
         }
 
+        // ====================================================================
+        // LOGIKA CORE INTEGRASI AUTO-CONNECT (BYPASS PENCARIAN MANUAL)
+        // ====================================================================
+        async function cekIntegrasiSessionDanUrl() {
+            // 1. Cek apakah ada parameter nama langsung dari URL iframe (Metode URL)
+            const urlParams = new URLSearchParams(window.location.search);
+            const paramNama = urlParams.get('nama');
+
+            // 2. Cek apakah ada token inject di LocalStorage dari web induk
+            const tokenNik = localStorage.getItem("santri_login_nik");
+            const tokenNama = localStorage.getItem("santri_login_nama");
+            const tokenKode = localStorage.getItem("santri_login_kode");
+            const tokenStatus = localStorage.getItem("santri_login_status") || "SANTRI";
+
+            if (tokenNik && tokenNama && tokenKode) {
+                // Jika token localStorage terdeteksi, langsung kunci akun
+                santriTerpilih = { nik: tokenNik, nama: tokenNama, kode: tokenKode, status_role: tokenStatus };
+                kunciFormulirBypass(santriTerpilih);
+                return true;
+            } else if (paramNama && dbSantri.length > 0) {
+                // Jika dikirim lewat parameter URL, cari kecocokannya di DB internal
+                const namaClean = paramNama.toLowerCase().trim();
+                const match = dbSantri.find(s => s.nama.toLowerCase().trim() === namaClean) 
+                           || dbSantri.find(s => s.nama.toLowerCase().includes(namaClean));
+                if (match) {
+                    pilihSantri(match);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function kunciFormulirBypass(santri) {
+            document.getElementById('wrapper-cari-nama').classList.add('hidden');
+            document.getElementById('step-upload').classList.remove('hidden');
+            document.getElementById('area-tombol-submit').classList.remove('hidden');
+            document.getElementById('target-nama').innerText = santri.nama;
+            document.getElementById('label-role-akun').innerText = "Status / Hubungan: " + (santri.status_role || "SANTRI");
+            document.getElementById('target-kode-unik').innerText = santri.kode ? santri.kode.toString() : "0";
+            cekValiditasInputUser();
+        }
+
         window.onload = async function() {
             if (localStorage.getItem("admin_logged_in_permanen_v2") === "true") { bukaPanelAdminTanPop(); }
+            
             tampilkanSpinnerGuard(true, "WALISANTRI, UNTUK MEMASTIKAN PROSES PASTI BERHASIL TOLONG PAKAI KODE UNIK TRANSFERNYA DAN JELAS STRUKNYA...", "Sinkronisasi database...");
+            
             try {
                 const res = await fetch(API_URL);
                 const hasil = await res.json();
                 if(hasil && hasil.santri) { dbSantri = hasil.santri; }
+                
+                // Eksekusi pemeriksaan integrasi akun otomatis setelah database termuat
+                const terintegrasi = await cekIntegrasiSessionDanUrl();
+                
+                // JIKA TIDAK TERINTEGRASI: Tampilkan pencarian manual secara normal
+                if (!terintegrasi && !santriTerpilih) {
+                    document.getElementById('wrapper-cari-nama').classList.remove('hidden');
+                    document.getElementById('step-upload').classList.add('hidden');
+                    document.getElementById('area-tombol-submit').classList.add('hidden');
+                }
+
                 tampilkanSpinnerGuard(false);
                 syncBadgeLuarSaja();
                 loopBadgeLuar = setInterval(syncBadgeLuarSaja, 15000);
@@ -168,7 +227,7 @@
                 filtered.forEach(s => {
                     const btn = document.createElement('button');
                     btn.className = "w-full text-left bg-slate-50 p-3 rounded-xl flex justify-between items-center mt-1 border border-slate-200 text-slate-900";
-                    btn.innerHTML = `<div><span class="block text-sm font-black">${s.nama}</span><span class="block text-[10px] text-slate-500 uppercase font-bold">${s.status_role}</span></div> <span class="bg-emerald-800 text-white font-black text-[10px] px-2 py-0.5 rounded">KODE: ${s.kode}</span>`;
+                    btn.innerHTML = `<div><span class="block text-sm font-black">${s.nama}</span><span class="block text-[10px] text-slate-500 uppercase font-bold">${s.status_role || 'SANTRI'}</span></div> <span class="bg-emerald-800 text-white font-black text-[10px] px-2 py-0.5 rounded">KODE: ${s.kode}</span>`;
                     btn.onclick = () => pilihSantri(s);
                     resDiv.appendChild(btn);
                 });
@@ -182,7 +241,7 @@
             document.getElementById('step-upload').classList.remove('hidden');
             document.getElementById('area-tombol-submit').classList.remove('hidden');
             document.getElementById('target-nama').innerText = santri.nama;
-            document.getElementById('label-role-akun').innerText = "Status: " + santri.status_role;
+            document.getElementById('label-role-akun').innerText = "Status: " + (santri.status_role || "SANTRI");
             document.getElementById('target-kode-unik').innerText = santri.kode ? santri.kode.toString() : "0";
             cekValiditasInputUser();
         }
@@ -242,7 +301,7 @@
                     aksi: "simpanTransaksiOtomatisPenuh",
                     nik: santriTerpilih.nik,
                     nama: santriTerpilih.nama,
-                    status_role: santriTerpilih.status_role,
+                    status_role: santriTerpilih.status_role || "SANTRI",
                     kode_unik_anak: santriTerpilih.kode,
                     nominal_total: nominalKetikManual,
                     image_base64: fileGambarKompresiBase64,
@@ -256,6 +315,17 @@
                 });
                 await response.json();
                 
+                // ==========================================
+                // INTERFACE LISTENER POSTMESSAGE KE INDUK WEB
+                // ==========================================
+                try {
+                    if (window.parent && window.parent !== window) {
+                        window.parent.postMessage({ type: 'TRANSFER_SUCCESS' }, '*');
+                    }
+                } catch (ePost) {
+                    console.error("Gagal kirim status ke web induk:", ePost);
+                }
+
                 setTimeout(() => {
                     tampilkanSpinnerGuard(false);
                     alert("WALISANTRI TERHORMAT MOHON MENUNGGU KAMI SEDANG MENYESUAIKAN...");
@@ -328,7 +398,6 @@
                                 <button onclick="batalProsesSecaraVisual('${t.id_trx}')" class="w-1/3 bg-slate-700 text-white font-black text-xs py-2.5 rounded-lg hover:bg-slate-600 transition">⚪ CANCEL</button>
                             </div>`;
                     } else {
-                        // MODIFIKASI: MENAMBAHKAN TOMBOL CANCEL UNTUK SEMUA ANTRIAN PENDING BIASA
                         kontenAksiHtml = `
                             <div class="space-y-1"><input type="text" id="fee-koreksi-${t.id_trx}" value="${t.nominal_total.toLocaleString('id-ID').replace(/,/g, ".")}" oninput="tanganiKetikanUangAdmin(this)" onfocus="adminSedangNgetikUang=true" onblur="adminSedangNgetikUang=false" placeholder="Ketik nominal..." class="w-full bg-slate-950 border border-white/20 rounded-lg px-3 py-2.5 font-black text-amber-400 text-center text-base"></div>
                             <div class="flex gap-2">
@@ -353,7 +422,7 @@
                     div.className = `border p-2.5 rounded-xl text-xs flex justify-between items-center bg-slate-900/30 border-white/5`;
                     div.innerHTML = `
                         <div>
-                            <span class="block font-black text-white">${t.nama.toLowerCase()}</span>
+                            <span class="block font-black text-white">${displayName(t.nama)}</span>
                             <span class="text-[9px] px-1.5 py-0.2 border rounded font-bold uppercase inline-block mt-1 ${warnaBadge}">${t.status}</span>
                         </div> 
                         <b class="text-amber-400 text-sm font-black">Rp ${parseInt(t.nominal_total || 0).toLocaleString('id-ID')}</b>`;
@@ -362,29 +431,28 @@
             }
         }
 
-        function batalProsesSecaraVisual(idTrx) {
-            const card = document.getElementById(`card-admin-trx-${idTrx}`);
-            if(card) {
-                card.remove();
-                let bDalam = document.getElementById('badge-antrean-dalam');
-                let jml = parseInt(bDalam.innerText || 0) - 1;
-                if(jml > 0) bDalam.innerText = jml; else bDalam.classList.add('hidden');
-            }
+        async function batalProsesSecaraVisual(idTrx) {
+            const tanya = confirm("Apakah Anda yakin ingin MEMBATALKAN/MENOLAK transaksi pending ini dari sistem?");
+            if(!tanya) return;
+            tampilkanSpinnerGuard(true, "SEDANG MEMBATALKAN TRANSAKSI...", "Memperbarui database pusat...");
+            try {
+                await fetch(API_URL, { 
+                    method: "POST", 
+                    body: JSON.stringify({ aksi: "tolakTransaksiOlehAdmin", id_transaksi: idTrx, pin_admin: PIN_ADMIN_SYSTEM })
+                });
+                await pullDataAdminDariServer();
+            } catch(e) { alert("Gagal membatalkan transaksi karena gangguan jaringan."); } 
+            finally { tampilkanSpinnerGuard(false); }
         }
 
         async function prosesTolakKecuranganTanPaPin(idTrx) {
             const tanya = confirm("Yakin Mas Admin?");
             if(!tanya) return;
-
             tampilkanSpinnerGuard(true, "WALISANTRI TERHORMAT MOHON MENUNGGU KAMI SEDANG MENYESUAIKAN...", "Menolak berkas...");
             try {
                 await fetch(API_URL, { 
                     method: "POST", 
-                    body: JSON.stringify({ 
-                        aksi: "tolakTransaksiOlehAdmin", 
-                        id_transaksi: idTrx, 
-                        pin_admin: PIN_ADMIN_SYSTEM 
-                    })
+                    body: JSON.stringify({ aksi: "tolakTransaksiOlehAdmin", id_transaksi: idTrx, pin_admin: PIN_ADMIN_SYSTEM })
                 });
                 pullDataAdminDariServer();
             } catch(e) {} finally { tampilkanSpinnerGuard(false); }

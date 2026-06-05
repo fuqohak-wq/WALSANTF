@@ -204,7 +204,24 @@
             try {
                 const res = await fetch(API_URL);
                 const hasil = await res.json();
-                if(hasil.status === "success") { dbSantri = hasil.santri; }
+                if(hasil.status === "success") { 
+                    dbSantri = hasil.santri; 
+                    
+                    // ==========================================
+                    // [TAMBAHAN] AUTO PILIH DARI PARAMETER URL iframe
+                    // ==========================================
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const paramNama = urlParams.get('nama');
+                    if (paramNama && dbSantri.length > 0) {
+                        const namaClean = paramNama.toLowerCase().trim();
+                        // cari yang nama lengkap atau mengandung unsur nama tersebut
+                        const match = dbSantri.find(s => s.nama.toLowerCase().trim() === namaClean) 
+                                   || dbSantri.find(s => s.nama.toLowerCase().includes(namaClean));
+                        if (match) {
+                            pilihSantri(match);
+                        }
+                    }
+                }
                 syncBadgeLuarSaja();
                 loopBadgeLuar = setInterval(syncBadgeLuarSaja, 20000);
             } catch(e) {}
@@ -262,7 +279,7 @@
             }
         }
 
-        // AMBIL DATA BASE64 TANPA MERUSAK LAPISAN ALPHA CHANNEL (ANTI-BLACKOUT)
+        // AMBUL DATA BASE64 TANPA MERUSAK LAPISAN ALPHA CHANNEL (ANTI-BLACKOUT)
         const bacaFileSebagaiBase64Asli = (file) => new Promise((resolve) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -349,6 +366,18 @@
                 const response = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
                 const hasil = await response.json();
                 if (hasil.status === "success") {
+                    
+                    // ==========================================
+                    // [TAMBAHAN] KIRIM KE INDUK APLIKASI
+                    // ==========================================
+                    try {
+                        if (window.parent && window.parent !== window) {
+                            window.parent.postMessage({ type: 'TRANSFER_SUCCESS' }, '*');
+                        }
+                    } catch (ePost) {
+                        console.error("Gagal mengirim postMessage ke induk:", ePost);
+                    }
+
                     alert(hasil.message);
                     location.reload();
                 } else { 

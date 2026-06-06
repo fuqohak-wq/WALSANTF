@@ -251,29 +251,36 @@
         }
 
         function prosesKompresiGambar(input) {
-            if(input.files.length === 0) return;
-            tampilkanSpinnerGuard(true, "WALISANTRI TERHORMAT, TOLONG STRUKNYA YANG JELAS DAN TRANSFERNYA PAKAI ANGKA UNIK 3 DIGIT DI BELAKANG. MOHON MENUNGGU, KAMI SEDANG MENYESUAIKAN...", "Mengompresi dokumen...");
-            const file = input.files[0];
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = function(event) {
-                const img = new Image();
-                img.src = event.target.result;
-                img.onload = function() {
-                    const canvas = document.getElementById('canvas-kompresor');
-                    const ctx = canvas.getContext('2d');
-                    const maxW = 800;
-                    const scale = maxW / img.width;
-                    canvas.width = maxW;
-                    canvas.height = img.height * scale;
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    fileGambarKompresiBase64 = canvas.toDataURL('image/jpeg', 0.75);
-                    document.getElementById('icon-upload').innerText = "✅";
-                    document.getElementById('text-upload-label').innerText = "Struk Siap Dikirim!";
-                    tampilkanSpinnerGuard(false);
-                    cekValiditasInputUser();
+            if(input.files.length === 0) return; [cite: 58]
+            tampilkanSpinnerGuard(true, "WALISANTRI TERHORMAT, TOLONG STRUKNYA YANG JELAS DAN TRANSFERNYA PAKAI ANGKA UNIK 3 DIGIT DI BELAKANG. MOHON MENUNGGU, KAMI SEDANG MENYESUAIKAN...", "Mengompresi dokumen..."); [cite: 59]
+            const file = input.files[0]; [cite: 60]
+            const reader = new FileReader(); [cite: 60]
+            reader.readAsDataURL(file); [cite: 60]
+            reader.onload = function(event) { [cite: 61]
+                const img = new Image(); [cite: 61]
+                img.src = event.target.result; [cite: 62]
+                img.onload = function() { [cite: 62]
+                    const canvas = document.getElementById('canvas-kompresor'); [cite: 62]
+                    const ctx = canvas.getContext('2d'); [cite: 63]
+                    
+                    // --- DI SINI PERUBAHANNYA: RESOLUSI & KUALITAS DINAIKKAN SUPER TAJAM ---
+                    const maxW = 1600; // Dinaikkan ke 1600 agar angka kecil di struk tidak pecah
+                    const scale = maxW / img.width; [cite: 63]
+                    canvas.width = maxW; [cite: 63]
+                    canvas.height = img.height * scale; [cite: 64]
+                    
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height); [cite: 64]
+                    
+                    // Kualitas dinaikkan ke 0.95 (95%) supaya teks tajam terbaca Gemini
+                    fileGambarKompresiBase64 = canvas.toDataURL('image/jpeg', 0.95); 
+                    // ------------------------------------------------------------------------
+                    
+                    document.getElementById('icon-upload').innerText = "✅"; [cite: 64]
+                    document.getElementById('text-upload-label').innerText = "Struk Siap Dikirim!"; [cite: 65]
+                    tampilkanSpinnerGuard(false); [cite: 65]
+                    cekValiditasInputUser(); [cite: 65]
                 }
-            };
+            }; [cite: 66]
         }
 
         function cekValiditasInputUser() {

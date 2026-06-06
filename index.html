@@ -331,7 +331,6 @@
 
                 setTimeout(() => {
                     tampilkanSpinnerGuard(false);
-                    // Adaptif menampilkan pesan sukses/anti-spam dari backend apps script
                     alert(hasilJson.pesan || "Alhamdulillah, verifikasi struk berhasil dikirim! Mohon tunggu proses selanjutnya.");
                     location.reload();
                 }, 5000); 
@@ -425,13 +424,23 @@
                 cacheRiwayatAdmin.forEach(t => {
                     const div = document.createElement('div'); 
                     const warnaBadge = t.status === "DITOLAK" ? "text-red-400 bg-red-950/30 border-red-900" : "text-emerald-400 bg-emerald-950/30 border-emerald-900";
-                    div.className = `border p-2.5 rounded-xl text-xs flex justify-between items-center bg-slate-900/30 border-white/5`;
+                    div.className = `border p-3 rounded-xl text-xs flex flex-col gap-2 bg-slate-900/30 border-white/5 shadow-sm`;
+                    
+                    // Membuat struktur layout riwayat dengan tambahan tombol review terpisah di bawahnya
                     div.innerHTML = `
-                        <div>
-                            <span class="block font-black text-white">${displayName(t.nama)}</span>
-                            <span class="text-[9px] px-1.5 py-0.2 border rounded font-bold uppercase inline-block mt-1 ${warnaBadge}">${t.status}</span>
-                        </div> 
-                        <b class="text-amber-400 text-sm font-black">Rp ${parseInt(t.nominal_total || 0).toLocaleString('id-ID')}</b>`;
+                        <div class="flex justify-between items-center w-full">
+                            <div>
+                                <span class="block font-black text-white">${displayName(t.nama)}</span>
+                                <span class="text-[9px] px-1.5 py-0.2 border rounded font-bold uppercase inline-block mt-1 ${warnaBadge}">${t.status}</span>
+                            </div> 
+                            <b class="text-amber-400 text-sm font-black">Rp ${parseInt(t.nominal_total || 0).toLocaleString('id-ID')}</b>
+                        </div>
+                        ${t.link_struk ? `
+                        <button onclick="bukaModalStruk('${t.link_struk}')" class="w-full bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 py-1.5 px-2 rounded-lg text-[11px] font-black tracking-wide text-center transition active:scale-[0.98]">
+                            🔎 REVIEW STRUK
+                        </button>
+                        ` : ''}
+                    `;
                     listContainer.appendChild(div);
                 });
             }
@@ -439,6 +448,7 @@
 
         /* FUNGSI PENGENDALIAN POPUP PREVIEW STRUK */
         function bukaModalStruk(urlDrive) {
+            if(!urlDrive || urlDrive === "undefined") { alert("Link struk tidak ditemukan."); return; }
             let urlPreview = urlDrive.replace("/view?usp=drivesdk", "/preview").replace("/view", "/preview");
             document.getElementById('frameViewerStruk').src = urlPreview;
             document.getElementById('loadingIframeStruk').classList.remove('hidden');

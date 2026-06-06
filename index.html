@@ -28,10 +28,9 @@
         const PIN_ADMIN_SYSTEM = "Masgus1988";
         
         let loopAdmin = null; let loopBadgeLuar = null; let dbSantri = [];
-        let santriTerpilih = null;
-        let cacheAntreanAdmin = []; let cacheRiwayatAdmin = [];
+        let santriTerpilih = null; let cacheAntreanAdmin = []; let cacheRiwayatAdmin = [];
         let tabAktifAdmin = "ANTREAN"; let adminSedangNgetikUang = false;
-        let fileGambarKompresiBase64 = "";
+        let fileGambarKompresiBase64 = ""; 
     </script>
 
     <main id="panel-walisantri" class="w-full flex-1 flex flex-col justify-center my-4 space-y-4">
@@ -47,7 +46,6 @@
                     <span id="target-nama" class="text-base font-black block leading-tight">Nama</span>
                     <span id="label-role-akun" class="text-[10px] uppercase font-bold text-amber-300 block mt-0.5">Status: SANTRI</span>
                 </div>
-               
                 <div class="border-t border-emerald-700/60 pt-2 text-center bg-emerald-950/40 p-2 rounded-lg border border-amber-500/30">
                     <span class="text-[11px] font-black text-amber-400 uppercase tracking-wide block">⚠️ WAJIB TRANSFER DENGAN AKHIRAN KODE UNIK:</span>
                     <div class="mt-2 inline-block bg-amber-400 text-emerald-950 text-base font-black px-4 py-1.5 rounded-full shadow-md">
@@ -98,6 +96,7 @@
 
     <footer class="w-full text-[10px] text-emerald-400/40 text-center pt-2 border-t border-white/5 font-bold">&copy; 2026 PPMUY Gemini-AI System</footer>
 
+    <!-- LOADING GUARD SPAM -->
     <div id="loadingSpamGuard" class="fixed inset-0 bg-slate-950/95 z-[9999] hidden flex-col justify-center items-center text-center p-6">
         <div class="w-14 h-14 border-4 border-slate-800 border-t-amber-400 rounded-full animate-spin"></div>
         <div class="mt-4 text-amber-400 font-black text-sm tracking-wide px-4 leading-relaxed" id="spamGuardText">WALISANTRI TERHORMAT MOHON MENUNGGU KAMI SEDANG MENYESUAIKAN...</div>
@@ -109,6 +108,7 @@
         </div>
     </div>
 
+    <!-- MODAL POPUP PREVIEW STRUK GOOGLE DRIVE VIEWER -->
     <div id="modalPreviewStruk" class="fixed inset-0 bg-slate-950/90 z-[99999] hidden flex-col justify-center items-center p-4" onclick="tutupModalStruk()">
         <div class="w-full max-w-lg bg-slate-900 border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[80vh]" onclick="event.stopPropagation()">
             <div class="p-3 bg-slate-950 flex justify-between items-center border-b border-white/5">
@@ -145,9 +145,9 @@
                         document.getElementById('label-kisah-teks').innerText = res.kisah;
                     } else { kisahBox.classList.add('hidden'); }
                 }).catch(() => { kisahBox.classList.add('hidden'); });
+
             } else { 
-                guard.classList.add('hidden');
-                guard.classList.remove('flex'); 
+                guard.classList.add('hidden'); guard.classList.remove('flex'); 
                 kisahBox.classList.add('hidden');
             }
         }
@@ -168,8 +168,7 @@
             } else if (paramNama && dbSantri.length > 0) {
                 const namaClean = paramNama.toLowerCase().trim();
                 const match = dbSantri.find(s => s.nama.toLowerCase().trim() === namaClean) 
-                           ||
-                           dbSantri.find(s => s.nama.toLowerCase().includes(namaClean));
+                           || dbSantri.find(s => s.nama.toLowerCase().includes(namaClean));
                 if (match) {
                     pilihSantri(match);
                     return true;
@@ -189,18 +188,17 @@
         }
 
         window.onload = async function() {
-            if (localStorage.getItem("admin_logged_in_permanen_v2") === "true") { 
-                bukaPanelAdminTanPop();
-                return; // Stop inisialisasi walisantri jika statusnya admin aktif
-            }
+            if (localStorage.getItem("admin_logged_in_permanen_v2") === "true") { bukaPanelAdminTanPop(); }
             
             tampilkanSpinnerGuard(true, "WALISANTRI, UNTUK MEMASTIKAN PROSES PASTI BERHASIL TOLONG PAKAI KODE UNIK TRANSFERNYA DAN JELAS STRUKNYA...", "Sinkronisasi database...");
+            
             try {
                 const res = await fetch(API_URL);
                 const hasil = await res.json();
                 if(hasil && hasil.santri) { dbSantri = hasil.santri; }
                 
                 const terintegrasi = await cekIntegrasiSessionDanUrl();
+                
                 if (!terintegrasi && !santriTerpilih) {
                     document.getElementById('wrapper-cari-nama').classList.remove('hidden');
                     document.getElementById('step-upload').classList.add('hidden');
@@ -209,24 +207,18 @@
 
                 tampilkanSpinnerGuard(false);
                 syncBadgeLuarSaja();
-                // Deteksi interval dinaikkan ke 30 detik agar server tidak stress/freeze
-                loopBadgeLuar = setInterval(syncBadgeLuarSaja, 30000);
+                loopBadgeLuar = setInterval(syncBadgeLuarSaja, 15000);
             } catch(e) { tampilkanSpinnerGuard(false); alert("Gagal terhubung ke Server."); }
         };
 
         async function syncBadgeLuarSaja() {
-            // REM PENGAMAT: Jika admin sedang dibuka, matikan pelacakan luar demi mencegah tabrakan gembok database
-            if (localStorage.getItem("admin_logged_in_permanen_v2") === "true") {
-                if(loopBadgeLuar) clearInterval(loopBadgeLuar);
-                return;
-            }
+            if (localStorage.getItem("admin_logged_in_permanen_v2") === "true") return;
             try {
                 const res = await fetch(`${API_URL}?aksi=ambilDataAdminLengkap`);
                 const hasil = await res.json();
                 const bLuar = document.getElementById('badge-antrean-luar');
                 if (hasil && hasil.status === "success" && hasil.antrean && hasil.antrean.length > 0) {
-                    bLuar.innerText = hasil.antrean.length;
-                    bLuar.classList.remove('hidden');
+                    bLuar.innerText = hasil.antrean.length; bLuar.classList.remove('hidden');
                 } else { bLuar.classList.add('hidden'); }
             } catch(e) {}
         }
@@ -269,6 +261,7 @@
         function prosesKompresiGambar(input) {
             if(input.files.length === 0) return;
             tampilkanSpinnerGuard(true, "WALISANTRI TERHORMAT, TOLONG STRUKNYA YANG JELAS DAN TRANSFERNYA PAKAI ANGKA UNIK 3 DIGIT DI BELAKANG. MOHON MENUNGGU, KAMI SEDANG MENYESUAIKAN...", "Mengompresi dokumen...");
+            
             const file = input.files[0];
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -278,15 +271,13 @@
                 img.onload = function() {
                     const canvas = document.getElementById('canvas-kompresor');
                     const ctx = canvas.getContext('2d');
-                    
-                    // --- REKREASI RESOLUSI TINGGI: AGAR GEMINI VISION BISA MEMBACA TEKS KECIL STRUK ---
-                    const maxW = 1600; 
+                    const maxW = 800;
                     const scale = maxW / img.width;
                     canvas.width = maxW;
                     canvas.height = img.height * scale;
                     
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    fileGambarKompresiBase64 = canvas.toDataURL('image/jpeg', 0.95); // Kualitas super tajam 95%
+                    fileGambarKompresiBase64 = canvas.toDataURL('image/jpeg', 0.75);
                     
                     document.getElementById('icon-upload').innerText = "✅";
                     document.getElementById('text-upload-label').innerText = "Struk Siap Dikirim!";
@@ -308,11 +299,12 @@
             
             btn.disabled = true;
             tampilkanSpinnerGuard(true, "WALISANTRI TERHORMAT MOHON MENUNGGU KAMI SEDANG MENYESUAIKAN...", "");
+
             let nominalKetikManual = parseInt(inputManualUang.replace(/[^0-9]/g, "")) || 0;
 
             try {
                 const payload = {
-                    aksi: "simpanTransaksiOtotmatisPenuh",
+                    aksi: "simpanTransaksiOtomatisPenuh",
                     nik: santriTerpilih.nik,
                     nama: santriTerpilih.nama,
                     status_role: santriTerpilih.status_role || "SANTRI",
@@ -323,6 +315,7 @@
                     device: navigator.userAgent,
                     digital_stamp: "STMP-" + Date.now().toString(16).toUpperCase() + "-PPMUY"
                 };
+
                 const response = await fetch(API_URL, {
                     method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(payload)
                 });
@@ -347,10 +340,7 @@
 
         function bukaPanelAdmin() {
             let pass = prompt("Masukkan PIN:");
-            if (pass === PIN_ADMIN_SYSTEM) { 
-                localStorage.setItem("admin_logged_in_permanen_v2", "true"); 
-                bukaPanelAdminTanPop(); 
-            }
+            if (pass === PIN_ADMIN_SYSTEM) { localStorage.setItem("admin_logged_in_permanen_v2", "true"); bukaPanelAdminTanPop(); }
         }
         function bukaPanelAdminTanPop() {
             if(loopBadgeLuar) clearInterval(loopBadgeLuar);
@@ -358,16 +348,12 @@
             document.getElementById('panel-admin').classList.remove('hidden');
             document.getElementById('btn-nav-admin').classList.add('hidden');
             pullDataAdminDariServer();
-            // Interval ditenangkan ke 15 detik demi menghindari tabrakan gembok script pusat
-            loopAdmin = setInterval(pullDataAdminDariServer, 15000);
+            loopAdmin = setInterval(pullDataAdminDariServer, 8000);
         }
-        function keluarPanelAdminSadar() { 
-            localStorage.removeItem("admin_logged_in_permanen_v2");
-            location.reload(); 
-        }
+        function keluarPanelAdminSadar() { localStorage.removeItem("admin_logged_in_permanen_v2"); location.reload(); }
         
         function gantiTabAdmin(t) { 
-            tabAktifAdmin = t;
+            tabAktifAdmin = t; 
             document.getElementById('tab-btn-antrean').className = t === 'ANTREAN' ? "w-1/2 text-center py-2 text-xs font-black rounded-lg transition-all bg-emerald-700 text-white flex justify-center items-center gap-1" : "w-1/2 text-center py-2 text-xs font-black text-slate-400 rounded-lg transition-all hover:text-white";
             document.getElementById('tab-btn-log').className = t === 'LOG' ? "w-1/2 text-center py-2 text-xs font-black rounded-lg transition-all bg-emerald-700 text-white flex justify-center items-center gap-1" : "w-1/2 text-center py-2 text-xs font-black text-slate-400 rounded-lg transition-all hover:text-white";
             renderVisualListAdmin(); 
@@ -379,32 +365,23 @@
                 const res = await fetch(`${API_URL}?aksi=ambilDataAdminLengkap`);
                 const hasil = await res.json();
                 if(hasil && hasil.status === "success") {
-                    cacheAntreanAdmin = hasil.antrean || []; 
-                    cacheRiwayatAdmin = hasil.riwayat || [];
+                    cacheAntreanAdmin = hasil.antrean || []; cacheRiwayatAdmin = hasil.riwayat || [];
                     let bDalam = document.getElementById('badge-antrean-dalam');
-                    if(cacheAntreanAdmin.length > 0) { 
-                        bDalam.innerText = cacheAntreanAdmin.length; 
-                        bDalam.classList.remove('hidden');
-                    } else { bDalam.classList.add('hidden'); }
+                    if(cacheAntreanAdmin.length > 0) { bDalam.innerText = cacheAntreanAdmin.length; bDalam.classList.remove('hidden'); }
+                    else { bDalam.classList.add('hidden'); }
                     renderVisualListAdmin();
                 }
             } catch(e) {}
         }
 
-        function tanganiKetikanUangAdmin(i) { 
-            let m = i.value.replace(/[^0-9]/g, "");
-            i.value = m !== "" ? parseInt(m).toLocaleString('id-ID').replace(/,/g, ".") : "";
-        }
+        function tanganiKetikanUangAdmin(i) { let m = i.value.replace(/[^0-9]/g, ""); i.value = m !== "" ? parseInt(m).toLocaleString('id-ID').replace(/,/g, ".") : ""; }
         
         function renderVisualListAdmin() {
             if (adminSedangNgetikUang) return;
             const listContainer = document.getElementById('list-container-admin'); listContainer.innerHTML = "";
             
             if(tabAktifAdmin === "ANTREAN") {
-                if(cacheAntreanAdmin.length === 0) { 
-                    listContainer.innerHTML = `<div class="text-center text-xs text-slate-400 py-12">🎉 Antrean Bersih!</div>`;
-                    return; 
-                }
+                if(cacheAntreanAdmin.length === 0) { listContainer.innerHTML = `<div class="text-center text-xs text-slate-400 py-12">🎉 Antrean Bersih!</div>`; return; }
                 
                 cacheAntreanAdmin.forEach(t => {
                     let userMeta = dbSantri.find(s => s.nik === t.nik) || { status_role: "SANTRI", kode: 0 };
@@ -417,6 +394,7 @@
 
                     if(t.alasan_pending && (t.alasan_pending.includes("BLOKIR HARD") || t.alasan_pending.includes("DUPLIKAT"))) {
                         alertHeaderHtml = `<div><h4 class="text-xs font-black text-white leading-tight">${t.nama}</h4><span class="text-[10px] bg-red-950/80 border border-red-500/30 p-2 rounded-lg text-red-400 block font-black mt-1 leading-normal">🚨 ${t.alasan_pending}</span></div>`;
+                        
                         kontenAksiHtml = `
                             <div class="grid grid-cols-2 flex gap-2">
                                 <button onclick="prosesTolakKecuranganTanPaPin('${t.id_trx}')" class="w-2/3 bg-red-600 text-white font-black text-xs py-2.5 rounded-lg hover:bg-red-500 transition">🔴 TOLAK FRAUD</button>
@@ -441,16 +419,14 @@
                     listContainer.appendChild(div);
                 });
             } else {
-                if(cacheRiwayatAdmin.length === 0) { 
-                    listContainer.innerHTML = `<div class="text-center text-xs text-slate-400 py-12">Belum ada riwayat pembukuan.</div>`;
-                    return; 
-                }
+                if(cacheRiwayatAdmin.length === 0) { listContainer.innerHTML = `<div class="text-center text-xs text-slate-400 py-12">Belum ada riwayat pembukuan.</div>`; return; }
                 
                 cacheRiwayatAdmin.forEach(t => {
                     const div = document.createElement('div'); 
                     const warnaBadge = t.status === "DITOLAK" ? "text-red-400 bg-red-950/30 border-red-900" : "text-emerald-400 bg-emerald-950/30 border-emerald-900";
                     div.className = `border p-3 rounded-xl text-xs flex flex-col gap-2 bg-slate-900/30 border-white/5 shadow-sm`;
                     
+                    // Membuat struktur layout riwayat dengan tambahan tombol review terpisah di bawahnya
                     div.innerHTML = `
                         <div class="flex justify-between items-center w-full">
                             <div>
@@ -470,6 +446,7 @@
             }
         }
 
+        /* FUNGSI PENGENDALIAN POPUP PREVIEW STRUK */
         function bukaModalStruk(urlDrive) {
             if(!urlDrive || urlDrive === "undefined") { alert("Link struk tidak ditemukan."); return; }
             let urlPreview = urlDrive.replace("/view?usp=drivesdk", "/preview").replace("/view", "/preview");

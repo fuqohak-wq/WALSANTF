@@ -33,6 +33,63 @@
         let cacheAntreanAdmin = []; let cacheRiwayatAdmin = [];
         let tabAktifAdmin = "ANTREAN"; let adminSedangNgetikUang = false;
         let fileGambarKompresiBase64 = "";
+
+        // ====================================================================
+        // INTEGRASI INDEXEDDB: JARING PENGAMAN OFFLINE / INTERNET MACET
+        // ====================================================================
+        const DB_NAME = "YahyawiyyahOfflineDB";
+        const DB_VERSION = 1;
+        let dbLogis;
+
+        function inisialisasiDatabaseLokal() {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onupgradeneeded = function(e) {
+                let db = e.target.result;
+                if (!db.objectStoreNames.contains("antrean_pending")) {
+                    db.createObjectStore("antrean_pending", { keyPath: "digital_stamp" });
+                }
+            };
+            request.onsuccess = function(e) {
+                dbLogis = e.target.result;
+                prosesKirimUlangAntreanGagal();
+            };
+        }
+        inisialisasiDatabaseLokal();
+
+        function simpanAntreanKeLokal(payload) {
+            if (!dbLogis) return;
+            const tx = dbLogis.transaction("antrean_pending", "readwrite");
+            const store = tx.objectStore("antrean_pending");
+            store.put(payload);
+        }
+
+        function hapusAntreanDariLokal(idStamp) {
+            if (!dbLogis) return;
+            const tx = dbLogis.transaction("antrean_pending", "readwrite");
+            const store = tx.objectStore("antrean_pending");
+            store.delete(idStamp);
+        }
+
+        function prosesKirimUlangAntreanGagal() {
+            if (!dbLogis || !navigator.onLine) return;
+            const tx = dbLogis.transaction("antrean_pending", "readonly");
+            const store = tx.objectStore("antrean_pending");
+            const request = store.getAll();
+
+            request.onsuccess = function() {
+                const dataGagal = request.result || [];
+                dataGagal.forEach(async (item) => {
+                    try {
+                        let res = await fetch(API_URL, { method: "POST", body: JSON.stringify(item) });
+                        let hasil = await res.json();
+                        if (hasil.status === "success" || hasil.pesan.includes("sudah kami terima")) {
+                            hapusAntreanDariLokal(item.digital_stamp);
+                        }
+                    } catch (err) { console.log("Gagal auto-retry, mencoba lagi nanti..."); }
+                });
+            };
+        }
+        window.addEventListener('online', prosesKirimUlangAntreanGagal);
     </script>
 
     <main id="panel-walisantri" class="w-full flex-1 flex flex-col justify-center my-4 space-y-4">
@@ -116,7 +173,7 @@
                 <span class="text-xs font-black text-amber-400">🔍 PRATINJAU STRUK ASLI</span>
                 <button onclick="tutupModalStruk()" class="bg-rose-600/20 text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-black px-3 py-1 rounded-lg transition">TUTUP</button>
             </div>
-           
+            
             <div class="flex-1 bg-slate-950 relative">
                 <div id="loadingIframeStruk" class="absolute inset-0 flex justify-center items-center text-xs text-slate-400 animate-pulse">Memuat dokumen Drive...</div>
                 <iframe id="frameViewerStruk" class="w-full h-full border-0 hidden" onload="document.getElementById('loadingIframeStruk').classList.add('hidden'); this.classList.remove('hidden');"></iframe>
@@ -136,7 +193,6 @@
             if (show) { 
                 guard.classList.remove('hidden'); guard.classList.add('flex'); 
                 
-                // INTEGRASI DINAMIS KISAH DARI SERVER KAMPUS
                 fetch(`${API_URL}?aksi=ambilKisahIslami`)
                 .then(r => r.json())
                 .then(res => {
@@ -252,7 +308,7 @@
 
         function prosesKompresiGambar(input) {
             if(input.files.length === 0) return;
-            tampilkanSpinnerGuard(true, "WALISANTRI TERHORMAT, TOLONG STRUKNYA YANG JELAS DAN TRANSFERNYA PAKAI ANGKA UNIK 3 DIGIT DI BELAKANG. MOHON MENUNGGU, KAMI SEDANG MENYESUAIKAN...", "Mengompresi dokumen...");
+            tampilkanSpinnerGuard(true, "MENGOMPRESI DOKUMEN... MOHON MENUNGGU SEJENAK...", "Menjaga kualitas scan AI...");
             const file = input.files[0];
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -262,12 +318,12 @@
                 img.onload = function() {
                     const canvas = document.getElementById('canvas-kompresor');
                     const ctx = canvas.getContext('2d');
-                    const maxW = 800;
+                    const maxW = 1000; // Ditingkatkan ke 1000px agar OCR angka referensi makin akurat/tajam
                     const scale = maxW / img.width;
                     canvas.width = maxW;
                     canvas.height = img.height * scale;
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    fileGambarKompresiBase64 = canvas.toDataURL('image/jpeg', 0.75);
+                    fileGambarKompresiBase64 = canvas.toDataURL('image/jpeg', 0.85); // Kualitas 85% untuk hasil baca tajam
                     document.getElementById('icon-upload').innerText = "✅";
                     document.getElementById('text-upload-label').innerText = "Struk Siap Dikirim!";
                     tampilkanSpinnerGuard(false);
@@ -286,31 +342,40 @@
             const btn = document.getElementById('btn-submit');
             const inputManualUang = document.getElementById('nominal-manual-user').value;
             btn.disabled = true;
-            tampilkanSpinnerGuard(true, "WALISANTRI TERHORMAT MOHON MENUNGGU KAMI SEDANG MENYESUAIKAN...", "");
+            tampilkanSpinnerGuard(true, "MENGIRIM STRUK KE SERVER AMAN... MOHON JANGAN TUTUP HALAMAN INI.", "Proses enkripsi digital...");
             let nominalKetikManual = parseInt(inputManualUang.replace(/[^0-9]/g, "")) || 0;
             
-            try {
-                const payload = {
-                    aksi: "simpanTransaksiOtomatisPenuh",
-                    nik: santriTerpilih.nik,
-                    nama: santriTerpilih.nama,
-                    status_role: santriTerpilih.status_role || "SANTRI",
-                    kode_unik_anak: santriTerpilih.kode,
-                    nominal_total: nominalKetikManual,
-                    image_base64: fileGambarKompresiBase64,
-                    file_name: `STRUK_AI_${santriTerpilih.nik}_${Date.now()}.jpg`,
-                    device: navigator.userAgent,
-                    digital_stamp: "STMP-" + Date.now().toString()
-                };
+            const digitalStampUnik = "STMP-" + Date.now().toString() + "-" + Math.floor(100+Math.random()*900);
+            const payload = {
+                aksi: "simpanTransaksiOtomatisPenuh",
+                nik: santriTerpilih.nik,
+                nama: santriTerpilih.nama,
+                status_role: santriTerpilih.status_role || "SANTRI",
+                kode_unik_anak: santriTerpilih.kode,
+                nominal_total: nominalKetikManual,
+                image_base64: fileGambarKompresiBase64,
+                file_name: `STRUK_AI_${santriTerpilih.nik}_${Date.now()}.jpg`,
+                device: navigator.userAgent,
+                digital_stamp: digitalStampUnik
+            };
 
+            // Simpan ke IndexedDB lokal sebagai cadangan jika fetch gagal ditengah jalan
+            simpanAntreanKeLokal(payload);
+            
+            try {
                 const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
                 const hasil = await res.json();
                 tampilkanSpinnerGuard(false);
+                
                 alert(hasil.pesan || hasil.message);
-                if(hasil.status === "success") { location.reload(); } else { btn.disabled = false; }
+                if(hasil.status === "success" || hasil.pesan.includes("sudah kami terima")) { 
+                    hapusAntreanDariLokal(digitalStampUnik); // Sukses, hapus dari cadangan lokal
+                    location.reload(); 
+                } else { btn.disabled = false; }
             } catch(e) {
                 tampilkanSpinnerGuard(false);
-                alert("Gangguan koneksi internet/server terputus.");
+                // Jika gagal karena masalah sinyal/timeout, data tetap aman di IndexedDB dan akan dikirim otomatis nanti
+                alert("Sinyal Anda terputus-putus. Data struk telah disimpan dengan aman di sistem lokal perangkat Anda dan akan otomatis terkirim kembali begitu internet Anda stabil.");
                 btn.disabled = false;
             }
         }
@@ -399,10 +464,10 @@
                     htmlAksiAdmin = `
                     <div class="pt-2.5 border-t border-white/5 space-y-2">
                         <div class="flex gap-2">
-                            <input type="text" id="fee-koreksi-${item.id_trx}" value="${item.nominal_total.toLocaleString('id-ID')}" 
+                            <input type="text" id="fee-koreksi-${item.id_trx}" value="${parseInt(item.nominal_total || 0).toLocaleString('id-ID').replace(/,/g, ".")}" 
                                 onfocus="adminSedangNgetikUang=true" onblur="adminSedangNgetikUang=false" oninput="tanganiKetikanUangUser(this)"
                                 class="w-1/2 bg-slate-950 text-white font-black text-xs text-center border border-white/20 rounded-lg px-2 focus:outline-none focus:border-amber-400">
-                            <button onclick="prosesSetujuAdmin('${item.id_trx}','${item.status}','0')" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black py-2 rounded-lg transition shadow-md">✅ ACC NOMINAL</button>
+                            <button onclick="prosesSetujuAdmin('${item.id_trx}')" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black py-2 rounded-lg transition shadow-md">✅ ACC MANUAL</button>
                         </div>
                         <div class="flex gap-2">
                             <button onclick="prosesTolakKecuranganTanPaPin('${item.id_trx}')" class="w-full bg-rose-600/30 hover:bg-rose-600 text-rose-400 hover:text-white text-[11px] font-black py-1.5 rounded-lg transition border border-rose-500/20">🚨 TOLAK / MANIPULASI</button>
@@ -425,7 +490,7 @@
                     <span class="text-[9px] font-black px-2 py-0.5 rounded-md shadow-sm uppercase ${warnaBadgeStatus}">${item.status}</span>
                 </div>
                 <div class="bg-slate-950/60 p-2 rounded-lg border border-white/5 space-y-1">
-                    <div class="flex justify-between text-xs font-bold"><span class="text-slate-400">Total Kirim:</span><span class="text-amber-400 font-black">Rp ${parseInt(item.nominal_total).toLocaleString('id-ID')}</span></div>
+                    <div class="flex justify-between text-xs font-bold"><span class="text-slate-400">Total Kirim:</span><span class="text-amber-400 font-black">Rp ${parseInt(item.nominal_total || 0).toLocaleString('id-ID')}</span></div>
                     <div class="flex justify-between text-[11px] font-medium"><span class="text-slate-400">No. Ref AI:</span><span class="text-slate-200 font-bold">${item.no_ref || '-'}</span></div>
                     <div class="text-[10px] text-rose-300 font-medium leading-tight pt-0.5 border-t border-white/5 mt-1">📢 ${item.alasan_pending || 'Normal'}</div>
                 </div>
@@ -456,38 +521,28 @@
             document.getElementById('frameViewerStruk').src = "";
         }
 
-        async function prosesPicuRetroaktifKoreksiLunas(id, nominalLama) {
-            const p = prompt(`KOREKSI NOMINAL RETROAKTIF\nSistem akan membalikkan transaksi lama dan menyuntikkan nominal baru.\nMasukkan nominal koreksi total baru:`, nominalLama);
-            if(!p) return;
-            const val = p.replace(/[^0-9]/g, "");
-            if(!val) return alert("Nominal wajib angka murni!");
-            tampilkanSpinnerGuard(true, "WALISANTRI TERHORMAT MOHON MENUNGGU KAMI SEDANG MENYESUAIKAN...", "Menghitung ulang keuangan...");
+        async function prosesSetujuAdmin(id) {
+            const inputVal = document.getElementById(`fee-koreksi-${id}`).value;
+            const valMurni = inputVal.replace(/[^0-9]/g, "");
+            if(!valMurni) return alert("Nominal wajib diisi!");
+            
+            tampilkanSpinnerGuard(true, "SEDANG MELULUSKAN TRANSAKSI MANUAL...", "Memperbarui database bank...");
             try {
-                await fetch(API_URL, { 
-                    method: "POST", 
-                    body: JSON.stringify({ aksi: "koreksiRetroaktifAdmin", id_transaksi: id, nominal_koreksi: val, pin_admin: PIN_ADMIN_SYSTEM })
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify({ aksi: "luluskanTransaksiOlehAdmin", id_transaksi: id, nominal_koreksi: valMurni, pin_admin: PIN_ADMIN_SYSTEM })
                 });
+                const hasil = await res.json();
+                alert(hasil.message || hasil.pesan);
                 pullDataAdminDariServer();
-            } finally { tampilkanSpinnerGuard(false); }
-        }
-
-        async function prosesPicuRetroaktifBatalkanLunas(id) {
-            const tanya = confirm("Peringatan Keras! Anda akan membatalkan status LUNAS dan menarik kembali saldo anak dari database bank. Lanjutkan?");
-            if(!tanya) return;
-            tampilkanSpinnerGuard(true, "WALISANTRI TERHORMAT MOHON MENUNGGU KAMI SEDANG MENYESUAIKAN...", "Membatalkan lunas...");
-            try {
-                await fetch(API_URL, { 
-                    method: "POST", 
-                    body: JSON.stringify({ aksi: "tolakTransaksiOlehAdmin", id_transaksi: id, pin_admin: PIN_ADMIN_SYSTEM })
-                });
-                pullDataAdminDariServer();
-            } finally { tampilkanSpinnerGuard(false); }
+            } catch(e) { alert("Gagal mengeksekusi data ke server."); }
+            finally { tampilkanSpinnerGuard(false); }
         }
 
         async function prosesTolakKecuranganTanPaPin(idTrx) {
-            const tanya = confirm("Yakin Mas Admin?");
+            const tanya = confirm("Yakin ingin menolak transaksi ini?");
             if(!tanya) return;
-            tampilkanSpinnerGuard(true, "WALISANTRI TERHORMAT MOHON MENUNGGU KAMI SEDANG MENYESUAIKAN...", "Menolak berkas...");
+            tampilkanSpinnerGuard(true, "SEDANG MENOLAK BERKAS...", "Memblokir antrean...");
             try {
                 await fetch(API_URL, { 
                     method: "POST", 
@@ -497,14 +552,32 @@
             } catch(e) {} finally { tampilkanSpinnerGuard(false); }
         }
 
-        async function prosesSetujuAdmin(id, role, kd) {
-            const val = document.getElementById(`fee-koreksi-${id}`).value.replace(/[^0-9]/g, "");
-            if(!val) return alert("Isi nominal!"); adminSedangNgetikUang = false;
-            tampilkanSpinnerGuard(true, "WALISANTRI TERHORMAT MOHON MENUNGGU KAMI SEDANG MENYESUAIKAN...", "Menyetujui manual...");
+        async function prosesPicuRetroaktifKoreksiLunas(id, nominalLama) {
+            const p = prompt(`KOREKSI NOMINAL RETROAKTIF\nMasukkan nominal koreksi total baru:`, nominalLama);
+            if(!p) return;
+            const val = p.replace(/[^0-9]/g, "");
+            if(!val) return alert("Nominal wajib angka murni!");
+            tampilkanSpinnerGuard(true, "MEMPROSES RETROAKTIF...", "Menghitung ulang keuangan...");
             try {
-                await fetch(API_URL, { method: "POST", body: JSON.stringify({ aksi: "luluskanTransaksiOlehAdmin", id_transaksi: id, nominal_koreksi: val, status_role: role, kode_unik_anak: kd, pin_admin: PIN_ADMIN_SYSTEM }) });
+                await fetch(API_URL, { 
+                    method: "POST", 
+                    body: JSON.stringify({ aksi: "luluskanTransaksiOlehAdmin", id_transaksi: id, nominal_koreksi: val, pin_admin: PIN_ADMIN_SYSTEM })
+                });
                 pullDataAdminDariServer();
-            } catch(e){} finally { tampilkanSpinnerGuard(false); }
+            } finally { tampilkanSpinnerGuard(false); }
+        }
+
+        async function prosesPicuRetroaktifBatalkanLunas(id) {
+            const tanya = confirm("Peringatan! Anda akan membatalkan status LUNAS dan menarik kembali saldo dari jurnal bank. Lanjutkan?");
+            if(!tanya) return;
+            tampilkanSpinnerGuard(true, "MEMBATALKAN TRANSAKSI...", "Menarik dokumen saldo...");
+            try {
+                await fetch(API_URL, { 
+                    method: "POST", 
+                    body: JSON.stringify({ aksi: "tolakTransaksiOlehAdmin", id_transaksi: id, pin_admin: PIN_ADMIN_SYSTEM })
+                });
+                pullDataAdminDariServer();
+            } finally { tampilkanSpinnerGuard(false); }
         }
     </script>
 </body>

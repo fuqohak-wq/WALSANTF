@@ -1,0 +1,8 @@
+{
+  "name": "jembatan-ai-dua",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@google/generative-ai": "^0.1.1"
+  }
+}

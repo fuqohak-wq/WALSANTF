@@ -318,12 +318,24 @@
                 img.onload = function() {
                     const canvas = document.getElementById('canvas-kompresor');
                     const ctx = canvas.getContext('2d');
-                    const maxW = 1000; // Ditingkatkan ke 1000px agar OCR angka referensi makin akurat/tajam
-                    const scale = maxW / img.width;
-                    canvas.width = maxW;
-                    canvas.height = img.height * scale;
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    fileGambarKompresiBase64 = canvas.toDataURL('image/jpeg', 0.85); // Kualitas 85% untuk hasil baca tajam
+                    
+                    // --- OPTIMASI RESOLUSI & UKURAN FILE AGAR TIDAK MEMBUAT AI OVERLOAD ---
+                    const maxW = 800; // Diturunkan ke 800px (Sangat aman untuk Google Apps Script & tetap tajam untuk AI)
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > maxW) {
+                        height = Math.round((height * maxW) / width);
+                        width = maxW;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Menggunakan kualitas 0.6 (60%) menghasilkan ukuran file super ringan (~100 KB) tanpa merusak teks struk
+                    fileGambarKompresiBase64 = canvas.toDataURL('image/jpeg', 0.6); 
+                    
                     document.getElementById('icon-upload').innerText = "✅";
                     document.getElementById('text-upload-label').innerText = "Struk Siap Dikirim!";
                     tampilkanSpinnerGuard(false);
@@ -331,7 +343,6 @@
                 }
             };
         }
-
         function cekValiditasInputUser() {
             const nominalInput = document.getElementById('nominal-manual-user').value;
             const btn = document.getElementById('btn-submit');

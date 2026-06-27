@@ -324,12 +324,22 @@
                 img.onload = () => {
                     const cvs = document.getElementById('canvas-kompresor'); const ctx = cvs.getContext('2d');
                     cvs.width = 800; cvs.height = (img.height * 800) / img.width;
+                    
+                    // SOLUSI UTAMA: Mengisi background canvas dengan warna putih solid sebelum menggambar struk
+                    // Ini mencegah area transparan pada tangkapan layar PNG/iOS berubah menjadi warna hitam murni
+                    ctx.fillStyle = "#FFFFFF";
+                    ctx.fillRect(0, 0, cvs.width, cvs.height);
+                    
                     ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
-                    fileGambarKompresiBase64 = cvs.toDataURL('image/jpeg', 0.6);
+                    
+                    // Kualitas ditingkatkan ke 0.8 agar hasil kompresi berkas jauh lebih tajam bagi AI
+                    fileGambarKompresiBase64 = cvs.toDataURL('image/jpeg', 0.8);
                     hashGambarSekarang = generateStringHash(fileGambarKompresiBase64);
+                    
                     document.getElementById('icon-upload').innerText = "✅";
                     document.getElementById('text-upload-label').innerText = "Berkas Berhasil Diunggah";
-                    tampilkanSpinnerGuard(false); cekValiditas();
+                    tampilkanSpinnerGuard(false); 
+                    cekValiditas();
                 }
             }
         }

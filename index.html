@@ -506,13 +506,25 @@ function renderListAdmin() {
 }
 
 // FUNGSI WHATSAPP TERPISAH (ANTI-BUG)
+// --- FUNGSI WHATSAPP V5.8 (DENGAN PENANGANAN NOMOR DB) ---
 function kirimWhatsAppWali(hp, nama, nominal) {
-    if(!hp || hp === "") return alert("Nomor HP tidak ditemukan di database.");
-    let cleanHp = hp.toString().replace(/[^0-9]/g, "");
-    if(cleanHp.startsWith("0")) cleanHp = "62" + cleanHp.substring(1);
+    if(!hp || hp === "" || hp === "undefined" || hp === "null") {
+        return alert("Maaf, Nomor HP Wali untuk " + nama + " tidak ditemukan di database Master Santri. Mohon lengkapi kolom E di sheet DATA_SANTRI.");
+    }
     
-    const pesan = `Assalamu'alaikum Bapak/Ibu Wali dari ${nama}. Terkait struk transfer Rp ${parseInt(nominal).toLocaleString('id-ID')} yang dikirimkan melalui sistem PPMUY, mohon konfirmasinya...`;
-    window.open(`https://wa.me/${cleanHp}?text=${encodeURIComponent(pesan)}`, "_blank");
+    // Bersihkan nomor dari spasi atau karakter aneh
+    let cleanHp = hp.toString().trim().replace(/[^0-9]/g, "");
+    
+    // Ubah awalan 0 ke 62
+    if(cleanHp.startsWith("0")) {
+        cleanHp = "62" + cleanHp.substring(1);
+    }
+    
+    const pesan = `Assalamu'alaikum Bapak/Ibu Wali dari ${nama}. Terkait struk transfer Rp ${parseInt(nominal).toLocaleString('id-ID')} yang Anda kirimkan, kami memerlukan konfirmasi lebih lanjut. Mohon infonya ya, terima kasih.`;
+    
+    // Buka tab baru tanpa merusak UI Admin
+    const link = `https://wa.me/${cleanHp}?text=${encodeURIComponent(pesan)}`;
+    window.open(link, "_blank");
 }
 
 // FUNGSI HAPUS TOTAL

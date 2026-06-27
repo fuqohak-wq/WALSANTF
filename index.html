@@ -73,7 +73,6 @@
         </div>
         <button onclick="paksaScanAi()" class="w-full bg-amber-500 text-slate-900 font-black py-3 rounded-xl text-[10px] animate-pulse uppercase">🚀 Paksa Validasi Digital</button>
         
-        <!-- KOLOM PENCARIAN REAL-TIME SISI ADMIN -->
         <div class="bg-slate-900 p-2 rounded-xl border border-white/10">
             <input type="text" id="admin-search-input" oninput="cariDataAdmin()" placeholder="Cari berdasarkan nama, NIK, ID, atau No Ref..." class="w-full bg-slate-950 border border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-amber-400">
         </div>
@@ -360,7 +359,6 @@
             location.reload();
         }
 
-        // FUNGSI CARI DATA ADMIN REAL-TIME
         function cariDataAdmin() {
             queryCariAdmin = document.getElementById('admin-search-input').value.toLowerCase().trim();
             renderListAdmin();
@@ -380,7 +378,6 @@
             const container = document.getElementById('list-container-admin'); container.innerHTML = "";
             let data = (tabAktifAdmin === "ANTREAN") ? cacheAntreanAdmin : cacheRiwayatAdmin;
             
-            // Filter data secara dinamis berdasarkan input pencarian admin
             if (queryCariAdmin !== "") {
                 data = data.filter(item => 
                     item.nama.toLowerCase().includes(queryCariAdmin) ||

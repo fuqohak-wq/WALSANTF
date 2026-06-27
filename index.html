@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YAYASAN YAHYAWIYYAH V2.7</title>
+    <title>KONFIRMASI TRANSFER - YAYASAN YAHYAWIYYAH</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap" rel="stylesheet">
     <style>
@@ -13,14 +13,12 @@
 </head>
 <body class="bg-gradient-to-br from-emerald-950 via-teal-950 to-slate-950 text-slate-100 min-h-screen flex flex-col p-4 antialiased mx-auto w-full max-w-md relative">
 
-    <header class="w-full text-center py-2 flex justify-between items-center border-b border-white/10 mb-4">
+    <header class="w-full py-2 flex justify-between items-center border-b border-white/10 mb-4">
         <div class="text-left">
             <h1 class="text-[10px] font-black text-amber-400 tracking-widest uppercase">PPMU YAHYAWIYYAH V2.7</h1>
             <h2 class="text-base font-extrabold text-white leading-tight">SEMANGAT KHIDMAH UMMAH</h2>
         </div>
-        <button onclick="bukaPanelAdmin()" id="btn-nav-admin" class="bg-white/10 hover:bg-white/20 text-xs font-black px-3 py-2 rounded-xl border border-white/10 transition">
-            🔐 Admin <span id="badge-antrean-luar" class="hidden bg-rose-600 text-[9px] px-1.5 py-0.5 rounded-full animate-pulse">0</span>
-        </button>
+        <button onclick="bukaPanelAdmin()" id="btn-nav-admin" class="bg-white/10 hover:bg-white/20 text-xs font-black px-3 py-2 rounded-xl border border-white/10 transition">🔐 Admin</button>
     </header>
 
     <main id="panel-walisantri" class="flex-1 flex flex-col space-y-4">
@@ -31,47 +29,52 @@
         </div>
 
         <div id="step-upload" class="bg-white text-slate-900 p-4 rounded-2xl shadow-xl space-y-4 hidden">
-            <div class="bg-emerald-800 text-white p-4 rounded-xl border border-emerald-700">
+            <div class="bg-emerald-800 text-white p-4 rounded-xl shadow border border-emerald-700">
                 <span id="target-nama" class="text-base font-black block">Nama Santri</span>
-                <span id="label-role-akun" class="text-[10px] uppercase font-bold text-amber-300 block">Status: SANTRI</span>
+                <span id="label-role-akun" class="text-[10px] uppercase font-bold text-amber-300 block italic">Status: SANTRI</span>
                 <div class="mt-2 text-center bg-emerald-950/40 p-2 rounded-lg border border-amber-500/30">
-                    <span class="text-[11px] font-black text-amber-400 uppercase tracking-widest">+Rp <span id="target-kode-unik">0</span></span>
+                    <span class="text-[10px] font-black text-amber-400 uppercase block mb-1 tracking-widest">WAJIB TRANSFER + KODE UNIK:</span>
+                    <span class="text-lg font-black text-white">+Rp <span id="target-kode-unik">0</span></span>
                 </div>
             </div>
             <div class="space-y-1">
-                <label class="text-xs font-black uppercase text-slate-700 block">2. Nominal Struk :</label>
-                <input type="text" id="nominal-manual-user" oninput="tanganiKetikanUangUser(this)" placeholder="Contoh: 200.388" class="w-full bg-slate-100 border-2 border-emerald-200 rounded-xl px-4 py-3 text-base font-black text-emerald-950 text-center">
+                <label class="text-xs font-black uppercase text-slate-700 block">2. Nominal Sesuai Struk :</label>
+                <input type="text" id="nominal-manual-user" oninput="tanganiKetikanUangUser(this)" placeholder="Contoh: 200.388" class="w-full bg-slate-100 border-2 border-emerald-200 rounded-xl px-4 py-3 text-base font-black text-emerald-950 text-center focus:outline-none">
             </div>
-            <label for="file-struk" class="flex flex-col items-center justify-center border-2 border-dashed border-emerald-600 bg-emerald-50 rounded-2xl p-5 cursor-pointer text-center">
-                <span id="icon-upload" class="text-3xl">📸</span>
-                <span id="text-upload-label" class="text-sm font-black text-emerald-950">Ambil Foto Struk</span>
+            <label for="file-struk" class="flex flex-col items-center justify-center border-2 border-dashed border-emerald-600 bg-emerald-50 rounded-2xl p-5 cursor-pointer text-center group">
+                <span id="icon-upload" class="text-3xl mb-1">📸</span>
+                <span id="text-upload-label" class="text-sm font-black text-emerald-950">Klik Unggah Berkas Struk</span>
             </label>
             <input type="file" id="file-struk" accept="image/*" onchange="prosesKompresiGambar(this)" class="hidden">
-            <button onclick="kirimDataKeServerVision()" id="btn-submit" class="w-full tombol-utama font-black py-4 rounded-2xl text-sm shadow-lg uppercase disabled:opacity-50" disabled>Kirim Verifikasi Struk</button>
+            <button onclick="kirimDataKeServerVision()" id="btn-submit" class="w-full tombol-utama font-black py-4 rounded-2xl text-sm shadow-lg uppercase border-b-4 border-amber-700 disabled:opacity-50" disabled>Kirim Konfirmasi</button>
         </div>
     </main>
 
     <main id="panel-admin" class="flex-1 flex flex-col space-y-3 hidden">
         <div class="flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-white/5">
-            <span class="text-xs font-black text-amber-400">🎛️ PANEL KENDALI V2.7</span>
-            <button onclick="location.reload()" class="text-[11px] text-rose-400 font-extrabold">Keluar</button>
+            <span class="text-xs font-black uppercase text-amber-400 tracking-wider">🎛️ PANEL KENDALI PUSAT</span>
+            <button onclick="location.reload()" class="text-[11px] text-rose-400 font-extrabold hover:underline">Keluar</button>
         </div>
-        <button onclick="paksaScanAi()" class="w-full bg-amber-500 text-slate-900 font-black py-3 rounded-xl text-[10px] animate-pulse">🚀 PAKSA SCAN AI SEKARANG</button>
+        <button onclick="paksaScanAi()" class="w-full bg-amber-500 text-slate-900 font-black py-3 rounded-xl text-[10px] animate-pulse">🚀 PAKSA AUDIT DIGITAL (JIKA MACET)</button>
         <div class="flex bg-slate-900 p-1 rounded-xl border border-white/10">
-            <button id="tab-btn-antrean" onclick="gantiTabAdmin('ANTREAN')" class="w-1/2 py-2 text-xs font-black rounded-lg bg-emerald-700 text-white transition-all">📥 Antrean</button>
-            <button id="tab-btn-log" onclick="gantiTabAdmin('LOG')" class="w-1/2 py-2 text-xs font-black text-slate-400 transition-all">📊 Riwayat</button>
+            <button id="tab-btn-antrean" onclick="gantiTabAdmin('ANTREAN')" class="w-1/2 py-2 text-xs font-black rounded-lg bg-emerald-700 text-white">📥 Antrean</button>
+            <button id="tab-btn-log" onclick="gantiTabAdmin('LOG')" class="w-1/2 py-2 text-xs font-black text-slate-400">📊 Riwayat</button>
         </div>
-        <div id="list-container-admin" class="space-y-2.5 max-h-[60vh] overflow-y-auto"></div>
+        <div id="list-container-admin" class="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1"></div>
     </main>
 
     <canvas id="canvas-kompresor" class="hidden"></canvas>
-    <div id="loadingSpamGuard" class="fixed inset-0 bg-slate-950/95 z-[9999] hidden flex-col justify-center items-center text-center p-6">
+    <div id="loadingSpamGuard" class="fixed inset-0 bg-slate-950/98 z-[9999] hidden flex-col justify-center items-center text-center p-8">
         <div class="w-14 h-14 border-4 border-slate-800 border-t-amber-400 rounded-full animate-spin"></div>
-        <div id="spamGuardText" class="mt-4 text-amber-400 font-black text-sm uppercase">Sedang Berproses...</div>
+        <div id="spamGuardText" class="mt-6 text-amber-400 font-black text-sm uppercase tracking-widest">Sinkronisasi Database...</div>
+        
+        <div id="wrapper-kisah" class="mt-10 max-w-sm w-full bg-emerald-950/40 border-l-4 border-amber-500 p-4 rounded-xl text-left">
+            <span class="text-[9px] font-black text-amber-500 uppercase block mb-1">📖 Kisah Hikmah Islami :</span>
+            <p id="label-kisah-teks" class="text-xs text-slate-200 italic leading-relaxed">"Sedang memuat kisah hikmah untuk Anda..."</p>
+        </div>
     </div>
 
     <script>
-        // GANTI DENGAN URL DEPLOYMENT TERBARU ANDA
         const API_URL = "https://script.google.com/macros/s/AKfycbz4WIiha9JSemWqoC4603207orwCm3eYd3XlMwXzNZBTLHvWsITLlyecHnjB4hvr-i03w/exec";
         const PIN_ADMIN_SYSTEM = "Masgus1988";
         
@@ -79,19 +82,24 @@
         let cacheAntreanAdmin = []; let cacheRiwayatAdmin = []; let tabAktifAdmin = "ANTREAN";
 
         window.onload = async () => {
-            tampilkanSpinnerGuard(true, "Menghubungkan Server...");
+            tampilkanSpinnerGuard(true, "Menghubungkan ke Server...");
             try {
                 const res = await fetch(API_URL);
                 const hasil = await res.json();
                 dbSantri = hasil.santri || [];
                 tampilkanSpinnerGuard(false);
-            } catch(e) { alert("Server Error."); tampilkanSpinnerGuard(false); }
+            } catch(e) { alert("Gagal koneksi server."); tampilkanSpinnerGuard(false); }
         };
 
         function tampilkanSpinnerGuard(show, text = "") {
             const guard = document.getElementById('loadingSpamGuard');
             if(text) document.getElementById('spamGuardText').innerText = text;
-            show ? guard.classList.replace('hidden', 'flex') : guard.classList.replace('flex', 'hidden');
+            if(show) {
+                guard.classList.replace('hidden', 'flex');
+                fetch(`${API_URL}?aksi=ambilKisahIslami`).then(r=>r.json()).then(res=>{
+                    document.getElementById('label-kisah-teks').innerText = res.kisah;
+                });
+            } else { guard.classList.replace('flex', 'hidden'); }
         }
 
         function cariData() {
@@ -104,7 +112,7 @@
                 fil.forEach(s => {
                     const b = document.createElement('button');
                     b.className = "w-full text-left bg-slate-50 p-3 rounded-xl flex justify-between mt-1 border text-slate-900 font-bold";
-                    b.innerHTML = `<span>${s.nama}</span> <span class="bg-emerald-800 text-white text-[9px] px-2 rounded uppercase">${s.kode}</span>`;
+                    b.innerHTML = `<span>${s.nama}</span> <span class="bg-emerald-800 text-white text-[9px] px-2 py-0.5 rounded uppercase">${s.kode}</span>`;
                     b.onclick = () => pilihSantri(s);
                     resDiv.appendChild(b);
                 });
@@ -128,7 +136,7 @@
 
         function prosesKompresiGambar(i) {
             if(!i.files[0]) return;
-            tampilkanSpinnerGuard(true, "Mengompresi...");
+            tampilkanSpinnerGuard(true, "Menganalisis Kualitas Berkas...");
             const reader = new FileReader(); reader.readAsDataURL(i.files[0]);
             reader.onload = (e) => {
                 const img = new Image(); img.src = e.target.result;
@@ -138,6 +146,7 @@
                     ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
                     fileGambarKompresiBase64 = cvs.toDataURL('image/jpeg', 0.6);
                     document.getElementById('icon-upload').innerText = "✅";
+                    document.getElementById('text-upload-label').innerText = "Berkas Siap Dikirim";
                     tampilkanSpinnerGuard(false); cekValiditas();
                 }
             }
@@ -148,7 +157,7 @@
         }
 
         async function kirimDataKeServerVision() {
-            tampilkanSpinnerGuard(true, "Mengirim Data...");
+            tampilkanSpinnerGuard(true, "Mengirim Berkas...");
             const pay = { 
                 aksi: "simpanTransaksiOtomatisPenuh", nik: santriTerpilih.nik, nama: santriTerpilih.nama, 
                 nominal_total: parseInt(document.getElementById('nominal-manual-user').value.replace(/\./g, "")),
@@ -159,11 +168,11 @@
                 const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(pay) });
                 const hasil = await res.json();
                 alert(hasil.pesan); location.reload();
-            } catch(e) { alert("Error kirim data."); tampilkanSpinnerGuard(false); }
+            } catch(e) { alert("Error Server."); tampilkanSpinnerGuard(false); }
         }
 
         function bukaPanelAdmin() {
-            const p = prompt("PIN Admin:");
+            const p = prompt("PIN Keamanan Pengurus:");
             if(p === PIN_ADMIN_SYSTEM) {
                 document.getElementById('panel-walisantri').classList.add('hidden');
                 document.getElementById('panel-admin').classList.remove('hidden');
@@ -186,26 +195,24 @@
             const data = (tabAktifAdmin === "ANTREAN") ? cacheAntreanAdmin : cacheRiwayatAdmin;
             data.forEach(item => {
                 const card = document.createElement('div');
-                card.className = "bg-slate-900 border border-white/10 rounded-xl p-3.5 space-y-3 shadow-lg";
-                let sCol = "bg-amber-500";
-                if(item.status.includes("LUNAS")) sCol = "bg-emerald-500";
-                if(item.status.includes("DITOLAK")) sCol = "bg-rose-600";
+                card.className = "bg-slate-900 border border-white/10 rounded-2xl p-4 space-y-3 shadow-xl";
+                let sCol = item.status.includes("LUNAS") ? "bg-emerald-500" : (item.status.includes("DITOLAK") ? "bg-rose-600" : "bg-amber-500");
 
                 card.innerHTML = `
                 <div class="flex justify-between items-start">
-                    <div class="w-2/3"><span class="block text-sm font-black text-white leading-tight">${item.nama}</span><span class="block text-[9px] text-slate-500 uppercase">${item.timestamp}</span></div>
-                    <span class="text-[8px] font-black px-2 py-0.5 rounded text-white uppercase ${sCol}">${item.status}</span>
+                    <div class="w-2/3"><span class="block text-sm font-black text-white leading-tight">${item.nama}</span><span class="block text-[9px] text-slate-500 uppercase">NIK: ${item.nik} | ${item.timestamp}</span></div>
+                    <span class="text-[8px] font-black px-2 py-1 rounded text-white uppercase ${sCol}">${item.status}</span>
                 </div>
-                <div class="bg-black/30 p-2 rounded text-[11px] font-bold">Total: Rp ${parseInt(item.nominal_total).toLocaleString('id-ID')} | Ref: ${item.no_ref || '...'}</div>
+                <div class="bg-black/30 p-2.5 rounded-xl text-[11px] font-bold">Total: Rp ${parseInt(item.nominal_total).toLocaleString('id-ID')} | Ref: ${item.no_ref || 'PENDING SCAN'}</div>
                 <div class="text-[9px] text-rose-300 italic font-bold">📢 ${item.alasan_pending}</div>
                 <div class="flex gap-2">
-                    <button onclick="kirimWA('${item.hp}', '${item.nama}', '${item.nominal_total}')" class="w-1/2 bg-emerald-600/20 text-emerald-400 py-2 rounded text-[10px] font-black">📞 WA WALI</button>
-                    <button onclick="window.open('${item.link_struk}', '_blank')" class="w-1/2 bg-white/5 text-slate-300 py-2 rounded text-[10px] font-black">👁️ STRUK</button>
+                    <button onclick="kirimWA('${item.hp}', '${item.nama}', '${item.nominal_total}')" class="w-1/2 bg-emerald-600/20 text-emerald-400 py-2 rounded-xl text-[10px] font-black">📞 WA WALI</button>
+                    <button onclick="window.open('${item.link_struk}', '_blank')" class="w-1/2 bg-white/5 text-slate-300 py-2 rounded-xl text-[10px] font-black">👁️ LIHAT STRUK</button>
                 </div>
                 ${tabAktifAdmin === "ANTREAN" ? `
                 <div class="flex gap-2">
-                    <button onclick="prosesAdmin('${item.id_trx}', 'LUNAS')" class="w-3/4 bg-emerald-600 py-2.5 rounded text-xs font-black">✅ ACC MANUAL</button>
-                    <button onclick="prosesAdmin('${item.id_trx}', 'HAPUS')" class="w-1/4 bg-rose-600/20 text-rose-500 py-2.5 rounded text-xs font-black text-center">HAPUS</button>
+                    <button onclick="prosesAdmin('${item.id_trx}', 'LUNAS')" class="w-3/4 bg-emerald-600 py-3 rounded-xl text-xs font-black">✅ ACC MANUAL</button>
+                    <button onclick="prosesAdmin('${item.id_trx}', 'HAPUS')" class="w-1/4 bg-rose-600/20 text-rose-500 py-3 rounded-xl text-xs font-black text-center">HAPUS</button>
                 </div>` : ''}
                 `;
                 container.appendChild(card);
@@ -213,25 +220,26 @@
         }
 
         async function paksaScanAi() {
-            tampilkanSpinnerGuard(true, "Memulai AI...");
+            tampilkanSpinnerGuard(true, "Memulai Audit Sistem...");
             await fetch(`${API_URL}?aksi=paksaScanAi`);
-            alert("AI sedang memproses. Tunggu 15-20 detik lalu refresh.");
+            alert("Audit Digital sedang berjalan di server. Silakan tunggu 20 detik lalu refresh halaman.");
             tampilkanSpinnerGuard(false);
         }
 
         async function prosesAdmin(id, aksi) {
-            const nom = aksi === 'LUNAS' ? prompt("Nominal Sesuai Struk:", "0") : "0";
+            const nom = aksi === 'LUNAS' ? prompt("Masukkan Nominal Sah Sesuai Foto Struk:", "0") : "0";
             if(aksi === 'LUNAS' && !nom) return;
-            tampilkanSpinnerGuard(true, "Updating database...");
+            tampilkanSpinnerGuard(true, "Memproses...");
             const p = { aksi: aksi === 'LUNAS' ? "luluskanTransaksiOlehAdmin" : "hapusBarisTransaksi", id_transaksi: id, nominal_koreksi: nom.replace(/\./g, ""), pin_admin: PIN_ADMIN_SYSTEM };
             await fetch(API_URL, { method: "POST", body: JSON.stringify(p) });
             pullDataAdminDariServer(); tampilkanSpinnerGuard(false);
         }
 
         function kirimWA(hp, nama, nominal) {
-            if(!hp) return alert("Nomor HP wali tidak terdaftar.");
-            let wa = hp.startsWith("0") ? "62" + hp.substring(1) : hp;
-            window.open(`https://wa.me/${wa.replace(/[^0-9]/g,"")}?text=Assalamu'alaikum Ibu/Bapak wali dari ${nama}, terkait struk transfer Rp ${parseInt(nominal).toLocaleString('id-ID')} yang dikirimkan...`, "_blank");
+            if(!hp) return alert("Nomor HP wali tidak terdaftar di master data.");
+            let wa = hp.toString().replace(/[^0-9]/g,"");
+            if(wa.startsWith("0")) wa = "62" + wa.substring(1);
+            window.open(`https://wa.me/${wa}?text=Assalamu'alaikum Ibu/Bapak wali dari ${nama}, perihal pengiriman struk transfer sebesar Rp ${parseInt(nominal).toLocaleString('id-ID')}...`, "_blank");
         }
 
         function gantiTabAdmin(t) { 

@@ -325,14 +325,11 @@
                     const cvs = document.getElementById('canvas-kompresor'); const ctx = cvs.getContext('2d');
                     cvs.width = 800; cvs.height = (img.height * 800) / img.width;
                     
-                    // SOLUSI UTAMA: Mengisi background canvas dengan warna putih solid sebelum menggambar struk
-                    // Ini mencegah area transparan pada tangkapan layar PNG/iOS berubah menjadi warna hitam murni
                     ctx.fillStyle = "#FFFFFF";
                     ctx.fillRect(0, 0, cvs.width, cvs.height);
                     
                     ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
                     
-                    // Kualitas ditingkatkan ke 0.8 agar hasil kompresi berkas jauh lebih tajam bagi AI
                     fileGambarKompresiBase64 = cvs.toDataURL('image/jpeg', 0.8);
                     hashGambarSekarang = generateStringHash(fileGambarKompresiBase64);
                     
@@ -386,16 +383,26 @@
 
         function renderListAdmin() {
             const container = document.getElementById('list-container-admin'); container.innerHTML = "";
-            let data = (tabAktifAdmin === "ANTREAN") ? cacheAntreanAdmin : cacheRiwayatAdmin;
+            let data;
             
+            // Perbaikan fitur pencarian: Pencarian bersifat global (menghubungkan kedua cache data) 
+            // jika kolom pencarian diisi oleh pengguna agar data yang dicari selalu dapat ditemukan
             if (queryCariAdmin !== "") {
-                data = data.filter(item => 
-                    item.nama.toLowerCase().includes(queryCariAdmin) ||
-                    item.nik.toLowerCase().includes(queryCariAdmin) ||
-                    item.id_trx.toLowerCase().includes(queryCariAdmin) ||
-                    (item.no_ref && item.no_ref.toLowerCase().includes(queryCariAdmin)) ||
-                    item.status.toLowerCase().includes(queryCariAdmin)
-                );
+                const gabungData = [...cacheAntreanAdmin, ...cacheRiwayatAdmin];
+                data = gabungData.filter(item => {
+                    const nama = (item.nama || "").toString().toLowerCase();
+                    const nik = (item.nik || "").toString().toLowerCase();
+                    const id_trx = (item.id_trx || "").toString().toLowerCase();
+                    const no_ref = (item.no_ref || "").toString().toLowerCase();
+                    const status = (item.status || "").toString().toLowerCase();
+                    return nama.includes(queryCariAdmin) ||
+                           nik.includes(queryCariAdmin) ||
+                           id_trx.includes(queryCariAdmin) ||
+                           no_ref.includes(queryCariAdmin) ||
+                           status.includes(queryCariAdmin);
+                });
+            } else {
+                data = (tabAktifAdmin === "ANTREAN") ? cacheAntreanAdmin : cacheRiwayatAdmin;
             }
 
             if (data.length === 0) {
